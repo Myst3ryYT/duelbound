@@ -15,6 +15,7 @@ export interface HudAbility {
   cooldown: number; // seconds left
   total: number; // full cooldown length
   active: boolean; // highlighted (e.g. currently placing it)
+  count?: number; // stored uses or ammo, shown in the corner
 }
 
 /** Extra things the game screen wants shown. */
@@ -71,6 +72,7 @@ function drawAbilityBar(ctx: CanvasRenderingContext2D, abilities: HudAbility[]):
       ctx.restore();
       outlinedText(ctx, a.cooldown >= 1 ? String(Math.ceil(a.cooldown)) : a.cooldown.toFixed(1), x + ICON / 2, y + ICON / 2, 'bold 24px monospace', '#fff', 'center');
     }
+    if (a.count !== undefined) outlinedText(ctx, String(a.count), x + ICON - 6, y + 12, 'bold 18px monospace', '#ffe27a', 'right');
     if (a.active) {
       ctx.strokeStyle = '#ffd34d';
       ctx.lineWidth = 4;

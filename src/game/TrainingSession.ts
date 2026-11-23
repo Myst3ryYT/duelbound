@@ -120,6 +120,7 @@ export class TrainingSession {
             cooldown: me.cooldowns[slot],
             total: me.cooldownTotals[slot],
             active: me.placing === slot,
+            count: me.chargeMax[slot] > 0 ? me.charges[slot] : slot === 'primary' ? cls.ammo?.(me, this.tuning)?.current : undefined,
           }))
         : [],
     };

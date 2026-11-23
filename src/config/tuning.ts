@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================================================
  *  REBOUND - TUNING
  * ============================================================================
@@ -88,18 +88,20 @@ export const TUNING = {
   // ------------------------------------------------------------- SHERIFF ----
   sheriff: {
     gun: {
-      fireInterval: 0.4, // LC: seconds between shots (hold to keep firing)
-      speed: 1600, // LC: bullet speed
-      damageNear: 45, // LC: damage at point blank
-      damageFar: 25, // LC: damage at long range
+      fireInterval: 0.6, // LC: seconds between shots (hold to keep firing)
+      speed: 1100, // LC: bullet speed
+      damageNear: 70, // LC: damage at point blank
+      damageFar: 30, // LC: damage at long range
       falloffRange: 700, // LC: distance travelled at which damage has dropped to damageFar
-      size: 5, // LC: bullet radius
+      size: 10.5, // LC: bullet radius
+      ammo: 6, // LC: shots before the Sheriff has to reload
+      reloadTime: 1.5, // LC: seconds to reload (starts by itself when the gun is empty)
     },
     lasso: {
-      range: 480, // RC: how far the lasso flies
-      speed: 1400, // RC: how fast the lasso flies
+      range: 800, // RC: how far the lasso flies
+      speed: 800, // RC: how fast the lasso flies
       damage: 20, // RC: damage when it catches someone
-      pullSpeed: 1400, // RC: how fast the caught player is dragged to the Sheriff
+      pullSpeed: 1000, // RC: how fast the caught player is dragged to the Sheriff
       size: 9, // RC: radius of the lasso loop
       cooldown: 9, // RC: seconds before it can be thrown again
     },
@@ -108,27 +110,76 @@ export const TUNING = {
       tossSpeed: 150, // C: speed it starts rolling at, towards the crosshair
       life: 8, // C: seconds before it crumbles on its own
       damage: 30, // C: damage to whoever it touches (the Sheriff too)
-      stun: 0.8, // C: seconds the touched player can't move or use abilities
+      stun: 1.3, // C: seconds the touched player can't move or use abilities
       restitution: 0.9, // C: bounciness off walls and structures (1 = no speed lost)
       shotImpulse: 350, // C: how much speed a projectile hit adds to it
       friction: 0.6, // C: how quickly it slows down by itself (0 = rolls forever)
-      size: 20, // C: radius of the tumbleweed
+      size: 33, // C: radius of the tumbleweed
+      carry: 0.75, // C: a stunned player is dragged along at this share of the tumbleweed's speed (1 = same speed)
+      carryDrag: 1.5, // C: extra slowdown on the tumbleweed while it drags someone
+      rehitDelay: 1.5, // C: seconds before the same tumbleweed can stun the same player again
       cooldown: 10, // C: seconds before another can be summoned
     },
     pierce: {
-      delay: 0.6, // V: seconds of aiming before the shot goes off
-      speed: 4000, // V: bullet speed
+      delay: 0.4, // V: seconds of aiming before the shot goes off
+      speed: 12339, // V: bullet speed
       bounces: 3, // V: how many walls / structures it bounces off
-      damage: 220, // V: damage on hit
-      trail: 0.4, // V: seconds the bullet trail stays visible (looks only)
+      damage: 140, // V: damage on hit
+      trail: 1.6, // V: seconds the bullet trail stays visible (looks only)
       size: 5, // V: bullet radius
-      cooldown: 14, // V: seconds before it can be used again
+      previewLength: 2500, // V: how far the predicted path is drawn while aiming
+      cooldown: 10, // V: seconds before it can be used again
     },
     roll: {
       duration: 0.35, // SPACE: seconds the roll lasts
       invincible: 0.2, // SPACE: seconds of invincibility at the start of the roll
-      distance: 260, // SPACE: how far the roll goes
+      distance: 300, // SPACE: how far the roll goes
       cooldown: 4, // SPACE: seconds before rolling again
+    },
+  },
+
+  // ----------------------------------------------------------- REFRACTOR ----
+  refractor: {
+    shotgun: {
+      pellets: 4, // LC: pellets per shot
+      spread: 6, // LC: total spread of the pellets, in degrees
+      damage: 18, // LC: damage per pellet
+      speed: 1000, // LC: pellet speed
+      size: 5, // LC: pellet radius
+      fireInterval: 0.5, // LC: seconds between shots
+      splitAngle: 5, // LC: degrees between the two halves when a pellet doubles off your mirror
+      mirrorBreakDelay: 0.15, // LC: seconds after doubling a volley before that mirror breaks
+    },
+    ray: {
+      pool: 100, // RC: size of the resource pool (bar next to the crosshair)
+      drain: 40, // RC: pool used per second while firing
+      refill: 25, // RC: pool regained per second when not firing
+      refillDelay: 1, // RC: seconds of not firing before the pool starts refilling
+      dps: 40, // RC: damage per second (doubles for every mirror the beam bounces off)
+      maxReflections: 3, // RC: how many mirrors the beam can bounce off
+      tickInterval: 0.1, // RC: seconds between damage ticks
+      range: 2500, // RC: total beam length, including bounces
+      width: 6, // RC: beam thickness (grows with each mirror; looks only)
+    },
+    mirror: {
+      maxMirrors: 3, // C: mirrors you can have at once (placing another removes your oldest)
+      charges: 3, // C: uses stored up
+      chargeTime: 6, // C: seconds for one use to come back
+      maxLength: 220, // C: longest mirror (dragging further places it automatically)
+      minLength: 40, // C: shortest mirror (shorter drags are ignored)
+      placeRange: 350, // C: how far from you the first point can be
+      hp: 150, // C: mirror health
+      thickness: 10, // C: mirror thickness (for collisions)
+    },
+    refract: {
+      duration: 0.6, // V: seconds you stay split
+      separation: 90, // V: distance between the two halves
+      cooldown: 8, // V: seconds before it can be used again
+    },
+    shatter: {
+      radius: 250, // SPACE: distance from a mirror that gets hurt
+      damage: 40, // SPACE: damage per mirror (near 2 mirrors = hit twice)
+      cooldown: 20, // SPACE: seconds before it can be used again
     },
   },
 

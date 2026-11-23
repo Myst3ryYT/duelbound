@@ -23,6 +23,11 @@ export const SHERIFF: ClassDef = {
   objects: [brambleObject],
   projectileHooks: { lasso: lassoHit },
 
+  // Revolver bullets left.
+  ammo(f, t) {
+    return { current: f.vars.ammo ?? t.sheriff.gun.ammo, max: t.sheriff.gun.ammo, reloading: !!f.vars.reloading };
+  },
+
   // Piercing Bullet aiming delay shown as a bar under the crosshair.
   crosshairBar(f, t) {
     if (!(f.vars.pierceT > 0)) return null;

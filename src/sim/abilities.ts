@@ -34,6 +34,8 @@ export interface PlacementPreview {
   sprite: string;
   x: number;
   y: number;
+  x2?: number; // set for line-shaped structures (mirrors): the line goes from (x, y) to (x2, y2)
+  y2?: number;
   angle: number;
   radius: number;
   valid: boolean;
@@ -53,6 +55,14 @@ export interface AbilityDef {
   preview?(world: World, tuning: Tuning, fighter: Fighter, x: number, y: number): PlacementPreview;
   /** Variable abilities: the player clicked. Return true if it was placed (starts the cooldown). */
   confirm?(ctx: AbilityContext): boolean;
+  /**
+   * Variable abilities placed by dragging (e.g. mirrors): called every tick while placing,
+   * with pressed / held / released describing the LEFT mouse button.
+   * Return 'placed' when done (starts the cooldown), or null to keep going.
+   */
+  placingUpdate?(ctx: AbilityContext): 'placed' | null;
+  /** Abilities with stored uses: how many can be stored. `cooldown` is then the time for one use to come back. */
+  charges?(t: Tuning): number;
 }
 
 /** Behaviour of a placed structure, registered by the class that owns it. */
@@ -66,6 +76,8 @@ export interface ObjectKindDef {
   kind: string;
   restitution(t: Tuning): number; // bounciness, 1 = keeps all speed
   friction(t: Tuning): number; // how fast it slows down by itself
+  carry?(t: Tuning): number; // share of its speed a carried (stunned) fighter moves at
+  carryDrag?(t: Tuning): number; // extra slowdown while carrying someone
   /** It touched a fighter. Return true to remove the object. */
   onTouch(world: World, tuning: Tuning, o: PhysObject, f: Fighter): boolean;
 }
@@ -90,19 +102,54 @@ export interface ClassDef {
   projectileHooks?: Record<string, ProjectileHook>;
   /** Optional bar next to the crosshair, e.g. the Mage's staff charge. */
   crosshairBar?(f: Fighter, t: Tuning): CrosshairBar | null;
+  /** Optional ammo count, shown as pips under the crosshair and on the LC icon. */
+  ammo?(f: Fighter, t: Tuning): { current: number; max: number; reloading: boolean } | null;
 }
 
 // ---------------------------------------------------------------- helpers ----
 
 export function isReady(f: Fighter, slot: ActionName): boolean {
-  return f.cooldowns[slot] <= 0;
+  return f.chargeMax[slot] > 0 ? f.charges[slot] >= 1 : f.cooldowns[slot] <= 0;
 }
 
-/** Start a cooldown (skipped when the training "cooldowns off" option is on). */
+/**
+ * The ability was used: start its cooldown (skipped when the training
+ * "cooldowns off" option is on). For abilities with charges, this spends a
+ * charge and starts the recharge timer if it isn't already running.
+ */
 export function startCooldown(world: World, f: Fighter, slot: ActionName, seconds: number): void {
   const s = world.options.cooldownsDisabled ? 0 : seconds;
+  if (f.chargeMax[slot] > 0) {
+    if (world.options.cooldownsDisabled) return;
+    f.charges[slot] = Math.max(0, f.charges[slot] - 1);
+    if (f.cooldowns[slot] > 0) return; // a recharge is already running
+  }
   f.cooldowns[slot] = s;
   f.cooldownTotals[slot] = s;
+}
+
+/** Keep stored charges topped up over time. */
+function updateCharges(world: World, tuning: Tuning, f: Fighter, slot: ActionName, def: AbilityDef): void {
+  const max = def.charges?.(tuning) ?? 0;
+  if (max <= 0) {
+    f.chargeMax[slot] = 0;
+    return;
+  }
+  if (f.chargeMax[slot] === 0) f.charges[slot] = max; // first tick: start full
+  f.chargeMax[slot] = max;
+  if (world.options.cooldownsDisabled) {
+    f.charges[slot] = max;
+    f.cooldowns[slot] = 0;
+    return;
+  }
+  f.charges[slot] = Math.min(f.charges[slot], max);
+  if (f.charges[slot] >= max || f.cooldowns[slot] > 0) return;
+  if (f.cooldownTotals[slot] > 0) f.charges[slot]++; // one use came back
+  f.cooldownTotals[slot] = 0;
+  if (f.charges[slot] < max) {
+    f.cooldowns[slot] = def.cooldown(tuning);
+    f.cooldownTotals[slot] = f.cooldowns[slot];
+  }
 }
 
 /** Give a cooldown back (e.g. a teleport that turned out to be blocked). */
@@ -112,7 +159,10 @@ export function refundCooldown(f: Fighter, slot: ActionName): void {
 
 /** Run all five abilities of one fighter for one tick. */
 export function runAbilities(world: World, tuning: Tuning, f: Fighter, input: PlayerInput, cls: ClassDef, dt: number): void {
-  for (const a of ACTIONS) f.cooldowns[a] = Math.max(0, f.cooldowns[a] - dt);
+  for (const a of ACTIONS) {
+    f.cooldowns[a] = Math.max(0, f.cooldowns[a] - dt);
+    updateCharges(world, tuning, f, a, cls.abilities[a]);
+  }
   const stunned = f.stunT > 0;
   if (stunned) f.placing = null;
 
@@ -146,10 +196,17 @@ export function runAbilities(world: World, tuning: Tuning, f: Fighter, input: Pl
     if (edges('secondary').pressed || edges(slot).pressed) {
       f.placing = null;
       cancelledSlot = slot;
+    } else if (def.placingUpdate) {
+      // Drag-placed (mirror): the ability reads the left mouse button itself.
+      if (def.placingUpdate(ctx(slot, edges('primary'))) === 'placed') {
+        startCooldown(world, f, slot, def.cooldown(tuning));
+        f.placing = null;
+      }
     } else if (edges('primary').pressed && def.confirm?.(ctx(slot, edges(slot)))) {
       startCooldown(world, f, slot, def.cooldown(tuning));
       f.placing = null;
     }
+    if (!f.placing) f.vars.placeDrag = 0; // forget any half-finished drag
   }
 
   // ---- Every ability's own logic ----
@@ -161,6 +218,7 @@ export function runAbilities(world: World, tuning: Tuning, f: Fighter, input: Pl
 
     if (def.activation === 'variable' && e.pressed && !f.placing && isReady(f, slot)) {
       f.placing = slot;
+      f.vars.placeDrag = 0;
       continue;
     }
     def.update?.(ctx(slot, e));

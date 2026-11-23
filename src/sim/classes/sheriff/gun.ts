@@ -1,6 +1,7 @@
 /**
  * SHERIFF - LC - Gun (instant, projectile)
  * Fast revolver shots. Hold to keep firing. Hits harder the closer the target is.
+ * Six shots, then it reloads by itself (no button needed).
  * Numbers: tuning.sheriff.gun
  */
 import type { AbilityDef } from '../../abilities.ts';
@@ -17,8 +18,17 @@ export const gun: AbilityDef = {
   cooldown: (t) => t.sheriff.gun.fireInterval,
 
   update({ world, tuning, fighter: f, slot, held }) {
-    if (!held || !isReady(f, slot) || f.vars.rollT > 0) return;
     const g = tuning.sheriff.gun;
+    if (f.vars.ammo === undefined) f.vars.ammo = g.ammo;
+
+    // Reload finished? (the reload uses this slot's cooldown, so the HUD shows it)
+    if (f.vars.reloading && isReady(f, slot)) {
+      f.vars.reloading = 0;
+      f.vars.ammo = g.ammo;
+      emitSound(world, 'reload_done', f.x, f.y);
+    }
+
+    if (!held || !isReady(f, slot) || f.vars.rollT > 0 || f.vars.reloading) return;
     spawnProjectile(world, tuning, {
       ownerId: f.id,
       kind: 'sheriff_bullet',
@@ -31,7 +41,15 @@ export const gun: AbilityDef = {
       damageFar: g.damageFar,
       falloffRange: g.falloffRange,
     });
-    startCooldown(world, f, slot, g.fireInterval);
     emitSound(world, 'gun_fire', f.x, f.y);
+
+    f.vars.ammo -= 1;
+    if (f.vars.ammo <= 0) {
+      f.vars.reloading = 1;
+      startCooldown(world, f, slot, g.reloadTime);
+      emitSound(world, 'reload_start', f.x, f.y);
+    } else {
+      startCooldown(world, f, slot, g.fireInterval);
+    }
   },
 };

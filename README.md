@@ -3,7 +3,7 @@
 A top-down 1v1 arena fighting game for keyboard and mouse, playable in the browser.
 The full design spec is in [GAME_BRIEF.md](GAME_BRIEF.md).
 
-**Current build: step 2 of 6, parts 1-2 (Mage, Sheriff).** Movement, arena, HP bars, training dummy, Mage and Sheriff. Press Tab in training to switch class until character select arrives in step 4.
+**Current build: step 2 of 6 done (Mage, Sheriff, Refractor).** Movement, arena, HP bars, training dummy and all three classes. Press Tab in training to switch class until character select arrives in step 4.
 
 ## Running the game
 
@@ -48,11 +48,21 @@ Other commands:
 
 | Key | Does |
 | --- | --- |
-| Left click | Revolver: hold to keep firing. Hits harder up close. |
+| Left click | Revolver: hold to keep firing. Hits harder up close. 6 shots, then it reloads by itself. |
 | Right click | Lasso: catches the enemy and drags them to you |
-| C | Bramble: a tumbleweed that stuns whoever touches it (you too). Shoot it to knock it around. |
-| V | Piercing bullet: aim for a moment (red line), then a very fast shot that bounces 3 times |
+| C | Bramble: a tumbleweed that stuns whoever touches it (you too) and drags them along. Shoot it to knock it around. |
+| V | Piercing bullet: aim for a moment (the red line shows the path, bounces included), then a very fast shot that bounces 3 times |
 | Space | Roll in the direction you're walking, briefly invincible |
+
+**Refractor**
+
+| Key | Does |
+| --- | --- |
+| Left click | Mind Shotgun: 4 pellets. Pellets that bounce off your own mirror double (once), and that mirror breaks. |
+| Right click | Mind Ray: hold for a beam. Uses the purple bar by the crosshair. Double damage for each mirror it bounces off. |
+| C | Mirror: press C, then hold left click where it starts, drag, release where it ends. 3 stored uses. |
+| V | Refract: split into two halves for a moment; a shot can pass between them |
+| Space | Shatter: breaks every mirror; enemies near a mirror take damage for each one |
 
 --- | --- |
 | W A S D | move |
@@ -115,7 +125,7 @@ Volume and mute are in the pause menu.
 
 ### Abilities and classes
 
-The numbers for every ability are in `src/config/tuning.ts` (look for the `mage:` and `sheriff:` groups).
+The numbers for every ability are in `src/config/tuning.ts` (look for the `mage:`, `sheriff:` and `refractor:` groups).
 
 How an ability *behaves* is in `src/sim/classes/<class>/`, one file per ability, for example
 `src/sim/classes/mage/staff.ts`. Each file starts with a short description. The class's

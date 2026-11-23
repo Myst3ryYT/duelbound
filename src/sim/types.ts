@@ -57,6 +57,8 @@ export interface Fighter {
   // ---- Abilities and status effects ----
   cooldowns: Record<ActionName, number>; // seconds left before each ability is ready
   cooldownTotals: Record<ActionName, number>; // full length of the current cooldown (for the HUD)
+  charges: Record<ActionName, number>; // stored uses, for abilities that have charges (e.g. Mirror)
+  chargeMax: Record<ActionName, number>; // 0 = this ability doesn't use charges
   placing: ActionName | null; // a "variable" ability waiting for a click, or null
   rootedT: number; // seconds left where the fighter can't walk
   stunT: number; // seconds left where the fighter can't walk or use abilities
@@ -95,6 +97,7 @@ export interface Projectile extends Switchable {
   bounces: number; // walls / structures it can still bounce off (0 = dies on contact)
   reflectable: boolean; // can shields reflect it? (if not, a shield just destroys it)
   trail: number; // seconds a visual trail lingers behind it (0 = no trail)
+  splits: boolean; // doubles once when it bounces off its owner's mirror (Refractor shotgun)
   life: number; // seconds left before it vanishes on its own
 }
 
@@ -103,10 +106,17 @@ export interface Placeable {
   id: number;
   ownerId: number;
   kind: string; // which behaviour + sprite (see sim/classes/registry.ts)
-  x: number;
+  shape: 'circle' | 'segment'; // a round structure, or a line (like a mirror)
+  x: number; // centre
   y: number;
+  x1: number; // segment shapes: the two end points (unused for circles)
+  y1: number;
+  x2: number;
+  y2: number;
   angle: number;
-  radius: number; // collision circle
+  radius: number; // circle: its radius. segment: half its thickness
+  reflective: boolean; // bounces projectiles instead of stopping them (mirrors)
+  breakT: number; // seconds until it breaks by itself (-1 = never)
   hp: number;
   maxHp: number;
   age: number; // seconds since placed

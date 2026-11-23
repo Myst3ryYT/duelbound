@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Sound effects. Each sound in config/assets.ts plays public/sfx/<file> if it
  * exists, otherwise a simple generated placeholder beep (defined below).
  */
@@ -30,6 +30,16 @@ const BEEPS: Record<SoundId, { wave: OscillatorType; from: number; to: number; d
   pierce_fire: { wave: 'sawtooth', from: 1400, to: 80, dur: 0.25, vol: 0.45 },
   roll: { wave: 'triangle', from: 220, to: 160, dur: 0.15, vol: 0.25 },
   dummy_fire: { wave: 'square', from: 500, to: 300, dur: 0.06, vol: 0.15 },
+  reload_start: { wave: 'square', from: 300, to: 200, dur: 0.08, vol: 0.2 },
+  reload_done: { wave: 'square', from: 600, to: 900, dur: 0.08, vol: 0.25 },
+  shotgun_fire: { wave: 'sawtooth', from: 700, to: 200, dur: 0.12, vol: 0.3 },
+  ray_start: { wave: 'sine', from: 500, to: 1100, dur: 0.15, vol: 0.25 },
+  mirror_place: { wave: 'triangle', from: 1200, to: 1800, dur: 0.12, vol: 0.25 },
+  mirror_bounce: { wave: 'triangle', from: 1800, to: 2400, dur: 0.04, vol: 0.15 },
+  mirror_split: { wave: 'triangle', from: 2000, to: 1000, dur: 0.1, vol: 0.25 },
+  mirror_break: { wave: 'sawtooth', from: 2200, to: 300, dur: 0.25, vol: 0.3 },
+  refract: { wave: 'sine', from: 900, to: 450, dur: 0.2, vol: 0.3 },
+  shatter: { wave: 'sawtooth', from: 2500, to: 150, dur: 0.45, vol: 0.45 },
 };
 
 /** Play a sound by name if it exists (the simulation reports sounds by name). */

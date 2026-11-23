@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================================================
  *  REBOUND - ASSET MAP (art and sounds)
  * ============================================================================
@@ -45,6 +45,11 @@ export const SPRITES = {
   sheriff_bramble: { file: 'sheriff_bramble.png', size: 0 }, // tumbleweed (drawn at its hitbox size)
   sheriff_pierce: { file: 'sheriff_pierce.png', size: 0 }, // piercing bullet
 
+  // ---- Refractor ----
+  class_refractor: { file: 'refractor.png', size: 64 }, // the Refractor
+  refractor_pellet: { file: 'refractor_pellet.png', size: 0 }, // shotgun pellet
+  refractor_mirror: { file: 'refractor_mirror.png', size: 0 }, // mirror (stretched along its length; draw it lying flat, left to right)
+
   // ---- Training ----
   dummy_shot: { file: 'dummy_shot.png', size: 0 }, // what the dummy shoots
 
@@ -59,6 +64,11 @@ export const SPRITES = {
   icon_sheriff_bramble: { file: 'icon_sheriff_bramble.png', size: 64 },
   icon_sheriff_pierce: { file: 'icon_sheriff_pierce.png', size: 64 },
   icon_sheriff_roll: { file: 'icon_sheriff_roll.png', size: 64 },
+  icon_refractor_shotgun: { file: 'icon_refractor_shotgun.png', size: 64 },
+  icon_refractor_ray: { file: 'icon_refractor_ray.png', size: 64 },
+  icon_refractor_mirror: { file: 'icon_refractor_mirror.png', size: 64 },
+  icon_refractor_refract: { file: 'icon_refractor_refract.png', size: 64 },
+  icon_refractor_shatter: { file: 'icon_refractor_shatter.png', size: 64 },
 };
 
 export const SOUNDS = {
@@ -85,6 +95,16 @@ export const SOUNDS = {
   pierce_fire: { file: 'pierce_fire.wav' }, // Sheriff V fired
   roll: { file: 'roll.wav' }, // Sheriff SPACE
   dummy_fire: { file: 'dummy_fire.wav' }, // training dummy shoots
+  reload_start: { file: 'reload_start.wav' }, // Sheriff revolver empty, reloading
+  reload_done: { file: 'reload_done.wav' }, // Sheriff revolver reloaded
+  shotgun_fire: { file: 'shotgun_fire.wav' }, // Refractor LC
+  ray_start: { file: 'ray_start.wav' }, // Refractor RC beam starts
+  mirror_place: { file: 'mirror_place.wav' }, // Refractor C placed
+  mirror_bounce: { file: 'mirror_bounce.wav' }, // a shot bounced off a mirror
+  mirror_split: { file: 'mirror_split.wav' }, // a pellet doubled off a mirror
+  mirror_break: { file: 'mirror_break.wav' }, // a mirror broke
+  refract: { file: 'refract.wav' }, // Refractor V
+  shatter: { file: 'shatter.wav' }, // Refractor SPACE
 };
 
 export type SpriteId = keyof typeof SPRITES;

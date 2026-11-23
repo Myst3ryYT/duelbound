@@ -1,4 +1,4 @@
-/**
+﻿/**
  * The World: creating it, and advancing it one tick at a time.
  *
  * World coordinates: (0, 0) is the top-left corner of the arena and
@@ -33,6 +33,8 @@ function newFighter(world: World, props: Partial<Fighter> & Pick<Fighter, 'kind'
     prevButtons: perAction(false),
     cooldowns: perAction(0),
     cooldownTotals: perAction(0),
+    charges: perAction(0),
+    chargeMax: perAction(0),
     placing: null,
     rootedT: 0,
     stunT: 0,

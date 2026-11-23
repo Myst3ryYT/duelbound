@@ -10,6 +10,9 @@ import type { Tuning } from '../config/tuning.ts';
 import type { Fighter, GameEvent, PhysObject, Placeable, Projectile, World } from '../sim/types.ts';
 import type { PlacementPreview } from '../sim/abilities.ts';
 import { getClass } from '../sim/classes/registry.ts';
+import { tracePath } from '../sim/trace.ts';
+import { traceRay } from '../sim/classes/refractor/ray.ts';
+import { hitPoints } from '../sim/hitbox.ts';
 import { findSprite, getSprite, type Sprite } from './sprites.ts';
 import { SCREEN_H, SCREEN_W, View } from './view.ts';
 import { drawHud, type HudInfo } from './hud.ts';
@@ -152,7 +155,7 @@ export class Renderer {
       const fp = fighterPos.get(f.id)!;
       // The local player faces the crosshair every frame, not just every tick.
       const angle = f.id === local.playerId && local.aim ? Math.atan2(local.aim.y - fp.y, local.aim.x - fp.x) : f.aimAngle;
-      this.drawFighter(f, fp.x, fp.y, angle, tuning);
+      this.drawFighter(world, f, fp.x, fp.y, angle, tuning);
     }
     this.updateTrails(world);
     this.drawTrails();
@@ -199,7 +202,7 @@ export class Renderer {
     }
   }
 
-  private drawFighter(f: Fighter, x: number, y: number, angle: number, tuning: Tuning): void {
+  private drawFighter(world: World, f: Fighter, x: number, y: number, angle: number, tuning: Tuning): void {
     const { ctx } = this;
     // Soft shadow
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
@@ -207,17 +210,56 @@ export class Renderer {
     ctx.ellipse(x, y + f.radius * 0.7, f.radius * 0.9, f.radius * 0.4, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Sheriff piercing bullet: a red aiming line during the delay.
+    // Sheriff piercing bullet: show the predicted path, bounces included, during the delay.
     if (f.vars.pierceT > 0) {
+      const pc = tuning.sheriff.pierce;
+      const start = f.radius + pc.size + 4;
+      const path = tracePath(world, tuning, x + Math.cos(angle) * start, y + Math.sin(angle) * start, angle, {
+        ownerId: f.id,
+        length: pc.previewLength,
+        radius: pc.size * tuning.projectiles.hitboxScale,
+        bounces: pc.bounces,
+        wallsBounce: true,
+        maxMirrors: 20,
+      });
       const pulse = 0.5 + 0.5 * Math.sin(this.clock * 40);
       ctx.strokeStyle = `rgba(255,80,60,${0.35 + 0.4 * pulse})`;
       ctx.lineWidth = 3;
       ctx.setLineDash([14, 10]);
       ctx.beginPath();
-      ctx.moveTo(x + Math.cos(angle) * f.radius, y + Math.sin(angle) * f.radius);
-      ctx.lineTo(x + Math.cos(angle) * 420, y + Math.sin(angle) * 420);
+      path.points.forEach((pt, i) => (i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)));
       ctx.stroke();
       ctx.setLineDash([]);
+      for (const pt of path.points.slice(1, -1)) {
+        ctx.fillStyle = 'rgba(255,120,90,0.9)';
+        ctx.fillRect(pt.x - 4, pt.y - 4, 8, 8); // bounce points
+      }
+    }
+
+    // Refractor Mind Ray: the beam, getting thicker after every mirror.
+    if (f.vars.rayOn) {
+      const beam = traceRay(world, tuning, f, angle);
+      const base = tuning.refractor.ray.width;
+      const flicker = 1 + 0.15 * Math.sin(this.clock * 50);
+      ctx.lineCap = 'round';
+      for (let i = 1; i < beam.points.length; i++) {
+        const a = beam.points[i - 1];
+        const b = beam.points[i];
+        const w = base * (1 + 0.8 * (i - 1)) * flicker;
+        for (const [color, width] of [
+          ['rgba(197,140,255,0.35)', w * 2.6],
+          ['#c58cff', w],
+          ['#ffffff', w * 0.35],
+        ] as const) {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = width;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+      }
+      ctx.lineCap = 'butt';
     }
 
     // Mage teleport: show the landing marker, and shrink while casting.
@@ -235,7 +277,19 @@ export class Renderer {
 
     const spriteName = f.kind === 'dummy' ? 'dummy' : (getClass(f.classId)?.sprite ?? 'fighter_default');
     const sprite = findSprite(spriteName) ?? getSprite('fighter_default');
-    this.drawSprite(sprite, x, y, f.kind === 'dummy' ? 0 : angle + spin, alpha);
+    if (f.vars.refractT > 0) {
+      // Refract: a red half and a blue half, side by side (both can be hit).
+      const halves = hitPoints({ ...f, x, y });
+      halves.forEach((h, i) => {
+        this.drawSprite(sprite, h.x, h.y, angle, 0.8 * alpha);
+        ctx.fillStyle = i === 0 ? 'rgba(255,60,80,0.35)' : 'rgba(60,140,255,0.35)';
+        ctx.beginPath();
+        ctx.arc(h.x, h.y, f.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    } else {
+      this.drawSprite(sprite, x, y, f.kind === 'dummy' ? 0 : angle + spin, alpha);
+    }
 
     // Mage staff charging: a growing orb at the staff tip.
     if (f.vars.staffCharging) {
@@ -361,9 +415,42 @@ export class Renderer {
     ctx.lineCap = 'butt';
   }
 
+  /** Draw a sprite stretched along a line from (x1, y1) to (x2, y2). */
+  private drawStretched(s: Sprite, x1: number, y1: number, x2: number, y2: number, thickness: number, alpha = 1): void {
+    const { ctx } = this;
+    const len = Math.hypot(x2 - x1, y2 - y1);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate((x1 + x2) / 2, (y1 + y2) / 2);
+    ctx.rotate(Math.atan2(y2 - y1, x2 - x1));
+    ctx.drawImage(s.image, -len / 2, -thickness / 2, len, thickness);
+    ctx.restore();
+  }
+
   private drawPlaceable(p: Placeable, tuning: Tuning): void {
     const { ctx } = this;
     const sprite = findSprite(p.kind);
+    if (p.shape === 'segment') {
+      // Mirrors: flash white just before breaking.
+      const flash = p.breakT >= 0 ? 0.5 + 0.5 * Math.sin(this.clock * 60) : 0;
+      if (sprite) this.drawStretched(sprite, p.x1, p.y1, p.x2, p.y2, p.radius * 2 * 1.4);
+      if (flash) {
+        ctx.strokeStyle = `rgba(255,255,255,${flash})`;
+        ctx.lineWidth = p.radius * 2;
+        ctx.beginPath();
+        ctx.moveTo(p.x1, p.y1);
+        ctx.lineTo(p.x2, p.y2);
+        ctx.stroke();
+      }
+      if (p.hp < p.maxHp) {
+        const w = 50;
+        ctx.fillStyle = '#000';
+        ctx.fillRect(p.x - w / 2 - 2, p.y - 22, w + 4, 8);
+        ctx.fillStyle = '#e05050';
+        ctx.fillRect(p.x - w / 2, p.y - 20, w * Math.max(0, p.hp / p.maxHp), 4);
+      }
+      return;
+    }
     // Watchtower build-up: fades in while building, with a progress ring.
     let alpha = 1;
     let progress = 1;
@@ -393,6 +480,29 @@ export class Renderer {
   private drawPreview(pv: PlacementPreview): void {
     const { ctx } = this;
     const sprite = findSprite(pv.sprite);
+    const color = pv.valid ? 'rgba(80,230,120,0.9)' : 'rgba(240,70,70,0.9)';
+    if (pv.x2 !== undefined && pv.y2 !== undefined) {
+      // A line structure (mirror) being dragged out.
+      if (sprite) this.drawStretched(sprite, pv.x, pv.y, pv.x2, pv.y2, pv.radius * 2 * 1.4, 0.5);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      ctx.moveTo(pv.x, pv.y);
+      ctx.lineTo(pv.x2, pv.y2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      return;
+    }
+    if (!sprite) {
+      // Just a start-point marker.
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(pv.x, pv.y, 10, 0, Math.PI * 2);
+      ctx.stroke();
+      return;
+    }
     if (sprite) this.drawSprite(sprite, pv.x, pv.y, pv.angle, 0.45);
     ctx.strokeStyle = pv.valid ? 'rgba(80,230,120,0.9)' : 'rgba(240,70,70,0.9)';
     ctx.lineWidth = 3;
@@ -406,7 +516,25 @@ export class Renderer {
   /** Small bar under the crosshair for the local player's class (charge, resource...). */
   private drawCrosshairBar(world: World, tuning: Tuning, local: LocalView, at: { x: number; y: number }, alpha: number): void {
     const me = world.fighters.find((f) => f.id === local.playerId);
-    const bar = me ? getClass(me.classId)?.crosshairBar?.(me, tuning) : null;
+    const cls = me ? getClass(me.classId) : undefined;
+
+    // Ammo pips (Sheriff revolver), just under the crosshair.
+    const ammo = me && cls?.ammo?.(me, tuning);
+    if (ammo) {
+      const size = 7;
+      const gap = 4;
+      const total = ammo.max * size + (ammo.max - 1) * gap;
+      for (let i = 0; i < ammo.max; i++) {
+        const px = at.x - total / 2 + i * (size + gap);
+        const py = at.y + 40;
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(px - 1, py - 1, size + 2, size + 2);
+        this.ctx.fillStyle = ammo.reloading ? '#555a66' : i < ammo.current ? '#e0b030' : '#2a2c36';
+        this.ctx.fillRect(px, py, size, size);
+      }
+    }
+
+    const bar = me ? cls?.crosshairBar?.(me, tuning) : null;
     if (!bar) return;
     // Grow the bar smoothly between ticks.
     const fill = Math.max(0, Math.min(1, bar.fill + (bar.rate ?? 0) * (alpha / tuning.world.tickRate)));

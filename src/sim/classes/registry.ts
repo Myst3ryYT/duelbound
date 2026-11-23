@@ -1,14 +1,16 @@
-/**
+﻿/**
  * The list of playable classes. To add a class: make a folder like ./mage/,
  * then add it to CLASSES below.
  */
 import type { ClassDef, ObjectKindDef, PlaceableKindDef, ProjectileHook } from '../abilities.ts';
 import { MAGE } from './mage/index.ts';
 import { SHERIFF } from './sheriff/index.ts';
+import { REFRACTOR } from './refractor/index.ts';
 
 export const CLASSES: Record<string, ClassDef> = {
   mage: MAGE,
   sheriff: SHERIFF,
+  refractor: REFRACTOR,
 };
 
 /** Class ids in menu order. */

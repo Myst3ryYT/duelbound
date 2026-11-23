@@ -342,6 +342,77 @@ function iconRoll(): HTMLCanvasElement {
   return p.canvas;
 }
 
+// ------------------------------------------------------------- REFRACTOR ----
+const GLASS = 'rgba(190,235,255,0.85)';
+const GLASS_DARK = '#4a8fb8';
+const MAGENTA = '#e05ad0';
+const CYAN = '#5ae0e8';
+
+function refractor(): HTMLCanvasElement {
+  const p = new Pixels(20, 20);
+  p.disc(10, 10, 8, OUTLINE);
+  p.disc(10, 10, 7, GLASS_DARK); // shoulders
+  p.disc(10, 10, 5.5, GLASS); // glassy head
+  for (let i = 0; i < 4; i++) p.line(6 + i, 6 + i * 2, 10 + i, 5 + i * 2, 'rgba(255,255,255,0.6)'); // facets
+  p.rect(13, 8, 3, 1, MAGENTA); // prism "eyes" looking right
+  p.rect(13, 11, 3, 1, CYAN);
+  p.px(10, 4, '#ffffff');
+  return p.canvas;
+}
+
+function refractorPellet(): HTMLCanvasElement {
+  const p = new Pixels(8, 8);
+  p.disc(4, 4, 4, 'rgba(197,140,255,0.5)');
+  p.disc(4, 4, 2.6, '#c58cff');
+  p.disc(4, 4, 1.2, '#ffffff');
+  return p.canvas;
+}
+
+function refractorMirror(): HTMLCanvasElement {
+  // Lying flat, left to right; stretched along the mirror's length in game.
+  const p = new Pixels(32, 4);
+  p.rect(0, 0, 32, 4, OUTLINE);
+  p.rect(0, 1, 32, 2, GLASS);
+  for (let x = 2; x < 32; x += 7) p.px(x, 1, '#ffffff');
+  return p.canvas;
+}
+
+function iconShotgun(): HTMLCanvasElement {
+  const p = iconBase('#2a2440');
+  p.disc(4, 8, 2, GLASS);
+  for (const dy of [-3, -1, 1, 3]) p.line(6, 8, 13, 8 + dy, '#c58cff');
+  return p.canvas;
+}
+function iconRay(): HTMLCanvasElement {
+  const p = iconBase('#2a2440');
+  p.line(2, 13, 8, 4, '#c58cff');
+  p.line(8, 4, 14, 12, '#e8c8ff');
+  p.rect(7, 3, 3, 1, GLASS); // mirror at the bounce
+  return p.canvas;
+}
+function iconMirror(): HTMLCanvasElement {
+  const p = iconBase('#2a2440');
+  p.line(3, 12, 12, 3, GLASS);
+  p.line(4, 12, 13, 3, GLASS_DARK);
+  p.px(7, 8, '#fff');
+  return p.canvas;
+}
+function iconRefract(): HTMLCanvasElement {
+  const p = iconBase('#2a2440');
+  p.disc(5.5, 8, 3, 'rgba(224,90,208,0.9)');
+  p.disc(10.5, 8, 3, 'rgba(90,224,232,0.9)');
+  return p.canvas;
+}
+function iconShatter(): HTMLCanvasElement {
+  const p = iconBase('#2a2440');
+  p.line(8, 8, 3, 3, GLASS);
+  p.line(8, 8, 13, 4, GLASS);
+  p.line(8, 8, 12, 13, GLASS);
+  p.line(8, 8, 3, 12, GLASS);
+  p.px(8, 8, '#fff');
+  return p.canvas;
+}
+
 /** One placeholder per sprite id. Adding a sprite? Add its painter here too. */
 export const PLACEHOLDERS: Record<SpriteId, () => HTMLCanvasElement> = {
   fighter_default: fighterDefault,
@@ -371,4 +442,12 @@ export const PLACEHOLDERS: Record<SpriteId, () => HTMLCanvasElement> = {
   icon_sheriff_bramble: iconBramble,
   icon_sheriff_pierce: iconPierce,
   icon_sheriff_roll: iconRoll,
+  class_refractor: refractor,
+  refractor_pellet: refractorPellet,
+  refractor_mirror: refractorMirror,
+  icon_refractor_shotgun: iconShotgun,
+  icon_refractor_ray: iconRay,
+  icon_refractor_mirror: iconMirror,
+  icon_refractor_refract: iconRefract,
+  icon_refractor_shatter: iconShatter,
 };
