@@ -10,7 +10,22 @@ const BEEPS: Record<SoundId, { wave: OscillatorType; from: number; to: number; d
   hit: { wave: 'square', from: 320, to: 90, dur: 0.09, vol: 0.35 },
   reset: { wave: 'triangle', from: 440, to: 880, dur: 0.15, vol: 0.4 },
   ui_click: { wave: 'square', from: 700, to: 700, dur: 0.04, vol: 0.2 },
+  structure_destroyed: { wave: 'sawtooth', from: 200, to: 40, dur: 0.3, vol: 0.35 },
+  fizzle: { wave: 'sawtooth', from: 150, to: 100, dur: 0.15, vol: 0.25 },
+  reflect: { wave: 'triangle', from: 900, to: 1400, dur: 0.08, vol: 0.35 },
+  staff_fire: { wave: 'triangle', from: 600, to: 300, dur: 0.1, vol: 0.3 },
+  shield_up: { wave: 'sine', from: 300, to: 900, dur: 0.2, vol: 0.4 },
+  tower_build: { wave: 'square', from: 120, to: 240, dur: 0.25, vol: 0.25 },
+  tower_fire: { wave: 'triangle', from: 500, to: 350, dur: 0.07, vol: 0.2 },
+  switch: { wave: 'sine', from: 1000, to: 200, dur: 0.4, vol: 0.4 },
+  teleport_start: { wave: 'sine', from: 400, to: 1200, dur: 0.3, vol: 0.3 },
+  teleport: { wave: 'sine', from: 1200, to: 500, dur: 0.15, vol: 0.35 },
 };
+
+/** Play a sound by name if it exists (the simulation reports sounds by name). */
+export function playSoundByName(name: string): void {
+  if (name in SOUNDS) playSound(name as SoundId);
+}
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;

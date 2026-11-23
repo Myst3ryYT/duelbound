@@ -1,9 +1,9 @@
-# Rebound
+﻿# Rebound
 
 A top-down 1v1 arena fighting game for keyboard and mouse, playable in the browser.
 The full design spec is in [GAME_BRIEF.md](GAME_BRIEF.md).
 
-**Current build: step 1 of 6.** Movement, aiming, the arena, HP bars and the training dummy.
+**Current build: step 2 of 6, part 1 (Mage).** Movement, arena, HP bars, training dummy, and the Mage. Training always uses the Mage until character select arrives in step 4.
 
 ## Running the game
 
@@ -29,6 +29,11 @@ Other commands:
 | Mouse | aim (the crosshair) |
 | R | refill the dummy's HP |
 | T | switch ability cooldowns on / off |
+| Left click | Mage staff: hold to charge, release to fire |
+| Right click | Mage reflective shield |
+| C | Mage watchtower: shows an outline, left click to place, right click or C to cancel |
+| V | Mage switch: every projectile turns around |
+| Space | Mage teleport to the crosshair |
 | ` (the key left of 1) | open the dev panel |
 | Esc | pause menu (volume, mute, leave match) |
 
@@ -80,8 +85,14 @@ Volume and mute are in the pause menu.
 
 ### Abilities and classes
 
-Arrive in build step 2. Each class and each ability will get its own small file,
-so changing an ability means editing one file.
+The numbers for every ability are in `src/config/tuning.ts` (look for the `mage:` group).
+
+How an ability *behaves* is in `src/sim/classes/<class>/`, one file per ability, for example
+`src/sim/classes/mage/staff.ts`. Each file starts with a short description. The class's
+`index.ts` says which ability goes on which key slot.
+
+To add a class later: copy the `mage` folder, rename it, edit the abilities, then add it to
+`src/sim/classes/registry.ts`. Its art goes in `src/config/assets.ts` like everything else.
 
 ### Menus
 
@@ -99,7 +110,7 @@ Arrive in build step 4. For now, the pause menu is `src/ui/pauseMenu.ts`.
 | `src/render/` | Draws the world and HUD on the canvas. Placeholder art is in `placeholders.ts`. |
 | `src/audio/` | Sound effects. |
 | `src/ui/` | HTML menus and the dev panel. |
-| `src/game/` | Glue: runs a session (input → simulation → visuals/sound). |
+| `src/game/` | Glue: runs a session (input â†’ simulation â†’ visuals/sound). |
 | `src/platform/` | Browser-only services (saved settings now; links and PeerJS later). Swap these for a desktop build. |
 | `src/dev/`, `tools/` | Dev-panel helpers and the dev-server hook that saves `tuning.ts`. |
 

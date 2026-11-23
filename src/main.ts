@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Entry point: sets everything up and runs the main loop.
  *
  * The loop runs the simulation at a fixed rate (60 ticks per second by
@@ -31,13 +31,15 @@ const view = new View(canvas);
 const renderer = new Renderer(canvas, view);
 const input = new KeyboardMouseInput(keybinds, canvas, view.clientToScreen);
 
-let session = new TrainingSession(tuning, keybinds, input, renderer);
+// Training uses the Mage until character select exists (build step 4).
+const TRAINING_CLASS = 'mage';
+let session = new TrainingSession(tuning, keybinds, input, renderer, TRAINING_CLASS);
 
 const pauseMenu = new PauseMenu(uiRoot, {
   onResume: () => setPaused(false),
   // No main menu yet (that's build step 4), so leaving restarts training.
   onLeave: () => {
-    session = new TrainingSession(tuning, keybinds, input, renderer);
+    session = new TrainingSession(tuning, keybinds, input, renderer, TRAINING_CLASS);
     setPaused(false);
   },
 });
@@ -81,7 +83,8 @@ function frame(now: number): void {
     session.prev,
     alpha,
     pauseMenu.isOpen ? 0 : dt,
-    { helpLine: session.helpLine() },
+    session.localView(),
+    session.hud(),
     pauseMenu.isOpen ? null : input.crosshair(),
   );
   requestAnimationFrame(frame);

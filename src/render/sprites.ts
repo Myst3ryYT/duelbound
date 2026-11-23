@@ -31,3 +31,8 @@ export function loadSprites(): void {
 export function getSprite(id: SpriteId): Sprite {
   return sprites.get(id)!;
 }
+
+/** Look up a sprite by a name coming from the simulation (which only knows plain strings). */
+export function findSprite(name: string): Sprite | undefined {
+  return sprites.get(name as SpriteId);
+}

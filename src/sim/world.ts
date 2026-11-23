@@ -5,8 +5,14 @@
  * (arenaSize, arenaSize) is the bottom-right corner.
  */
 import type { Tuning } from '../config/tuning.ts';
-import { ACTIONS, emptyInput, type Fighter, type PlayerInput, type World } from './types.ts';
+import { ACTIONS, perAction, type Fighter, type PlayerInput, type World } from './types.ts';
 import { clampToArena, moveFighter, separateFighters, updateAim } from './movement.ts';
+import { runAbilities } from './abilities.ts';
+import { updateProjectiles } from './projectiles.ts';
+import { collideFightersWithPlaceables, updatePlaceables } from './placeables.ts';
+import { getClass } from './classes/registry.ts';
+
+export { applyDamage, resetHp } from './damage.ts';
 
 function newFighter(world: World, props: Partial<Fighter> & Pick<Fighter, 'kind' | 'side' | 'x' | 'y'>): Fighter {
   const f: Fighter = {
@@ -21,7 +27,14 @@ function newFighter(world: World, props: Partial<Fighter> & Pick<Fighter, 'kind'
     hp: 1000,
     maxHp: 1000,
     radius: 22,
-    prevButtons: { ...emptyInput().buttons },
+    prevButtons: perAction(false),
+    cooldowns: perAction(0),
+    cooldownTotals: perAction(0),
+    placing: null,
+    rootedT: 0,
+    shieldT: 0,
+    shieldRadius: 0,
+    vars: {},
     ...props,
   };
   world.fighters.push(f);
@@ -29,12 +42,14 @@ function newFighter(world: World, props: Partial<Fighter> & Pick<Fighter, 'kind'
 }
 
 /** Build a fresh training world: one player on the left, the dummy on the right. */
-export function createTrainingWorld(tuning: Tuning): World {
+export function createTrainingWorld(tuning: Tuning, classId: string): World {
   const world: World = {
     mode: 'training',
     tick: 0,
     time: 0,
     fighters: [],
+    projectiles: [],
+    placeables: [],
     events: [],
     nextId: 1,
     options: { cooldownsDisabled: false },
@@ -44,6 +59,7 @@ export function createTrainingWorld(tuning: Tuning): World {
   newFighter(world, {
     kind: 'player',
     side: 0,
+    classId,
     name: 'You',
     x: c - d,
     y: c,
@@ -77,33 +93,31 @@ export function stepWorld(world: World, inputs: Map<number, PlayerInput>, tuning
   world.events.length = 0;
 
   for (const f of world.fighters) {
+    f.shieldT = Math.max(0, f.shieldT - dt);
+    f.rootedT = Math.max(0, f.rootedT - dt);
     const input = inputs.get(f.id);
     if (!input || f.kind === 'dummy') continue;
+
     updateAim(f, input);
-    moveFighter(f, input, tuning, dt);
-    // Abilities will read input.buttons vs f.prevButtons here (step 2).
+    if (f.rootedT > 0) {
+      f.vx = 0;
+      f.vy = 0;
+    } else moveFighter(f, input, tuning, dt);
+
+    const cls = getClass(f.classId);
+    if (cls) runAbilities(world, tuning, f, input, cls, dt);
     for (const a of ACTIONS) f.prevButtons[a] = input.buttons[a];
   }
 
+  updateProjectiles(world, tuning, dt);
+  updatePlaceables(world, tuning, dt);
+
   separateFighters(world.fighters);
+  collideFightersWithPlaceables(world);
   for (const f of world.fighters) clampToArena(f, tuning.world.arenaSize);
 
   world.tick++;
   world.time += dt;
-}
-
-/** Deal damage to a fighter. Only the simulation (the host, when online) calls this. */
-export function applyDamage(world: World, target: Fighter, amount: number, sourceId: number): void {
-  if (amount <= 0 || target.hp <= 0) return;
-  const dealt = Math.min(target.hp, amount);
-  target.hp -= dealt;
-  world.events.push({ type: 'damage', targetId: target.id, sourceId, amount: dealt, x: target.x, y: target.y });
-}
-
-/** Refill a fighter's HP (training dummy reset, dev tools). */
-export function resetHp(world: World, target: Fighter): void {
-  target.hp = target.maxHp;
-  world.events.push({ type: 'hpReset', targetId: target.id });
 }
 
 export function findFighter(world: World, id: number): Fighter | undefined {

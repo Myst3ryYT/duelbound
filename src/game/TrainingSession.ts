@@ -6,14 +6,16 @@ import type { Tuning } from '../config/tuning.ts';
 import type { Keybinds } from '../config/keybinds.ts';
 import type { InputSource } from '../input/InputSource.ts';
 import { keyLabel } from '../input/keyLabels.ts';
-import type { Fighter, PlayerInput, World } from '../sim/types.ts';
+import { ACTIONS, type Fighter, type PlayerInput, type World } from '../sim/types.ts';
 import { applyDamage, createTrainingWorld, resetHp, stepWorld } from '../sim/world.ts';
-import type { Renderer } from '../render/Renderer.ts';
-import { playSound } from '../audio/sfx.ts';
+import { getClass } from '../sim/classes/registry.ts';
+import type { LocalView, Renderer } from '../render/Renderer.ts';
+import type { HudInfo } from '../render/hud.ts';
+import { playSound, playSoundByName } from '../audio/sfx.ts';
 
 export class TrainingSession {
   world: World;
-  /** Fighter positions from the previous tick, for smooth drawing between ticks. */
+  /** Positions from the previous tick (fighters and projectiles), for smooth drawing between ticks. */
   prev = new Map<number, { x: number; y: number }>();
 
   constructor(
@@ -21,8 +23,9 @@ export class TrainingSession {
     private keybinds: Keybinds,
     private input: InputSource,
     private renderer: Renderer,
+    classId: string,
   ) {
-    this.world = createTrainingWorld(tuning);
+    this.world = createTrainingWorld(tuning, classId);
     this.renderer.reset();
   }
 
@@ -41,6 +44,7 @@ export class TrainingSession {
 
     this.prev.clear();
     for (const f of this.world.fighters) this.prev.set(f.id, { x: f.x, y: f.y });
+    for (const p of this.world.projectiles) this.prev.set(p.id, { x: p.x, y: p.y });
 
     stepWorld(this.world, inputs, this.tuning);
     this.flushEvents();
@@ -53,15 +57,44 @@ export class TrainingSession {
       this.flushEvents();
     }
     if (this.input.consumeMenu('toggleCooldowns')) {
-      this.world.options.cooldownsDisabled = !this.world.options.cooldownsDisabled;
+      const off = !this.world.options.cooldownsDisabled;
+      this.world.options.cooldownsDisabled = off;
+      if (off) for (const a of ACTIONS) this.player.cooldowns[a] = 0;
       playSound('ui_click');
     }
   }
 
-  helpLine(): string {
+  /** What the renderer needs to know about the local player. */
+  localView(): LocalView {
+    const me = this.player;
+    const def = me.placing ? getClass(me.classId)?.abilities[me.placing] : undefined;
+    return { playerId: me.id, preview: def?.preview?.(this.world, this.tuning, me) ?? null };
+  }
+
+  hud(): HudInfo {
+    const me = this.player;
     const k = (name: keyof Keybinds) => keyLabel(this.keybinds[name][0]);
     const cd = this.world.options.cooldownsDisabled ? 'OFF' : 'ON';
-    return `TRAINING   ${k('resetDummy')}: reset dummy   ${k('toggleCooldowns')}: cooldowns ${cd}   ${k('devPanel')}: dev panel   ${k('pause')}: pause`;
+    const cls = getClass(me.classId);
+    return {
+      helpLines: [
+        `TRAINING - ${cls?.name ?? 'no class'}`,
+        `${k('resetDummy')}  reset dummy HP`,
+        `${k('toggleCooldowns')}  cooldowns ${cd}`,
+        `${k('devPanel')}  dev panel`,
+        `${k('pause')}  pause`,
+      ],
+      abilities: cls
+        ? ACTIONS.map((slot) => ({
+            icon: cls.abilities[slot].icon,
+            name: cls.abilities[slot].name,
+            key: keyLabel(this.keybinds[slot][0]),
+            cooldown: me.cooldowns[slot],
+            total: me.cooldownTotals[slot],
+            active: me.placing === slot,
+          }))
+        : [],
+    };
   }
 
   // ---- Dev panel test buttons ----
@@ -84,6 +117,7 @@ export class TrainingSession {
       this.renderer.onEvent(e, this.world);
       if (e.type === 'damage') playSound('hit');
       if (e.type === 'hpReset') playSound('reset');
+      if (e.type === 'sound') playSoundByName(e.sound);
     }
     this.world.events.length = 0;
   }

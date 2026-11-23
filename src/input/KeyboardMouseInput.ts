@@ -28,7 +28,9 @@ export class KeyboardMouseInput implements InputSource {
     private toScreen: (clientX: number, clientY: number) => { x: number; y: number },
   ) {
     window.addEventListener('keydown', (e) => {
-      if (isTypingTarget(e.target)) return; // typing in a dev panel box shouldn't move the player
+      // Typing a number in a dev panel box shouldn't move the player,
+      // but menu keys (pause, dev panel) always work.
+      if (isTypingTarget(e.target) && !this.isMenuKey(e.code)) return;
       if (this.isBound(e.code)) e.preventDefault(); // e.g. stop Space from scrolling the page
       if (e.repeat) return;
       this.press(e.code);
@@ -36,6 +38,8 @@ export class KeyboardMouseInput implements InputSource {
     window.addEventListener('keyup', (e) => this.held.delete(e.code));
     surface.addEventListener('mousedown', (e) => {
       e.preventDefault();
+      // Clicking the game takes keyboard focus back from any menu slider or box.
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       this.press('Mouse' + e.button);
     });
     window.addEventListener('mouseup', (e) => this.held.delete('Mouse' + e.button));
@@ -51,6 +55,10 @@ export class KeyboardMouseInput implements InputSource {
     this.held.add(code);
     this.tapped.add(code);
     for (const m of MENU_ACTIONS) if (this.keybinds[m].includes(code)) this.menuPresses.add(m);
+  }
+
+  private isMenuKey(code: string): boolean {
+    return MENU_ACTIONS.some((m) => this.keybinds[m].includes(code));
   }
 
   private isBound(code: string): boolean {
@@ -98,6 +106,8 @@ export class KeyboardMouseInput implements InputSource {
   }
 }
 
+/** Text and number boxes need the keyboard; sliders, checkboxes and buttons don't. */
 function isTypingTarget(t: EventTarget | null): boolean {
-  return t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement;
+  if (t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement) return true;
+  return t instanceof HTMLInputElement && (t.type === 'text' || t.type === 'number');
 }

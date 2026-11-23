@@ -1,13 +1,26 @@
 /**
- * The HUD: HP bars across the top, and the training help line at the bottom.
- * Everything here is in 1920x1080 screen units.
+ * The HUD: HP bars across the top, ability icons with cooldowns, and help text.
+ * Everything here is in 1920x1080 screen units. The arena fills the middle,
+ * so the ability bar and help text sit in the empty space on the left.
  */
 import type { Fighter, World } from '../sim/types.ts';
+import { findSprite } from './sprites.ts';
 import { SCREEN_H, SCREEN_W } from './view.ts';
 
-/** Extra text the game screen wants shown. */
+/** One ability slot on the HUD. */
+export interface HudAbility {
+  icon: string; // sprite id
+  name: string;
+  key: string; // key label, e.g. "C"
+  cooldown: number; // seconds left
+  total: number; // full cooldown length
+  active: boolean; // highlighted (e.g. currently placing it)
+}
+
+/** Extra things the game screen wants shown. */
 export interface HudInfo {
-  helpLine: string; // shown under the arena
+  helpLines: string[]; // shown bottom-left, above the ability bar
+  abilities: HudAbility[];
 }
 
 const BAR_W = 780;
@@ -15,14 +28,67 @@ const BAR_H = 30;
 const BAR_Y = 14;
 const BAR_MARGIN = 60;
 
+const ICON = 64;
+const ICON_GAP = 12;
+const ICONS_X = 26;
+const ICONS_Y = SCREEN_H - ICON - 44;
+
 export function drawHud(ctx: CanvasRenderingContext2D, world: World, info: HudInfo, trailHpOf: (id: number) => number): void {
   for (const f of world.fighters) drawHpBar(ctx, f, trailHpOf(f.id));
+  drawAbilityBar(ctx, info.abilities);
 
-  ctx.font = '20px monospace';
-  ctx.textAlign = 'center';
+  ctx.font = '18px monospace';
+  ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#8a8fa3';
-  ctx.fillText(info.helpLine, SCREEN_W / 2, SCREEN_H - 30);
+  info.helpLines.forEach((line, i) => {
+    ctx.fillText(line, ICONS_X, ICONS_Y - 30 - (info.helpLines.length - 1 - i) * 26);
+  });
+}
+
+function drawAbilityBar(ctx: CanvasRenderingContext2D, abilities: HudAbility[]): void {
+  abilities.forEach((a, i) => {
+    const x = ICONS_X + i * (ICON + ICON_GAP);
+    const y = ICONS_Y;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x - 3, y - 3, ICON + 6, ICON + 6);
+    const sprite = findSprite(a.icon);
+    if (sprite) ctx.drawImage(sprite.image, x, y, ICON, ICON);
+
+    // Cooldown: a dark "clock hand" sweep plus the seconds left.
+    if (a.cooldown > 0 && a.total > 0) {
+      const frac = Math.min(1, a.cooldown / a.total);
+      ctx.fillStyle = 'rgba(0,0,0,0.65)';
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x, y, ICON, ICON);
+      ctx.clip();
+      ctx.beginPath();
+      ctx.moveTo(x + ICON / 2, y + ICON / 2);
+      ctx.arc(x + ICON / 2, y + ICON / 2, ICON, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      outlinedText(ctx, a.cooldown >= 1 ? String(Math.ceil(a.cooldown)) : a.cooldown.toFixed(1), x + ICON / 2, y + ICON / 2, 'bold 24px monospace', '#fff', 'center');
+    }
+    if (a.active) {
+      ctx.strokeStyle = '#ffd34d';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(x - 2, y - 2, ICON + 4, ICON + 4);
+    }
+    outlinedText(ctx, a.key, x + ICON / 2, y + ICON + 18, 'bold 16px monospace', '#c9cddb', 'center');
+  });
+}
+
+function outlinedText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, font: string, color: string, align: CanvasTextAlign): void {
+  ctx.font = font;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#000';
+  ctx.strokeText(text, x, y);
+  ctx.fillStyle = color;
+  ctx.fillText(text, x, y);
 }
 
 function drawHpBar(ctx: CanvasRenderingContext2D, f: Fighter, trailHp: number): void {
@@ -49,14 +115,6 @@ function drawHpBar(ctx: CanvasRenderingContext2D, f: Fighter, trailHp: number): 
   ctx.fillRect(x, BAR_Y, BAR_W, 6);
 
   // Name and HP number
-  ctx.font = 'bold 20px monospace';
-  ctx.textBaseline = 'middle';
-  ctx.lineWidth = 4;
-  ctx.strokeStyle = '#000';
-  ctx.fillStyle = '#fff';
   const label = `${f.name}  ${Math.ceil(f.hp)}`;
-  ctx.textAlign = left ? 'left' : 'right';
-  const tx = left ? x + 10 : x + BAR_W - 10;
-  ctx.strokeText(label, tx, BAR_Y + BAR_H / 2 + 1);
-  ctx.fillText(label, tx, BAR_Y + BAR_H / 2 + 1);
+  outlinedText(ctx, label, left ? x + 10 : x + BAR_W - 10, BAR_Y + BAR_H / 2 + 1, 'bold 20px monospace', '#fff', left ? 'left' : 'right');
 }
