@@ -1,0 +1,18 @@
+{
+  "name": "rebound",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Rebound: a top-down 1v1 arena fighting game for keyboard and mouse.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run typecheck && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.sim.json"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8"
+  }
+}

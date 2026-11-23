@@ -1,0 +1,106 @@
+# Rebound
+
+A top-down 1v1 arena fighting game for keyboard and mouse, playable in the browser.
+The full design spec is in [GAME_BRIEF.md](GAME_BRIEF.md).
+
+**Current build: step 1 of 6.** Movement, aiming, the arena, HP bars and the training dummy.
+
+## Running the game
+
+You need [Node.js](https://nodejs.org) installed (any recent version).
+
+1. Open a terminal in this folder.
+2. The first time only, run `npm install`
+3. Run `npm run dev`
+4. Open the address it prints (normally http://localhost:5173) in your browser.
+
+Leave `npm run dev` running while you play. Any file you save is picked up straight away.
+
+Other commands:
+
+- `npm run build` checks the code and builds the finished site into `dist/`
+- `npm run typecheck` only checks the code for mistakes
+
+## Controls (training)
+
+| Key | Does |
+| --- | --- |
+| W A S D | move |
+| Mouse | aim (the crosshair) |
+| R | refill the dummy's HP |
+| T | switch ability cooldowns on / off |
+| ` (the key left of 1) | open the dev panel |
+| Esc | pause menu (volume, mute, leave match) |
+
+---
+
+## Where to change things (no programming needed)
+
+All the files you would normally touch are in **`src/config/`**. Save the file
+while the game is running and the change shows up immediately.
+
+### Numbers: damage, speed, cooldowns, HP, ranges, durations
+
+**File: `src/config/tuning.ts`**
+
+Every number in the game is here, grouped by topic, with a comment on each
+line saying what it does. Change the number, save, done.
+
+Keep the layout the same: one value per line, like `moveSpeed: 420, // ...`.
+
+**Or tweak them while playing:** press ` to open the **dev panel**. Every number
+has a slider and a box. Changes apply instantly. Values you changed turn yellow.
+
+- **Save to tuning.ts** writes the current values into the file for you (only works with `npm run dev`).
+- **Revert to file** throws away slider changes.
+- **Damage dummy / Damage me / Heal all** are test buttons.
+
+### Keys
+
+**File: `src/config/keybinds.ts`**
+
+Each action lists the key(s) for it. Key names are explained at the top of the file
+(for example `KeyC`, `Space`, `Mouse0` for left click).
+
+### Art
+
+**File: `src/config/assets.ts`** lists every sprite and its file name.
+
+To use your own art, put a PNG with that file name into **`public/art/`**
+(create the folder if it isn't there). For example `public/art/dummy.png`
+replaces the training dummy. No code changes needed. Remove the file to go back
+to the built-in placeholder. Characters should face **right** in the image.
+The `size` number in `assets.ts` sets how big it appears in the game.
+
+### Sounds
+
+Same idea: the sound list is also in **`src/config/assets.ts`**. Put a `.wav`
+with the listed file name into **`public/sfx/`** to replace a placeholder beep.
+Volume and mute are in the pause menu.
+
+### Abilities and classes
+
+Arrive in build step 2. Each class and each ability will get its own small file,
+so changing an ability means editing one file.
+
+### Menus
+
+Arrive in build step 4. For now, the pause menu is `src/ui/pauseMenu.ts`.
+
+---
+
+## How the code is organised (for programmers)
+
+| Folder | What's in it |
+| --- | --- |
+| `src/config/` | Tuning numbers, keybinds, asset list. The things you tweak. |
+| `src/sim/` | The game rules. No drawing, sound or browser code (checked by `npm run typecheck`), so it can later run headless on a server or in a desktop build. |
+| `src/input/` | Turns keyboard and mouse into a `PlayerInput` each tick. A controller would be another input source. |
+| `src/render/` | Draws the world and HUD on the canvas. Placeholder art is in `placeholders.ts`. |
+| `src/audio/` | Sound effects. |
+| `src/ui/` | HTML menus and the dev panel. |
+| `src/game/` | Glue: runs a session (input → simulation → visuals/sound). |
+| `src/platform/` | Browser-only services (saved settings now; links and PeerJS later). Swap these for a desktop build. |
+| `src/dev/`, `tools/` | Dev-panel helpers and the dev-server hook that saves `tuning.ts`. |
+
+The simulation runs at a fixed 60 ticks per second, independent of the screen's frame rate.

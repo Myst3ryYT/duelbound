@@ -1,0 +1,21 @@
+{
+  // Guard rail: the simulation (all game rules) and the config files must
+  // never touch the browser. This check compiles them WITHOUT the DOM library,
+  // so any accidental use of window, document, canvas, etc. fails `npm run typecheck`.
+  // That keeps the simulation ready to run headless on a server or in a desktop build.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "types": [],
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/sim", "src/config/tuning.ts"]
+}
