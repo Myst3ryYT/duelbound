@@ -41,22 +41,26 @@ export const TUNING = {
   training: {
     dummyHp: 1000, // health of the training dummy
     dummyRadius: 26, // body size of the training dummy
+    dummyFireInterval: 1, // seconds between dummy shots (when dummy shooting is switched on)
+    dummyShotDamage: 30, // damage of each dummy shot
+    dummyShotSpeed: 600, // speed of each dummy shot
+    dummyShotSize: 9, // radius of each dummy shot
   },
 
   // ---------------------------------------------------------------- MAGE ----
   mage: {
     staff: {
-      chargeTime: 0.8, // LC: seconds of holding to reach a full charge
-      damageMin: 40, // LC: damage of an uncharged shot
-      damageMax: 120, // LC: damage of a fully charged shot
-      speedMin: 700, // LC: speed of an uncharged shot
+      chargeTime: 1.3, // LC: seconds of holding to reach a full charge
+      damageMin: 20, // LC: damage of an uncharged shot
+      damageMax: 90, // LC: damage of a fully charged shot
+      speedMin: 400, // LC: speed of an uncharged shot
       speedMax: 1300, // LC: speed of a fully charged shot
       sizeMin: 7, // LC: radius of an uncharged shot
-      sizeMax: 13, // LC: radius of a fully charged shot
+      sizeMax: 20, // LC: radius of a fully charged shot
       fireInterval: 0.35, // LC: wait after a shot before you can start charging the next one
     },
     shield: {
-      duration: 1.5, // RC: seconds the reflective shield stays up
+      duration: 2, // RC: seconds the reflective shield stays up
       cooldown: 10, // RC: seconds before it can be used again (counts from when it goes up)
       radius: 46, // RC: size of the shield bubble
     },
@@ -67,18 +71,64 @@ export const TUNING = {
       fireInterval: 1.2, // C: seconds between each ring of 8 bolts
       boltDamage: 30, // C: damage of each bolt
       boltSpeed: 500, // C: speed of each bolt
-      boltSize: 7, // C: radius of each bolt
+      boltSize: 10, // C: radius of each bolt
       radius: 34, // C: size of the tower (for collisions and placement)
       cooldown: 18, // C: seconds before another tower can be placed (counts from placement)
     },
     switch: {
-      turnTime: 0.4, // V: seconds a projectile takes to slow down and curve back the other way
-      slowest: 0.15, // V: how slow a projectile gets mid-turn (0.15 = 15% of its speed)
-      cooldown: 25, // V: seconds before Switch can be used again
+      turnTime: 1, // V: seconds a projectile takes to slow to a stop and fly back at full speed
+      cooldown: 0, // V: seconds before Switch can be used again
     },
     teleport: {
       castTime: 0.35, // SPACE: seconds of animation before you arrive (you can't walk during it)
       cooldown: 8, // SPACE: seconds before teleport can be used again
+    },
+  },
+
+  // ------------------------------------------------------------- SHERIFF ----
+  sheriff: {
+    gun: {
+      fireInterval: 0.4, // LC: seconds between shots (hold to keep firing)
+      speed: 1600, // LC: bullet speed
+      damageNear: 45, // LC: damage at point blank
+      damageFar: 25, // LC: damage at long range
+      falloffRange: 700, // LC: distance travelled at which damage has dropped to damageFar
+      size: 5, // LC: bullet radius
+    },
+    lasso: {
+      range: 480, // RC: how far the lasso flies
+      speed: 1400, // RC: how fast the lasso flies
+      damage: 20, // RC: damage when it catches someone
+      pullSpeed: 1400, // RC: how fast the caught player is dragged to the Sheriff
+      size: 9, // RC: radius of the lasso loop
+      cooldown: 9, // RC: seconds before it can be thrown again
+    },
+    bramble: {
+      spawnDistance: 80, // C: how far from the Sheriff the tumbleweed appears (towards the crosshair)
+      tossSpeed: 150, // C: speed it starts rolling at, towards the crosshair
+      life: 8, // C: seconds before it crumbles on its own
+      damage: 30, // C: damage to whoever it touches (the Sheriff too)
+      stun: 0.8, // C: seconds the touched player can't move or use abilities
+      restitution: 0.9, // C: bounciness off walls and structures (1 = no speed lost)
+      shotImpulse: 350, // C: how much speed a projectile hit adds to it
+      friction: 0.6, // C: how quickly it slows down by itself (0 = rolls forever)
+      size: 20, // C: radius of the tumbleweed
+      cooldown: 10, // C: seconds before another can be summoned
+    },
+    pierce: {
+      delay: 0.6, // V: seconds of aiming before the shot goes off
+      speed: 4000, // V: bullet speed
+      bounces: 3, // V: how many walls / structures it bounces off
+      damage: 220, // V: damage on hit
+      trail: 0.4, // V: seconds the bullet trail stays visible (looks only)
+      size: 5, // V: bullet radius
+      cooldown: 14, // V: seconds before it can be used again
+    },
+    roll: {
+      duration: 0.35, // SPACE: seconds the roll lasts
+      invincible: 0.2, // SPACE: seconds of invincibility at the start of the roll
+      distance: 260, // SPACE: how far the roll goes
+      cooldown: 4, // SPACE: seconds before rolling again
     },
   },
 

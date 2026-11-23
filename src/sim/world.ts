@@ -9,7 +9,10 @@ import { ACTIONS, perAction, type Fighter, type PlayerInput, type World } from '
 import { clampToArena, moveFighter, separateFighters, updateAim } from './movement.ts';
 import { runAbilities } from './abilities.ts';
 import { updateProjectiles } from './projectiles.ts';
+import { updateObjects } from './objects.ts';
 import { collideFightersWithPlaceables, updatePlaceables } from './placeables.ts';
+import { checkPullStuck, tickStatusTimers, updatePull } from './status.ts';
+import { updateDummy } from './training.ts';
 import { getClass } from './classes/registry.ts';
 
 export { applyDamage, resetHp } from './damage.ts';
@@ -32,8 +35,12 @@ function newFighter(world: World, props: Partial<Fighter> & Pick<Fighter, 'kind'
     cooldownTotals: perAction(0),
     placing: null,
     rootedT: 0,
+    stunT: 0,
+    invulnT: 0,
     shieldT: 0,
     shieldRadius: 0,
+    pullById: 0,
+    pullT: 0,
     vars: {},
     ...props,
   };
@@ -50,9 +57,10 @@ export function createTrainingWorld(tuning: Tuning, classId: string): World {
     fighters: [],
     projectiles: [],
     placeables: [],
+    objects: [],
     events: [],
     nextId: 1,
-    options: { cooldownsDisabled: false },
+    options: { cooldownsDisabled: false, dummyFires: false },
   };
   const c = tuning.world.arenaSize / 2;
   const d = tuning.player.spawnDistance;
@@ -79,6 +87,7 @@ export function createTrainingWorld(tuning: Tuning, classId: string): World {
     maxHp: tuning.training.dummyHp,
     radius: tuning.training.dummyRadius,
     aimAngle: Math.PI, // faces the player
+    vars: { homeX: c + d, homeY: c }, // where R puts it back
   });
   return world;
 }
@@ -93,13 +102,17 @@ export function stepWorld(world: World, inputs: Map<number, PlayerInput>, tuning
   world.events.length = 0;
 
   for (const f of world.fighters) {
-    f.shieldT = Math.max(0, f.shieldT - dt);
-    f.rootedT = Math.max(0, f.rootedT - dt);
+    tickStatusTimers(f, dt);
+    updatePull(world, f, dt);
+    if (f.kind === 'dummy') {
+      updateDummy(world, tuning, f, dt);
+      continue;
+    }
     const input = inputs.get(f.id);
-    if (!input || f.kind === 'dummy') continue;
+    if (!input) continue;
 
     updateAim(f, input);
-    if (f.rootedT > 0) {
+    if (f.rootedT > 0 || f.stunT > 0 || f.pullById) {
       f.vx = 0;
       f.vy = 0;
     } else moveFighter(f, input, tuning, dt);
@@ -110,11 +123,15 @@ export function stepWorld(world: World, inputs: Map<number, PlayerInput>, tuning
   }
 
   updateProjectiles(world, tuning, dt);
+  updateObjects(world, tuning, dt);
   updatePlaceables(world, tuning, dt);
 
   separateFighters(world.fighters);
   collideFightersWithPlaceables(world);
-  for (const f of world.fighters) clampToArena(f, tuning.world.arenaSize);
+  for (const f of world.fighters) {
+    clampToArena(f, tuning.world.arenaSize);
+    checkPullStuck(f, dt);
+  }
 
   world.tick++;
   world.time += dt;

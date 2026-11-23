@@ -1,4 +1,4 @@
-/**
+﻿/**
  * The input abstraction.
  *
  * The game never reads the keyboard or mouse directly. It asks an InputSource
@@ -9,7 +9,7 @@
 import type { PlayerInput } from '../sim/types.ts';
 
 /** Non-gameplay buttons the game screens react to. */
-export type MenuAction = 'pause' | 'devPanel' | 'resetDummy' | 'toggleCooldowns';
+export type MenuAction = 'pause' | 'devPanel' | 'resetDummy' | 'toggleCooldowns' | 'toggleDummyFire' | 'nextClass';
 
 export interface InputSource {
   /**

@@ -3,7 +3,7 @@
 A top-down 1v1 arena fighting game for keyboard and mouse, playable in the browser.
 The full design spec is in [GAME_BRIEF.md](GAME_BRIEF.md).
 
-**Current build: step 2 of 6, part 1 (Mage).** Movement, arena, HP bars, training dummy, and the Mage. Training always uses the Mage until character select arrives in step 4.
+**Current build: step 2 of 6, parts 1-2 (Mage, Sheriff).** Movement, arena, HP bars, training dummy, Mage and Sheriff. Press Tab in training to switch class until character select arrives in step 4.
 
 ## Running the game
 
@@ -25,6 +25,36 @@ Other commands:
 
 | Key | Does |
 | --- | --- |
+| W A S D | move |
+| Mouse | aim (the crosshair) |
+| Tab | switch class |
+| R | put the dummy back and refill its HP |
+| F | make the dummy shoot at you (on / off) |
+| T | switch ability cooldowns on / off |
+| ` (the key left of 1) | open the dev panel |
+| Esc | pause menu (volume, mute, leave match) |
+
+**Mage**
+
+| Key | Does |
+| --- | --- |
+| Left click | Staff: hold to charge (bar under the crosshair), release to fire. Fires by itself at full charge. |
+| Right click | Reflective shield: bounces enemy shots back, and they become yours |
+| C | Watchtower: shows an outline, left click to place, right click or C to cancel |
+| V | Switch: every projectile and tumbleweed slows down and comes back the other way |
+| Space | Teleport to the crosshair |
+
+**Sheriff**
+
+| Key | Does |
+| --- | --- |
+| Left click | Revolver: hold to keep firing. Hits harder up close. |
+| Right click | Lasso: catches the enemy and drags them to you |
+| C | Bramble: a tumbleweed that stuns whoever touches it (you too). Shoot it to knock it around. |
+| V | Piercing bullet: aim for a moment (red line), then a very fast shot that bounces 3 times |
+| Space | Roll in the direction you're walking, briefly invincible |
+
+--- | --- |
 | W A S D | move |
 | Mouse | aim (the crosshair) |
 | R | refill the dummy's HP |
@@ -85,7 +115,7 @@ Volume and mute are in the pause menu.
 
 ### Abilities and classes
 
-The numbers for every ability are in `src/config/tuning.ts` (look for the `mage:` group).
+The numbers for every ability are in `src/config/tuning.ts` (look for the `mage:` and `sheriff:` groups).
 
 How an ability *behaves* is in `src/sim/classes/<class>/`, one file per ability, for example
 `src/sim/classes/mage/staff.ts`. Each file starts with a short description. The class's

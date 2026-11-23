@@ -1,6 +1,7 @@
 /**
  * MAGE - LC - Staff (instant, projectile)
  * Hold to charge, release to fire. Longer charge = faster, bigger, more damage.
+ * Reaching a full charge fires automatically. Keep holding to start charging the next shot.
  * Numbers: tuning.mage.staff
  */
 import type { AbilityDef } from '../../abilities.ts';
@@ -17,8 +18,12 @@ export const staff: AbilityDef = {
   icon: 'icon_mage_staff',
   cooldown: (t) => t.mage.staff.fireInterval,
 
-  update({ world, tuning, fighter: f, slot, held, dt }) {
+  update({ world, tuning, fighter: f, slot, held, stunned, dt }) {
     const s = tuning.mage.staff;
+    if (stunned) {
+      f.vars.staffCharging = 0; // a stun cancels the charge
+      return;
+    }
     // Start charging as soon as the button is down and the staff is ready.
     if (!f.vars.staffCharging && held && isReady(f, slot)) {
       f.vars.staffCharging = 1;
@@ -27,9 +32,10 @@ export const staff: AbilityDef = {
     if (!f.vars.staffCharging) return;
 
     f.vars.staffCharge = Math.min(s.chargeTime, (f.vars.staffCharge ?? 0) + dt);
-    if (held) return;
+    const full = f.vars.staffCharge >= s.chargeTime;
+    if (held && !full) return;
 
-    // Released: fire.
+    // Released, or fully charged: fire.
     const k = s.chargeTime > 0 ? f.vars.staffCharge / s.chargeTime : 1; // 0 = tap, 1 = full charge
     const radius = lerp(s.sizeMin, s.sizeMax, k);
     spawnProjectile(world, tuning, {

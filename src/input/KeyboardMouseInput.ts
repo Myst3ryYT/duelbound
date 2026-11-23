@@ -1,11 +1,11 @@
-/**
+﻿/**
  * Keyboard + mouse input, using the bindings in config/keybinds.ts.
  */
 import type { Keybinds, BindName } from '../config/keybinds.ts';
 import { ACTIONS, emptyInput, type PlayerInput } from '../sim/types.ts';
 import type { InputSource, MenuAction } from './InputSource.ts';
 
-const MENU_ACTIONS: MenuAction[] = ['pause', 'devPanel', 'resetDummy', 'toggleCooldowns'];
+const MENU_ACTIONS: MenuAction[] = ['pause', 'devPanel', 'resetDummy', 'toggleCooldowns', 'toggleDummyFire', 'nextClass'];
 
 export class KeyboardMouseInput implements InputSource {
   /** Keys/buttons currently held down, by code ("KeyW", "Mouse0"...). */

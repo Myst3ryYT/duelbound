@@ -20,6 +20,16 @@ const BEEPS: Record<SoundId, { wave: OscillatorType; from: number; to: number; d
   switch: { wave: 'sine', from: 1000, to: 200, dur: 0.4, vol: 0.4 },
   teleport_start: { wave: 'sine', from: 400, to: 1200, dur: 0.3, vol: 0.3 },
   teleport: { wave: 'sine', from: 1200, to: 500, dur: 0.15, vol: 0.35 },
+  bounce: { wave: 'square', from: 1500, to: 900, dur: 0.05, vol: 0.2 },
+  gun_fire: { wave: 'sawtooth', from: 900, to: 120, dur: 0.08, vol: 0.3 },
+  lasso_throw: { wave: 'triangle', from: 300, to: 600, dur: 0.15, vol: 0.25 },
+  lasso_hit: { wave: 'square', from: 250, to: 500, dur: 0.12, vol: 0.3 },
+  bramble_spawn: { wave: 'sawtooth', from: 180, to: 260, dur: 0.15, vol: 0.2 },
+  bramble_hit: { wave: 'sawtooth', from: 400, to: 60, dur: 0.25, vol: 0.35 },
+  pierce_charge: { wave: 'sine', from: 200, to: 800, dur: 0.6, vol: 0.25 },
+  pierce_fire: { wave: 'sawtooth', from: 1400, to: 80, dur: 0.25, vol: 0.45 },
+  roll: { wave: 'triangle', from: 220, to: 160, dur: 0.15, vol: 0.25 },
+  dummy_fire: { wave: 'square', from: 500, to: 300, dur: 0.06, vol: 0.15 },
 };
 
 /** Play a sound by name if it exists (the simulation reports sounds by name). */

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * MAGE - C - Watchtower (variable, static placeable)
  * Press C to see an outline at the crosshair, left click to place it.
  * After a build-up it fires bolts in 8 directions at regular intervals.
@@ -18,9 +18,9 @@ export const watchtower: AbilityDef = {
   icon: 'icon_mage_watchtower',
   cooldown: (t) => t.mage.watchtower.cooldown,
 
-  preview(world, tuning, f) {
+  preview(world, tuning, _f, x, y) {
     const r = tuning.mage.watchtower.radius;
-    return { sprite: 'mage_watchtower', x: f.aimX, y: f.aimY, angle: 0, radius: r, valid: canPlaceAt(world, tuning, f.aimX, f.aimY, r) };
+    return { sprite: 'mage_watchtower', x, y, angle: 0, radius: r, valid: canPlaceAt(world, tuning, x, y, r) };
   },
 
   confirm({ world, tuning, fighter: f }) {

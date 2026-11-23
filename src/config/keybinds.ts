@@ -32,6 +32,8 @@ export const KEYBINDS = {
   devPanel: ['Backquote'], // open / close the dev tuning panel
   resetDummy: ['KeyR'], // training: refill the dummy's HP
   toggleCooldowns: ['KeyT'], // training: switch ability cooldowns on / off
+  toggleDummyFire: ['KeyF'], // training: make the dummy shoot at you (on / off)
+  nextClass: ['Tab'], // training: switch to the next class (until character select exists)
 };
 
 export type Keybinds = typeof KEYBINDS;

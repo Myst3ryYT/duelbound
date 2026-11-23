@@ -1,8 +1,13 @@
 ﻿/**
  * Draws the game. Reads the World, never changes it.
+ *
+ * The simulation runs at a fixed 60 ticks per second. To look smooth on fast
+ * monitors, moving things are drawn part-way between their last two tick
+ * positions, and the local player's facing and placement previews follow the
+ * mouse every frame instead of every tick.
  */
 import type { Tuning } from '../config/tuning.ts';
-import type { Fighter, GameEvent, Placeable, Projectile, World } from '../sim/types.ts';
+import type { Fighter, GameEvent, PhysObject, Placeable, Projectile, World } from '../sim/types.ts';
 import type { PlacementPreview } from '../sim/abilities.ts';
 import { getClass } from '../sim/classes/registry.ts';
 import { findSprite, getSprite, type Sprite } from './sprites.ts';
@@ -28,6 +33,14 @@ interface Effect {
   age: number;
 }
 
+/** A fading line left behind a fast projectile (looks only). */
+interface Trail {
+  points: { x: number; y: number; t: number }[];
+  life: number; // seconds each point stays visible
+  color: string;
+  alive: boolean; // the projectile still exists
+}
+
 /** Per-fighter visual state that the simulation doesn't care about. */
 interface FighterFx {
   trailHp: number; // the white "recent damage" part of the HP bar
@@ -37,15 +50,19 @@ interface FighterFx {
 /** What the renderer needs to know about the local player, beyond the World. */
 export interface LocalView {
   playerId: number;
+  aim: { x: number; y: number } | null; // crosshair position in world units, this frame
   preview: PlacementPreview | null; // ghost of a structure being placed
 }
+
+const TRAIL_COLORS: Record<string, string> = { sheriff_pierce: '#ff6a4a' };
 
 export class Renderer {
   private ctx: CanvasRenderingContext2D;
   private numbers: FloatingNumber[] = [];
   private effects: Effect[] = [];
+  private trails = new Map<number, Trail>();
   private fx = new Map<number, FighterFx>();
-  private clock = 0; // seconds, for pulsing animations
+  private clock = 0; // seconds, for animations
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -70,6 +87,8 @@ export class Renderer {
       if (fx) fx.trailHold = 0;
     } else if (e.type === 'fx') {
       this.effects.push({ ...e, age: 0 });
+    } else if (e.type === 'bounce') {
+      this.trails.get(e.projectileId)?.points.push({ x: e.x, y: e.y, t: this.clock });
     }
   }
 
@@ -77,6 +96,7 @@ export class Renderer {
   reset(): void {
     this.numbers = [];
     this.effects = [];
+    this.trails.clear();
     this.fx.clear();
   }
 
@@ -111,23 +131,35 @@ export class Renderer {
     ctx.fillStyle = '#14151b';
     ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
 
-    const lerpPos = (id: number, x: number, y: number) => {
+    const pos = (id: number, x: number, y: number) => {
       const p = prev.get(id);
       return p ? { x: p.x + (x - p.x) * alpha, y: p.y + (y - p.y) * alpha } : { x, y };
     };
+    const fighterPos = new Map<number, { x: number; y: number }>();
+    for (const f of world.fighters) fighterPos.set(f.id, pos(f.id, f.x, f.y));
 
     // ---- World space (arena) ----
     ctx.save();
     ctx.translate(view.arenaX, view.arenaY);
     this.drawArena(tuning.world.arenaSize);
     for (const p of world.placeables) this.drawPlaceable(p, tuning);
-    for (const f of world.fighters) {
-      const pos = lerpPos(f.id, f.x, f.y);
-      this.drawFighter(f, pos.x, pos.y, tuning);
+    for (const o of world.objects) {
+      const op = pos(o.id, o.x, o.y);
+      this.drawObject(o, op.x, op.y);
     }
+    this.drawRopes(world, fighterPos, pos);
+    for (const f of world.fighters) {
+      const fp = fighterPos.get(f.id)!;
+      // The local player faces the crosshair every frame, not just every tick.
+      const angle = f.id === local.playerId && local.aim ? Math.atan2(local.aim.y - fp.y, local.aim.x - fp.x) : f.aimAngle;
+      this.drawFighter(f, fp.x, fp.y, angle, tuning);
+    }
+    this.updateTrails(world);
+    this.drawTrails();
     for (const p of world.projectiles) {
-      const pos = lerpPos(p.id, p.x, p.y);
-      this.drawProjectile(p, pos.x, pos.y, tuning);
+      // Trail shots are too fast to blend between ticks (they may have bounced in between).
+      const pp = p.trail > 0 ? { x: p.x, y: p.y } : pos(p.id, p.x, p.y);
+      this.drawProjectile(p, pp.x, pp.y, tuning);
     }
     if (local.preview) this.drawPreview(local.preview);
     this.drawEffects(dt);
@@ -138,7 +170,10 @@ export class Renderer {
     this.updateHpTrails(world, tuning, dt);
     drawHud(ctx, world, hud, (id) => this.fx.get(id)?.trailHp ?? 0);
 
-    if (crosshair) this.drawSprite(getSprite('crosshair'), crosshair.x, crosshair.y, 0);
+    if (crosshair) {
+      this.drawSprite(getSprite('crosshair'), crosshair.x, crosshair.y, 0);
+      this.drawCrosshairBar(world, tuning, local, crosshair, alpha);
+    }
   }
 
   private drawArena(size: number): void {
@@ -164,13 +199,26 @@ export class Renderer {
     }
   }
 
-  private drawFighter(f: Fighter, x: number, y: number, tuning: Tuning): void {
+  private drawFighter(f: Fighter, x: number, y: number, angle: number, tuning: Tuning): void {
     const { ctx } = this;
     // Soft shadow
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.beginPath();
     ctx.ellipse(x, y + f.radius * 0.7, f.radius * 0.9, f.radius * 0.4, 0, 0, Math.PI * 2);
     ctx.fill();
+
+    // Sheriff piercing bullet: a red aiming line during the delay.
+    if (f.vars.pierceT > 0) {
+      const pulse = 0.5 + 0.5 * Math.sin(this.clock * 40);
+      ctx.strokeStyle = `rgba(255,80,60,${0.35 + 0.4 * pulse})`;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([14, 10]);
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(angle) * f.radius, y + Math.sin(angle) * f.radius);
+      ctx.lineTo(x + Math.cos(angle) * 420, y + Math.sin(angle) * 420);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
 
     // Mage teleport: show the landing marker, and shrink while casting.
     let alpha = 1;
@@ -180,18 +228,23 @@ export class Renderer {
       alpha = 1 - k * 0.8;
     }
 
+    // Sheriff roll: spin once over the roll, see-through while invincible.
+    let spin = 0;
+    if (f.vars.rollT > 0) spin = (1 - f.vars.rollT / Math.max(0.001, tuning.sheriff.roll.duration)) * Math.PI * 2;
+    if (f.invulnT > 0) alpha *= 0.5;
+
     const spriteName = f.kind === 'dummy' ? 'dummy' : (getClass(f.classId)?.sprite ?? 'fighter_default');
     const sprite = findSprite(spriteName) ?? getSprite('fighter_default');
-    this.drawSprite(sprite, x, y, f.kind === 'dummy' ? 0 : f.aimAngle, alpha);
+    this.drawSprite(sprite, x, y, f.kind === 'dummy' ? 0 : angle + spin, alpha);
 
     // Mage staff charging: a growing orb at the staff tip.
     if (f.vars.staffCharging) {
       const s = tuning.mage.staff;
       const k = s.chargeTime > 0 ? Math.min(1, f.vars.staffCharge / s.chargeTime) : 1;
       const r = s.sizeMin + (s.sizeMax - s.sizeMin) * k;
-      const tipX = x + Math.cos(f.aimAngle) * (f.radius + r);
-      const tipY = y + Math.sin(f.aimAngle) * (f.radius + r);
-      const pulse = k >= 1 ? 1 + 0.15 * Math.sin(this.clock * 30) : 1;
+      const tipX = x + Math.cos(angle) * (f.radius + r);
+      const tipY = y + Math.sin(angle) * (f.radius + r);
+      const pulse = k >= 0.95 ? 1 + 0.15 * Math.sin(this.clock * 30) : 1;
       this.drawSprite(getSprite('mage_bolt'), tipX, tipY, 0, 0.6 + 0.4 * k, r * 2.5 * pulse);
     }
 
@@ -200,13 +253,46 @@ export class Renderer {
       const fade = Math.min(1, f.shieldT / 0.25); // fades out in the last quarter second
       this.drawSprite(getSprite('mage_shield'), x, y, 0, fade, f.shieldRadius * 2);
     }
+
+    // Stunned: little stars circling over the head.
+    if (f.stunT > 0) {
+      ctx.fillStyle = '#ffe27a';
+      for (let i = 0; i < 3; i++) {
+        const a = this.clock * 6 + (i * Math.PI * 2) / 3;
+        ctx.fillRect(x + Math.cos(a) * f.radius * 0.9 - 3, y - f.radius - 6 + Math.sin(a) * 6 - 3, 6, 6);
+      }
+    }
+  }
+
+  /** Lasso ropes: from the Sheriff to a flying lasso, or to whoever is being dragged. */
+  private drawRopes(world: World, fighterPos: Map<number, { x: number; y: number }>, pos: (id: number, x: number, y: number) => { x: number; y: number }): void {
+    const { ctx } = this;
+    ctx.strokeStyle = '#d8b880';
+    ctx.lineWidth = 3;
+    const line = (a: { x: number; y: number }, b: { x: number; y: number }) => {
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    };
+    for (const p of world.projectiles) {
+      if (p.behavior !== 'lasso') continue;
+      const owner = fighterPos.get(p.ownerId);
+      if (owner) line(owner, pos(p.id, p.x, p.y));
+    }
+    for (const f of world.fighters) {
+      if (!f.pullById) continue;
+      const a = fighterPos.get(f.pullById);
+      const b = fighterPos.get(f.id);
+      if (a && b) line(a, b);
+    }
   }
 
   private drawProjectile(p: Projectile, x: number, y: number, tuning: Tuning): void {
     const sprite = findSprite(p.kind);
-    // Drawn 20% bigger than its radius because of the glow; the hitbox is set by tuning.
+    // Drawn a bit bigger than its radius because of the glow; the hitbox is set by tuning.
     const size = p.radius * 2 * 1.25;
-    if (sprite) this.drawSprite(sprite, x, y, Math.atan2(p.vy, p.vx), 1, size);
+    if (sprite) this.drawSprite(sprite, x, y, p.behavior === 'lasso' ? 0 : Math.atan2(p.vy, p.vx), 1, size);
     else {
       this.ctx.fillStyle = '#fff';
       this.ctx.beginPath();
@@ -221,6 +307,58 @@ export class Renderer {
       this.ctx.arc(x, y, p.radius * tuning.projectiles.hitboxScale + 4, 0, Math.PI * 2);
       this.ctx.stroke();
     }
+  }
+
+  private drawObject(o: PhysObject, x: number, y: number): void {
+    const sprite = findSprite(o.kind);
+    if (sprite) this.drawSprite(sprite, x, y, o.spin, o.life < 1 ? 0.4 + 0.6 * o.life : 1, o.radius * 2);
+    if (o.switchT > 0) {
+      this.ctx.strokeStyle = 'rgba(255,211,77,0.9)';
+      this.ctx.lineWidth = 2;
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, o.radius + 5, 0, Math.PI * 2);
+      this.ctx.stroke();
+    }
+  }
+
+  /** Record the head of every trail-leaving projectile, and let finished trails fade. */
+  private updateTrails(world: World): void {
+    for (const t of this.trails.values()) t.alive = false;
+    for (const p of world.projectiles) {
+      if (p.trail <= 0) continue;
+      let t = this.trails.get(p.id);
+      if (!t) {
+        t = { points: [], life: p.trail, color: TRAIL_COLORS[p.kind] ?? '#ffffff', alive: true };
+        this.trails.set(p.id, t);
+      }
+      t.alive = true;
+      t.points.push({ x: p.x, y: p.y, t: this.clock });
+    }
+    for (const [id, t] of this.trails) {
+      t.points = t.points.filter((pt) => this.clock - pt.t < t.life);
+      if (!t.alive && t.points.length === 0) this.trails.delete(id);
+    }
+  }
+
+  private drawTrails(): void {
+    const { ctx } = this;
+    ctx.lineCap = 'round';
+    for (const t of this.trails.values()) {
+      for (let i = 1; i < t.points.length; i++) {
+        const a = t.points[i - 1];
+        const b = t.points[i];
+        const fade = 1 - (this.clock - a.t) / t.life;
+        ctx.strokeStyle = t.color;
+        ctx.globalAlpha = Math.max(0, fade);
+        ctx.lineWidth = 2 + 4 * fade;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+    ctx.lineCap = 'butt';
   }
 
   private drawPlaceable(p: Placeable, tuning: Tuning): void {
@@ -263,6 +401,26 @@ export class Renderer {
     ctx.arc(pv.x, pv.y, pv.radius, 0, Math.PI * 2);
     ctx.stroke();
     ctx.setLineDash([]);
+  }
+
+  /** Small bar under the crosshair for the local player's class (charge, resource...). */
+  private drawCrosshairBar(world: World, tuning: Tuning, local: LocalView, at: { x: number; y: number }, alpha: number): void {
+    const me = world.fighters.find((f) => f.id === local.playerId);
+    const bar = me ? getClass(me.classId)?.crosshairBar?.(me, tuning) : null;
+    if (!bar) return;
+    // Grow the bar smoothly between ticks.
+    const fill = Math.max(0, Math.min(1, bar.fill + (bar.rate ?? 0) * (alpha / tuning.world.tickRate)));
+    const w = 56;
+    const h = 7;
+    const x = at.x - w / 2;
+    const y = at.y + 24;
+    const { ctx } = this;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
+    ctx.fillStyle = '#2a2c36';
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = bar.color;
+    ctx.fillRect(x, y, w * fill, h);
   }
 
   private drawEffects(dt: number): void {
@@ -342,4 +500,3 @@ export class Renderer {
     }
   }
 }
-

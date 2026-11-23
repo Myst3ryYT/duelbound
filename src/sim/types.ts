@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Shared data types for the simulation.
  *
  * The simulation is the "rules of the game". It has no drawing, no sound and no
@@ -54,34 +54,48 @@ export interface Fighter {
   /** Which buttons were held last tick, so we can tell "just pressed" from "held". */
   prevButtons: Record<ActionName, boolean>;
 
-  // ---- Abilities ----
+  // ---- Abilities and status effects ----
   cooldowns: Record<ActionName, number>; // seconds left before each ability is ready
   cooldownTotals: Record<ActionName, number>; // full length of the current cooldown (for the HUD)
   placing: ActionName | null; // a "variable" ability waiting for a click, or null
   rootedT: number; // seconds left where the fighter can't walk
+  stunT: number; // seconds left where the fighter can't walk or use abilities
+  invulnT: number; // seconds left where projectiles and objects pass through
   shieldT: number; // seconds left of a reflective shield
   shieldRadius: number; // size of that shield
+  pullById: number; // id of whoever is dragging this fighter (Sheriff lasso), 0 = nobody
+  pullT: number; // seconds left of being dragged (safety limit)
   /** Free-form numbers abilities use to remember things (charge time, teleport target...). */
   vars: Record<string, number>;
 }
 
+/** Things Switch can turn around (projectiles and physics objects). */
+export interface Switchable {
+  vx: number;
+  vy: number;
+  switchT: number; // seconds left of the turn-around (0 = not turning)
+  switchTotal: number;
+  switchVx: number; // velocity when the turn-around started
+  switchVy: number;
+}
+
 /** A flying projectile. Moves in a straight line unless something (like Switch) turns it. */
-export interface Projectile {
+export interface Projectile extends Switchable {
   id: number;
   ownerId: number; // who it belongs to (it never hurts its owner)
   kind: string; // which sprite to draw (see config/assets.ts)
+  behavior: string; // special on-hit behaviour ('' = just damage; e.g. 'lasso')
   x: number;
   y: number;
-  vx: number;
-  vy: number;
   radius: number; // visual radius; the hitbox is bigger (tuning.projectiles.hitboxScale)
-  damage: number;
+  damage: number; // damage at point blank
+  damageFar: number; // damage after travelling falloffRange (same as damage = no falloff)
+  falloffRange: number; // 0 = no falloff
+  traveled: number; // distance flown so far
+  bounces: number; // walls / structures it can still bounce off (0 = dies on contact)
+  reflectable: boolean; // can shields reflect it? (if not, a shield just destroys it)
+  trail: number; // seconds a visual trail lingers behind it (0 = no trail)
   life: number; // seconds left before it vanishes on its own
-  // Switch: the projectile turns around over `switchTotal` seconds.
-  switchT: number; // seconds left of the turn (0 = not turning)
-  switchTotal: number;
-  switchVx: number; // velocity when the turn started
-  switchVy: number;
 }
 
 /** A structure on the map (watchtower, mirror...). Blocks movement, can be shot down. */
@@ -99,11 +113,24 @@ export interface Placeable {
   timer: number; // free timer for the behaviour (e.g. time to next shot)
 }
 
+/** A physics object (e.g. the Bramble tumbleweed): rolls, bounces, gets knocked around by shots. */
+export interface PhysObject extends Switchable {
+  id: number;
+  ownerId: number;
+  kind: string; // which behaviour + sprite
+  x: number;
+  y: number;
+  radius: number;
+  life: number; // seconds left
+  spin: number; // rotation, for looks
+}
+
 /** Things that happened during a tick. The game layer turns these into sounds and effects. */
 export type GameEvent =
   | { type: 'damage'; targetId: number; sourceId: number; amount: number; x: number; y: number }
   | { type: 'hpReset'; targetId: number }
   | { type: 'sound'; sound: string; x: number; y: number }
+  | { type: 'bounce'; projectileId: number; x: number; y: number } // so trails can show the exact corner
   | { type: 'fx'; fx: 'ring' | 'burst'; x: number; y: number; color: string; radius: number; duration: number };
 
 /** Match modes. More arrive with the menus and online play. */
@@ -116,9 +143,11 @@ export interface World {
   fighters: Fighter[];
   projectiles: Projectile[];
   placeables: Placeable[];
+  objects: PhysObject[];
   events: GameEvent[]; // cleared at the start of every tick
   nextId: number;
   options: {
     cooldownsDisabled: boolean; // training option: abilities have no cooldown
+    dummyFires: boolean; // training option: the dummy shoots at the player
   };
 }

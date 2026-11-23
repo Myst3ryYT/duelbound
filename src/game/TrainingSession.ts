@@ -8,14 +8,14 @@ import type { InputSource } from '../input/InputSource.ts';
 import { keyLabel } from '../input/keyLabels.ts';
 import { ACTIONS, type Fighter, type PlayerInput, type World } from '../sim/types.ts';
 import { applyDamage, createTrainingWorld, resetHp, stepWorld } from '../sim/world.ts';
-import { getClass } from '../sim/classes/registry.ts';
+import { CLASS_ORDER, getClass } from '../sim/classes/registry.ts';
 import type { LocalView, Renderer } from '../render/Renderer.ts';
 import type { HudInfo } from '../render/hud.ts';
 import { playSound, playSoundByName } from '../audio/sfx.ts';
 
 export class TrainingSession {
   world: World;
-  /** Positions from the previous tick (fighters and projectiles), for smooth drawing between ticks. */
+  /** Positions from the previous tick (everything that moves), for smooth drawing between ticks. */
   prev = new Map<number, { x: number; y: number }>();
 
   constructor(
@@ -23,10 +23,18 @@ export class TrainingSession {
     private keybinds: Keybinds,
     private input: InputSource,
     private renderer: Renderer,
-    classId: string,
+    private classId: string,
   ) {
-    this.world = createTrainingWorld(tuning, classId);
+    this.world = this.newWorld();
+  }
+
+  private newWorld(): World {
+    const old = this.world as World | undefined;
+    const w = createTrainingWorld(this.tuning, this.classId);
+    if (old) w.options = { ...old.options }; // keep training toggles when switching class
+    this.prev.clear();
     this.renderer.reset();
+    return w;
   }
 
   get player(): Fighter {
@@ -45,6 +53,7 @@ export class TrainingSession {
     this.prev.clear();
     for (const f of this.world.fighters) this.prev.set(f.id, { x: f.x, y: f.y });
     for (const p of this.world.projectiles) this.prev.set(p.id, { x: p.x, y: p.y });
+    for (const o of this.world.objects) this.prev.set(o.id, { x: o.x, y: o.y });
 
     stepWorld(this.world, inputs, this.tuning);
     this.flushEvents();
@@ -53,7 +62,12 @@ export class TrainingSession {
   /** Training-only buttons. Call once per frame. */
   handleMenuKeys(): void {
     if (this.input.consumeMenu('resetDummy')) {
-      resetHp(this.world, this.dummy);
+      const d = this.dummy;
+      d.x = d.vars.homeX;
+      d.y = d.vars.homeY;
+      d.stunT = 0;
+      d.pullById = 0;
+      resetHp(this.world, d);
       this.flushEvents();
     }
     if (this.input.consumeMenu('toggleCooldowns')) {
@@ -62,27 +76,41 @@ export class TrainingSession {
       if (off) for (const a of ACTIONS) this.player.cooldowns[a] = 0;
       playSound('ui_click');
     }
+    if (this.input.consumeMenu('toggleDummyFire')) {
+      this.world.options.dummyFires = !this.world.options.dummyFires;
+      playSound('ui_click');
+    }
+    if (this.input.consumeMenu('nextClass')) {
+      const i = CLASS_ORDER.indexOf(this.classId);
+      this.classId = CLASS_ORDER[(i + 1) % CLASS_ORDER.length];
+      this.world = this.newWorld();
+      playSound('ui_click');
+    }
   }
 
-  /** What the renderer needs to know about the local player. */
+  /** What the renderer needs to know about the local player (worked out every frame). */
   localView(): LocalView {
     const me = this.player;
+    const cross = this.input.crosshair();
+    const aim = cross ? this.renderer.view.screenToWorld(cross.x, cross.y) : null;
     const def = me.placing ? getClass(me.classId)?.abilities[me.placing] : undefined;
-    return { playerId: me.id, preview: def?.preview?.(this.world, this.tuning, me) ?? null };
+    const at = aim ?? { x: me.aimX, y: me.aimY };
+    return { playerId: me.id, aim, preview: def?.preview?.(this.world, this.tuning, me, at.x, at.y) ?? null };
   }
 
   hud(): HudInfo {
     const me = this.player;
     const k = (name: keyof Keybinds) => keyLabel(this.keybinds[name][0]);
-    const cd = this.world.options.cooldownsDisabled ? 'OFF' : 'ON';
+    const onOff = (b: boolean) => (b ? 'ON' : 'OFF');
     const cls = getClass(me.classId);
     return {
       helpLines: [
         `TRAINING - ${cls?.name ?? 'no class'}`,
-        `${k('resetDummy')}  reset dummy HP`,
-        `${k('toggleCooldowns')}  cooldowns ${cd}`,
-        `${k('devPanel')}  dev panel`,
-        `${k('pause')}  pause`,
+        `${k('nextClass')}  switch class`,
+        `${k('resetDummy')}  reset dummy`,
+        `${k('toggleDummyFire')}  dummy shoots: ${onOff(this.world.options.dummyFires)}`,
+        `${k('toggleCooldowns')}  cooldowns: ${onOff(!this.world.options.cooldownsDisabled)}`,
+        `${k('devPanel')}  dev panel   ${k('pause')}  pause`,
       ],
       abilities: cls
         ? ACTIONS.map((slot) => ({

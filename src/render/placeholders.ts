@@ -241,6 +241,107 @@ function iconTeleport(): HTMLCanvasElement {
   return p.canvas;
 }
 
+// --------------------------------------------------------------- SHERIFF ----
+const BROWN = '#7a4b22';
+const BROWN_DARK = '#4a2c12';
+const BROWN_LIGHT = '#a8703a';
+const RED = '#b8322f';
+const STEEL = '#9aa3b5';
+
+function sheriff(): HTMLCanvasElement {
+  const p = new Pixels(20, 20);
+  p.rect(12, 11, 7, 2, STEEL); // revolver pointing right
+  p.rect(12, 13, 2, 1, BROWN_DARK); // grip
+  p.disc(10, 10, 8, OUTLINE);
+  p.disc(10, 10, 7, RED); // shirt / shoulders
+  p.disc(10, 10, 6.2, BROWN_LIGHT); // hat brim, seen from above
+  p.ring(10, 10, 6.2, 1, BROWN_DARK);
+  p.disc(10, 10, 3.6, BROWN); // hat crown
+  p.rect(9, 9, 3, 2, BROWN_DARK); // crown dent
+  p.px(15, 10, '#ffd34d'); // star badge peeking out
+  return p.canvas;
+}
+
+function sheriffBullet(): HTMLCanvasElement {
+  const p = new Pixels(10, 6);
+  p.rect(0, 2, 4, 2, 'rgba(255,200,80,0.5)'); // streak behind
+  p.rect(3, 1, 5, 4, '#e0b030');
+  p.rect(8, 2, 2, 2, '#fff1b0');
+  return p.canvas;
+}
+
+function sheriffLasso(): HTMLCanvasElement {
+  const p = new Pixels(12, 12);
+  p.ring(6, 6, 6, 1.6, '#d8b880');
+  p.ring(6, 6, 4.4, 0.8, BROWN_LIGHT);
+  return p.canvas;
+}
+
+function sheriffBramble(): HTMLCanvasElement {
+  const p = new Pixels(16, 16);
+  p.disc(8, 8, 8, 'rgba(90,60,20,0.35)');
+  for (let i = 0; i < 9; i++) {
+    const a = i * 0.7;
+    p.line(8 + Math.cos(a) * 7, 8 + Math.sin(a) * 7, 8 - Math.cos(a + 1.9) * 6, 8 - Math.sin(a + 1.9) * 6, i % 2 ? '#a07a40' : '#c8a060');
+  }
+  p.ring(8, 8, 8, 1, '#6b4a20');
+  return p.canvas;
+}
+
+function sheriffPierce(): HTMLCanvasElement {
+  const p = new Pixels(14, 6);
+  p.rect(0, 2, 6, 2, 'rgba(255,80,60,0.6)');
+  p.rect(5, 1, 7, 4, '#ff6a4a');
+  p.rect(11, 2, 3, 2, '#ffffff');
+  return p.canvas;
+}
+
+function dummyShot(): HTMLCanvasElement {
+  const p = new Pixels(10, 10);
+  p.disc(5, 5, 5, 'rgba(184,50,47,0.5)');
+  p.disc(5, 5, 3.5, '#e05050');
+  p.disc(5, 5, 1.5, '#ffe0d0');
+  return p.canvas;
+}
+
+function iconGun(): HTMLCanvasElement {
+  const p = iconBase(BROWN_DARK);
+  p.rect(3, 6, 9, 2, STEEL); // barrel
+  p.rect(6, 5, 4, 4, '#6a7385'); // cylinder
+  p.rect(4, 8, 3, 5, BROWN_LIGHT); // grip
+  p.px(12, 6, '#fff');
+  return p.canvas;
+}
+function iconLasso(): HTMLCanvasElement {
+  const p = iconBase(BROWN_DARK);
+  p.ring(10, 6, 4, 1.2, '#d8b880');
+  p.line(3, 13, 7, 9, '#d8b880');
+  return p.canvas;
+}
+function iconBramble(): HTMLCanvasElement {
+  const p = iconBase(BROWN_DARK);
+  for (let i = 0; i < 6; i++) {
+    const a = i * 1.05;
+    p.line(8 + Math.cos(a) * 5, 8 + Math.sin(a) * 5, 8 - Math.cos(a + 2) * 5, 8 - Math.sin(a + 2) * 5, '#c8a060');
+  }
+  return p.canvas;
+}
+function iconPierce(): HTMLCanvasElement {
+  const p = iconBase(BROWN_DARK);
+  p.line(2, 12, 7, 3, '#ff6a4a'); // bouncing path
+  p.line(7, 3, 13, 12, '#ff6a4a');
+  p.rect(12, 11, 2, 2, '#fff');
+  return p.canvas;
+}
+function iconRoll(): HTMLCanvasElement {
+  const p = iconBase(BROWN_DARK);
+  p.ring(9, 8, 4.5, 1.2, BROWN_LIGHT);
+  p.line(2, 6, 4, 6, '#c9cddb'); // speed lines
+  p.line(1, 9, 4, 9, '#c9cddb');
+  p.line(2, 12, 4, 12, '#c9cddb');
+  return p.canvas;
+}
+
 /** One placeholder per sprite id. Adding a sprite? Add its painter here too. */
 export const PLACEHOLDERS: Record<SpriteId, () => HTMLCanvasElement> = {
   fighter_default: fighterDefault,
@@ -259,4 +360,15 @@ export const PLACEHOLDERS: Record<SpriteId, () => HTMLCanvasElement> = {
   icon_mage_watchtower: iconWatchtower,
   icon_mage_switch: iconSwitch,
   icon_mage_teleport: iconTeleport,
+  class_sheriff: sheriff,
+  sheriff_bullet: sheriffBullet,
+  sheriff_lasso: sheriffLasso,
+  sheriff_bramble: sheriffBramble,
+  sheriff_pierce: sheriffPierce,
+  dummy_shot: dummyShot,
+  icon_sheriff_gun: iconGun,
+  icon_sheriff_lasso: iconLasso,
+  icon_sheriff_bramble: iconBramble,
+  icon_sheriff_pierce: iconPierce,
+  icon_sheriff_roll: iconRoll,
 };

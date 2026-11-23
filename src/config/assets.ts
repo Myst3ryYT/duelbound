@@ -38,12 +38,27 @@ export const SPRITES = {
   mage_shield: { file: 'mage_shield.png', size: 0 }, // reflective shield bubble
   teleport_marker: { file: 'teleport_marker.png', size: 56 }, // where a teleport will land
 
+  // ---- Sheriff ----
+  class_sheriff: { file: 'sheriff.png', size: 64 }, // the Sheriff
+  sheriff_bullet: { file: 'sheriff_bullet.png', size: 0 }, // revolver shot
+  sheriff_lasso: { file: 'sheriff_lasso.png', size: 0 }, // lasso loop (the rope is drawn as a line)
+  sheriff_bramble: { file: 'sheriff_bramble.png', size: 0 }, // tumbleweed (drawn at its hitbox size)
+  sheriff_pierce: { file: 'sheriff_pierce.png', size: 0 }, // piercing bullet
+
+  // ---- Training ----
+  dummy_shot: { file: 'dummy_shot.png', size: 0 }, // what the dummy shoots
+
   // ---- Ability icons (HUD, screen pixels) ----
   icon_mage_staff: { file: 'icon_mage_staff.png', size: 64 },
   icon_mage_shield: { file: 'icon_mage_shield.png', size: 64 },
   icon_mage_watchtower: { file: 'icon_mage_watchtower.png', size: 64 },
   icon_mage_switch: { file: 'icon_mage_switch.png', size: 64 },
   icon_mage_teleport: { file: 'icon_mage_teleport.png', size: 64 },
+  icon_sheriff_gun: { file: 'icon_sheriff_gun.png', size: 64 },
+  icon_sheriff_lasso: { file: 'icon_sheriff_lasso.png', size: 64 },
+  icon_sheriff_bramble: { file: 'icon_sheriff_bramble.png', size: 64 },
+  icon_sheriff_pierce: { file: 'icon_sheriff_pierce.png', size: 64 },
+  icon_sheriff_roll: { file: 'icon_sheriff_roll.png', size: 64 },
 };
 
 export const SOUNDS = {
@@ -60,6 +75,16 @@ export const SOUNDS = {
   switch: { file: 'switch.wav' }, // Mage V
   teleport_start: { file: 'teleport_start.wav' }, // Mage SPACE begins
   teleport: { file: 'teleport.wav' }, // Mage SPACE arrives
+  bounce: { file: 'bounce.wav' }, // a shot bounced off a wall or structure
+  gun_fire: { file: 'gun_fire.wav' }, // Sheriff LC
+  lasso_throw: { file: 'lasso_throw.wav' }, // Sheriff RC thrown
+  lasso_hit: { file: 'lasso_hit.wav' }, // Sheriff RC caught someone
+  bramble_spawn: { file: 'bramble_spawn.wav' }, // Sheriff C
+  bramble_hit: { file: 'bramble_hit.wav' }, // tumbleweed touched someone
+  pierce_charge: { file: 'pierce_charge.wav' }, // Sheriff V aiming
+  pierce_fire: { file: 'pierce_fire.wav' }, // Sheriff V fired
+  roll: { file: 'roll.wav' }, // Sheriff SPACE
+  dummy_fire: { file: 'dummy_fire.wav' }, // training dummy shoots
 };
 
 export type SpriteId = keyof typeof SPRITES;

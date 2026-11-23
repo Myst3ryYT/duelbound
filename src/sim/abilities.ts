@@ -1,4 +1,4 @@
-/**
+﻿/**
  * The ability framework.
  *
  * Every ability is one file that exports an AbilityDef: some data (name, type,
@@ -11,7 +11,7 @@
  *              left click confirms (`confirm`), right click or the same key cancels.
  */
 import type { Tuning } from '../config/tuning.ts';
-import { ACTIONS, type ActionName, type Fighter, type Placeable, type PlayerInput, type World } from './types.ts';
+import { ACTIONS, type ActionName, type Fighter, type PhysObject, type Placeable, type PlayerInput, type Projectile, type World } from './types.ts';
 
 export type AbilityType = 'projectile' | 'placeable' | 'object' | 'misc';
 
@@ -26,6 +26,7 @@ export interface AbilityContext {
   pressed: boolean; // button went down this tick
   held: boolean; // button is down
   released: boolean; // button went up this tick
+  stunned: boolean; // the fighter is stunned (buttons are all off while stunned)
 }
 
 /** What a variable ability shows while you are choosing where to put it. */
@@ -48,8 +49,8 @@ export interface AbilityDef {
   cooldown(t: Tuning): number;
   /** Runs every tick for the fighter that has this ability. */
   update?(ctx: AbilityContext): void;
-  /** Variable abilities: what to show at the crosshair while placing. */
-  preview?(world: World, tuning: Tuning, fighter: Fighter): PlacementPreview;
+  /** Variable abilities: what to show if placed at (x, y). */
+  preview?(world: World, tuning: Tuning, fighter: Fighter, x: number, y: number): PlacementPreview;
   /** Variable abilities: the player clicked. Return true if it was placed (starts the cooldown). */
   confirm?(ctx: AbilityContext): boolean;
 }
@@ -60,12 +61,35 @@ export interface PlaceableKindDef {
   update(p: Placeable, world: World, tuning: Tuning, dt: number): void;
 }
 
+/** Behaviour of a physics object, registered by the class that owns it. */
+export interface ObjectKindDef {
+  kind: string;
+  restitution(t: Tuning): number; // bounciness, 1 = keeps all speed
+  friction(t: Tuning): number; // how fast it slows down by itself
+  /** It touched a fighter. Return true to remove the object. */
+  onTouch(world: World, tuning: Tuning, o: PhysObject, f: Fighter): boolean;
+}
+
+/** Extra effect when a projectile with this `behavior` hits a fighter (after damage). */
+export type ProjectileHook = (world: World, tuning: Tuning, p: Projectile, target: Fighter) => void;
+
+/** A small bar shown under the crosshair (charge, resource...). */
+export interface CrosshairBar {
+  fill: number; // 0..1
+  rate?: number; // how fast fill grows per second (lets the screen animate it smoothly between ticks)
+  color: string;
+}
+
 export interface ClassDef {
   id: string;
   name: string;
   sprite: string; // sprite id for the character (config/assets.ts)
   abilities: Record<ActionName, AbilityDef>;
-  placeables: PlaceableKindDef[];
+  placeables?: PlaceableKindDef[];
+  objects?: ObjectKindDef[];
+  projectileHooks?: Record<string, ProjectileHook>;
+  /** Optional bar next to the crosshair, e.g. the Mage's staff charge. */
+  crosshairBar?(f: Fighter, t: Tuning): CrosshairBar | null;
 }
 
 // ---------------------------------------------------------------- helpers ----
@@ -89,12 +113,18 @@ export function refundCooldown(f: Fighter, slot: ActionName): void {
 /** Run all five abilities of one fighter for one tick. */
 export function runAbilities(world: World, tuning: Tuning, f: Fighter, input: PlayerInput, cls: ClassDef, dt: number): void {
   for (const a of ACTIONS) f.cooldowns[a] = Math.max(0, f.cooldowns[a] - dt);
+  const stunned = f.stunT > 0;
+  if (stunned) f.placing = null;
 
-  const edges = (a: ActionName) => ({
-    pressed: input.buttons[a] && !f.prevButtons[a],
-    held: input.buttons[a],
-    released: !input.buttons[a] && f.prevButtons[a],
-  });
+  // While stunned every button counts as "not held", without firing a "released".
+  const edges = (a: ActionName) =>
+    stunned
+      ? { pressed: false, held: false, released: false }
+      : {
+          pressed: input.buttons[a] && !f.prevButtons[a],
+          held: input.buttons[a],
+          released: !input.buttons[a] && f.prevButtons[a],
+        };
   const ctx = (slot: ActionName, e: { pressed: boolean; held: boolean; released: boolean }): AbilityContext => ({
     world,
     tuning,
@@ -102,6 +132,7 @@ export function runAbilities(world: World, tuning: Tuning, f: Fighter, input: Pl
     input,
     slot,
     dt,
+    stunned,
     ...e,
   });
 
