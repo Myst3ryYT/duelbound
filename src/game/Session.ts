@@ -124,7 +124,10 @@ export abstract class Session {
       cooldown: me.cooldowns[slot],
       total: me.cooldownTotals[slot],
       active: me.placing === slot,
-      count: me.chargeMax[slot] > 0 ? me.charges[slot] : slot === 'primary' ? cls.ammo?.(me, this.tuning)?.current : undefined,
+      count: slot === 'primary' ? cls.ammo?.(me, this.tuning)?.current : undefined,
+      charges: me.chargeMax[slot] > 0 ? me.charges[slot] : undefined,
+      chargeMax: me.chargeMax[slot] > 0 ? me.chargeMax[slot] : undefined,
+      ready: isReady(me, slot) || (me.chargeMax[slot] === 0 && me.cooldownTotals[slot] < 0.75), // tiny cooldowns (fire rate) don't flash the icon
     }));
   }
 

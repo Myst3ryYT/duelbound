@@ -1,6 +1,7 @@
 /**
- * Physics objects (e.g. Sheriff's Bramble): they roll, slow down, bounce off
- * walls and structures, and get knocked around by projectiles (see projectiles.ts).
+ * Physics objects (Sheriff's Bramble, Builder's furniture): they roll, slow down,
+ * bounce off walls and structures, and react to projectiles (see projectiles.ts).
+ * Solid ones also block players, and can be shot to pieces.
  * Only the simulation moves them, so online both players see the same thing.
  *
  * An object can "carry" a fighter (fighter.vars.carriedBy = object id): the
@@ -13,12 +14,14 @@ import { updateSwitch } from './switching.ts';
 import { getObjectKind } from './classes/registry.ts';
 import { closestPoint, distanceTo, surfaceNormal } from './placeables.ts';
 import { hitPoints } from './hitbox.ts';
-import { emitFx } from './events.ts';
+import { emitFx, emitSound } from './events.ts';
 
 const STEP = 12; // world units per collision sub-step
 
-export function spawnObject(world: World, props: Omit<PhysObject, 'id' | 'switchT' | 'switchTotal' | 'switchVx' | 'switchVy' | 'spin'>): PhysObject {
-  const o: PhysObject = { id: world.nextId++, switchT: 0, switchTotal: 0, switchVx: 0, switchVy: 0, spin: 0, ...props };
+type Defaults = 'id' | 'switchT' | 'switchTotal' | 'switchVx' | 'switchVy' | 'spin' | 'hp' | 'maxHp' | 'armed';
+
+export function spawnObject(world: World, props: Omit<PhysObject, Defaults> & Partial<Pick<PhysObject, 'hp' | 'maxHp'>>): PhysObject {
+  const o: PhysObject = { id: world.nextId++, switchT: 0, switchTotal: 0, switchVx: 0, switchVy: 0, spin: 0, hp: 0, maxHp: 0, armed: 0, ...props };
   world.objects.push(o);
   return o;
 }
@@ -34,7 +37,7 @@ export function updateObjects(world: World, tuning: Tuning, dt: number): void {
 
     updateSwitch(o, dt);
     if (o.switchT <= 0) {
-      const friction = (kind?.friction(tuning) ?? 0) + (carried.length ? (kind?.carryDrag?.(tuning) ?? 0) : 0);
+      const friction = (kind?.friction(tuning, o) ?? 0) + (carried.length ? (kind?.carryDrag?.(tuning) ?? 0) : 0);
       const drag = Math.exp(-friction * dt);
       o.vx *= drag;
       o.vy *= drag;
@@ -82,11 +85,19 @@ export function updateObjects(world: World, tuning: Tuning, dt: number): void {
 
       // Fighters: the object's own behaviour decides what touching does
       for (const f of world.fighters) {
-        if (f.invulnT > 0) continue;
         if (!hitPoints(f).some((h) => dist(o.x, o.y, h.x, h.y) <= o.radius + f.radius)) continue;
-        if (kind?.onTouch(world, tuning, o, f)) {
+        if (f.invulnT <= 0 && kind?.onTouch(world, tuning, o, f)) {
           alive = false;
           break;
+        }
+        // Solid objects block players like a wall.
+        if (kind?.solid && f.kind !== 'dummy') {
+          const d = dist(o.x, o.y, f.x, f.y) || 0.001;
+          const push = o.radius + f.radius - d;
+          if (push > 0) {
+            f.x += ((f.x - o.x) / d) * push;
+            f.y += ((f.y - o.y) / d) * push;
+          }
         }
       }
     }
@@ -104,6 +115,12 @@ export function updateObjects(world: World, tuning: Tuning, dt: number): void {
       alive = false;
       emitFx(world, 'burst', o.x, o.y, '#c8a060', o.radius * 1.5, 0.3);
     }
+    if (o.maxHp > 0 && o.hp <= 0 && alive) {
+      alive = false; // shot to pieces
+      emitFx(world, 'burst', o.x, o.y, '#c8a060', o.radius * 2, 0.35);
+      emitFx(world, 'ring', o.x, o.y, '#c8a060', o.radius * 1.6, 0.3);
+      emitSound(world, 'structure_destroyed', o.x, o.y);
+    }
     if (alive) survivors.push(o);
   }
   world.objects = survivors;
@@ -113,4 +130,11 @@ export function updateObjects(world: World, tuning: Tuning, dt: number): void {
     if (!f.vars.carriedBy) continue;
     if (f.stunT <= 0 || !world.objects.some((o) => o.id === f.vars.carriedBy)) f.vars.carriedBy = 0;
   }
+}
+
+/** Damage a breakable object (does nothing to unbreakable ones). */
+export function damageObject(world: World, o: PhysObject, amount: number): void {
+  if (o.maxHp <= 0) return;
+  o.hp -= amount;
+  emitFx(world, 'burst', o.x, o.y, '#ffffff', 12, 0.15);
 }

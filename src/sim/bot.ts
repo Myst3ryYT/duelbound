@@ -10,7 +10,8 @@
  *  - sometimes dodges shots coming at it, or uses a defensive ability
  *
  * Two difficulties, 'normal' and 'hard'. Their numbers are in tuning.bot.normal and tuning.bot.hard;
- * the bot only notices a shot eactionTime seconds after it appears.
+ * the bot only notices a shot 
+eactionTime seconds after it appears.
  */
 import type { Tuning } from '../config/tuning.ts';
 import { emptyInput, type Fighter, type PlayerInput, type Projectile, type World } from './types.ts';
@@ -51,7 +52,6 @@ export class BotBrain {
   private noiseX = 0;
   private noiseY = 0;
   private noiseT = 0;
-  private chargeGoal = 0.5; // Mage: how much of a full charge to wait for
   private rayT = 0; // Refractor: seconds left of the current beam burst
   private script: ScriptStep[] = [];
   private dodgeDecisions = new Map<number, boolean>(); // projectile id -> decided to dodge it?
@@ -134,19 +134,15 @@ export class BotBrain {
     if (me.classId === 'mage') this.playMage(world, tuning, input, me, enemy, d, urgent ? threat : null, tryAbility);
     else if (me.classId === 'sheriff') this.playSheriff(tuning, input, me, d, urgent ? threat : null, tryAbility);
     else if (me.classId === 'refractor') this.playRefractor(world, tuning, input, me, enemy, d, urgent ? threat : null, tryAbility, dt);
+    else if (me.classId === 'builder') this.playBuilder(world, tuning, input, me, enemy, d, urgent ? threat : null, tryAbility);
     return input;
   }
 
   // ------------------------------------------------------------- classes ----
 
   private playMage(world: World, tuning: Tuning, input: PlayerInput, me: Fighter, enemy: Fighter, d: number, threat: Threat | null, tryAbility: () => boolean): void {
-    // Staff: hold to charge, let go once the planned charge is reached.
-    if (d < 950) {
-      const s = tuning.mage.staff;
-      const charged = me.vars.staffCharging && me.vars.staffCharge >= this.chargeGoal * s.chargeTime;
-      input.buttons.primary = !charged;
-      if (charged) this.chargeGoal = 0.25 + this.rng() * 0.75;
-    }
+    // Staff: keep firing.
+    if (d < 950) input.buttons.primary = true;
     if (threat) {
       if (isReady(me, 'secondary')) input.buttons.secondary = true; // shield
       else if (isReady(me, 'mobility')) {
@@ -193,6 +189,17 @@ export class BotBrain {
     else if (isReady(me, 'ability2')) input.buttons.ability2 = true;
   }
 
+  private playBuilder(world: World, tuning: Tuning, input: PlayerInput, me: Fighter, enemy: Fighter, d: number, threat: Threat | null, tryAbility: () => boolean): void {
+    if (d < 700) input.buttons.primary = true; // nail gun
+    if (threat && isReady(me, 'mobility')) input.buttons.mobility = true; // dash out of the way
+    const reach = me.radius + tuning.builder.hammer.range;
+    // Hammer: when the enemy is close, or to fling a piece of our furniture that's between us.
+    const furniture = world.objects.find((o) => o.ownerId === me.id && o.kind.startsWith('builder_furniture') && dist(o.x, o.y, me.x, me.y) < reach + o.radius);
+    if (isReady(me, 'secondary') && (d < reach + enemy.radius || furniture)) input.buttons.secondary = true;
+    // Furniture: build some cover towards the enemy.
+    if (isReady(me, 'ability2') && d < 600 && tryAbility()) input.buttons.ability2 = true;
+  }
+
   private playRefractor(world: World, tuning: Tuning, input: PlayerInput, me: Fighter, enemy: Fighter, d: number, threat: Threat | null, tryAbility: () => boolean, dt: number): void {
     // Mind Ray in short bursts, shotgun otherwise.
     this.rayT -= dt;
@@ -200,9 +207,9 @@ export class BotBrain {
     else if (d < 560) input.buttons.primary = true;
     if (this.rayT <= 0 && d < 700 && (me.vars.rayPool ?? tuning.refractor.ray.pool) > 50 && this.rng() < 0.6 * dt) this.rayT = 0.6 + this.rng() * 0.6;
 
-    if (threat && isReady(me, 'mobility')) input.buttons.mobility = true; // refract
+    if (threat && isReady(me, 'mobility')) input.buttons.mobility = true; // dash out of the way
     // Shatter when the enemy stands near a mirror.
-    const mirrors = world.placeables.filter((p) => p.reflective && p.ownerId === me.id);
+    const mirrors = world.placeables.filter((p) => p.kind === 'refractor_mirror' && p.ownerId === me.id);
     if (isReady(me, 'ability2') && mirrors.some((m) => distanceTo(m, enemy.x, enemy.y) < tuning.refractor.shatter.radius * 0.8)) input.buttons.ability2 = true;
 
     // Mirror: enter mirror mode, drag one out across the line between us, leave.
@@ -294,12 +301,16 @@ function approaching(p: Projectile, f: Fighter): boolean {
 }
 
 function preferredRange(classId: string, t: Tuning): number {
-  return classId === 'mage' ? t.bot.rangeMage : classId === 'sheriff' ? t.bot.rangeSheriff : t.bot.rangeRefractor;
+  if (classId === 'mage') return t.bot.rangeMage;
+  if (classId === 'sheriff') return t.bot.rangeSheriff;
+  if (classId === 'builder') return t.bot.rangeBuilder;
+  return t.bot.rangeRefractor;
 }
 
 /** Roughly how fast this class's main weapon flies (for leading shots). */
 function weaponSpeed(classId: string, t: Tuning): number {
-  if (classId === 'mage') return (t.mage.staff.speedMin + t.mage.staff.speedMax) / 2;
+  if (classId === 'mage') return t.mage.staff.speed;
   if (classId === 'sheriff') return t.sheriff.gun.speed;
+  if (classId === 'builder') return t.builder.nailgun.speed;
   return t.refractor.shotgun.speed;
 }

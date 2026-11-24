@@ -5,6 +5,9 @@
  * monitors, moving things are drawn part-way between their last two tick
  * positions, and the local player's facing and placement previews follow the
  * mouse every frame instead of every tick.
+ *
+ * Anything that belongs to the OTHER side (shots, structures, objects, beams)
+ * is tinted red, so you can always tell at a glance what can hurt you.
  */
 import type { Tuning } from '../config/tuning.ts';
 import type { Fighter, GameEvent, PhysObject, Placeable, Projectile, World } from '../sim/types.ts';
@@ -12,7 +15,6 @@ import type { PlacementPreview } from '../sim/abilities.ts';
 import { getClass } from '../sim/classes/registry.ts';
 import { tracePath } from '../sim/trace.ts';
 import { traceRay } from '../sim/classes/refractor/ray.ts';
-import { hitPoints } from '../sim/hitbox.ts';
 import { findSprite, getSprite, type Sprite } from './sprites.ts';
 import { SCREEN_H, SCREEN_W, View } from './view.ts';
 import { drawHud, type HudInfo } from './hud.ts';
@@ -60,7 +62,9 @@ export interface LocalView {
   preview: PlacementPreview | null; // ghost of a structure being placed
 }
 
-const TRAIL_COLORS: Record<string, string> = { sheriff_pierce: '#ff6a4a' };
+const TRAIL_COLORS: Record<string, string> = { sheriff_pierce: '#ffd27a' };
+const ENEMY_TINT = 'rgba(255,40,40,0.55)'; // red wash over enemy sprites
+const ENEMY_TRAIL = '#ff4a4a';
 
 export class Renderer {
   private ctx: CanvasRenderingContext2D;
@@ -70,6 +74,8 @@ export class Renderer {
   private fx = new Map<number, FighterFx>();
   private clock = 0; // seconds, for animations
   private mergeWindow = 0.35; // copied from tuning.visuals.damageNumberMerge every frame
+  private localId = 0; // the local player's fighter id (anything owned by someone else is "enemy")
+  private tintCache = new Map<CanvasImageSource, HTMLCanvasElement>();
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -137,6 +143,7 @@ export class Renderer {
   ): void {
     const { ctx, view } = this;
     this.clock += dt;
+    this.localId = local.playerId;
     this.mergeWindow = tuning.visuals.damageNumberMerge;
     view.arenaSize = tuning.world.arenaSize;
     view.fit();
@@ -192,7 +199,9 @@ export class Renderer {
     drawHud(ctx, world, hud, (id) => this.fx.get(id)?.trailHp ?? 0);
 
     if (crosshair) {
-      this.drawSprite(getSprite('crosshair'), crosshair.x, crosshair.y, 0);
+      const me = world.fighters.find((f) => f.id === local.playerId);
+      if (me?.placing) this.drawPlacingCrosshair(me, crosshair);
+      else this.drawSprite(getSprite('crosshair'), crosshair.x, crosshair.y, 0);
       this.drawCrosshairBar(world, tuning, local, crosshair, alpha);
     }
   }
@@ -254,7 +263,7 @@ export class Renderer {
       }
     }
 
-    // Refractor Mind Ray: the beam, getting thicker after every mirror.
+    // Refractor Mind Ray: the beam.
     if (f.vars.rayOn) {
       const beam = traceRay(world, tuning, f, angle);
       const base = tuning.refractor.ray.width;
@@ -263,10 +272,11 @@ export class Renderer {
       for (let i = 1; i < beam.points.length; i++) {
         const a = beam.points[i - 1];
         const b = beam.points[i];
-        const w = base * (1 + 0.8 * (i - 1)) * flicker;
+        const w = base * flicker;
+        const enemy = this.isEnemy(f.id);
         for (const [color, width] of [
-          ['rgba(197,140,255,0.35)', w * 2.6],
-          ['#c58cff', w],
+          [enemy ? 'rgba(255,60,60,0.35)' : 'rgba(197,140,255,0.35)', w * 2.6],
+          [enemy ? '#ff5050' : '#c58cff', w],
           ['#ffffff', w * 0.35],
         ] as const) {
           ctx.strokeStyle = color;
@@ -295,36 +305,26 @@ export class Renderer {
 
     const spriteName = f.kind === 'dummy' ? 'dummy' : (getClass(f.classId)?.sprite ?? 'fighter_default');
     const sprite = findSprite(spriteName) ?? getSprite('fighter_default');
-    if (f.vars.refractT > 0) {
-      // Refract: a red half and a blue half, side by side (both can be hit).
-      // (the split follows the mouse every frame for the local player)
-      const halves = hitPoints({ ...f, x, y, vars: { ...f.vars, refractAngle: angle + Math.PI / 2 } });
-      halves.forEach((h, i) => {
-        this.drawSprite(sprite, h.x, h.y, angle, 0.8 * alpha);
-        ctx.fillStyle = i === 0 ? 'rgba(255,60,80,0.35)' : 'rgba(60,140,255,0.35)';
-        ctx.beginPath();
-        ctx.arc(h.x, h.y, f.radius, 0, Math.PI * 2);
-        ctx.fill();
-      });
-    } else {
-      this.drawSprite(sprite, x, y, f.kind === 'dummy' ? 0 : angle + spin, alpha);
+    // Dash: a few fading after-images behind.
+    if (f.vars.dashT > 0) {
+      for (let i = 1; i <= 3; i++) this.drawSprite(sprite, x - f.vars.dashDX * i * 18, y - f.vars.dashDY * i * 18, angle, 0.25 / i);
     }
+    this.drawSprite(sprite, x, y, f.kind === 'dummy' ? 0 : angle + spin, alpha);
 
-    // Mage staff charging: a growing orb at the staff tip.
-    if (f.vars.staffCharging) {
-      const s = tuning.mage.staff;
-      const k = s.chargeTime > 0 ? Math.min(1, f.vars.staffCharge / s.chargeTime) : 1;
-      const r = s.sizeMin + (s.sizeMax - s.sizeMin) * k;
-      const tipX = x + Math.cos(angle) * (f.radius + r);
-      const tipY = y + Math.sin(angle) * (f.radius + r);
-      const pulse = k >= 0.95 ? 1 + 0.15 * Math.sin(this.clock * 30) : 1;
-      this.drawSprite(getSprite('mage_bolt'), tipX, tipY, 0, 0.6 + 0.4 * k, r * 2.5 * pulse);
-    }
 
-    // Reflective shield bubble
-    if (f.shieldT > 0) {
-      const fade = Math.min(1, f.shieldT / 0.25); // fades out in the last quarter second
-      this.drawSprite(getSprite('mage_shield'), x, y, 0, fade, f.shieldRadius * 2);
+    // Builder hammer swing: a quick sweeping arc in front.
+    if (f.vars.swingT > 0) {
+      const h = tuning.builder.hammer;
+      const k = 1 - f.vars.swingT / Math.max(0.001, h.swingTime); // 0 -> 1 over the swing
+      const half = (h.arcDegrees * Math.PI) / 360;
+      const a0 = f.vars.swingAngle - half;
+      const reach = f.radius + h.range;
+      ctx.fillStyle = this.isEnemy(f.id) ? `rgba(255,80,80,${0.35 * (1 - k)})` : `rgba(255,220,160,${0.35 * (1 - k)})`;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.arc(x, y, reach, a0, a0 + 2 * half * Math.min(1, k * 1.5));
+      ctx.closePath();
+      ctx.fill();
     }
 
     // Stunned: little stars circling over the head.
@@ -365,7 +365,7 @@ export class Renderer {
     const sprite = findSprite(p.kind);
     // Drawn a bit bigger than its radius because of the glow; the hitbox is set by tuning.
     const size = p.radius * 2 * 1.25;
-    if (sprite) this.drawSprite(sprite, x, y, p.behavior === 'lasso' ? 0 : Math.atan2(p.vy, p.vx), 1, size);
+    if (sprite) this.drawSprite(sprite, x, y, p.behavior === 'lasso' ? 0 : Math.atan2(p.vy, p.vx), 1, size, this.isEnemy(p.ownerId));
     else {
       this.ctx.fillStyle = '#fff';
       this.ctx.beginPath();
@@ -383,8 +383,26 @@ export class Renderer {
   }
 
   private drawObject(o: PhysObject, x: number, y: number): void {
+    const { ctx } = this;
     const sprite = findSprite(o.kind);
-    if (sprite) this.drawSprite(sprite, x, y, o.spin, o.life < 1 ? 0.4 + 0.6 * o.life : 1, o.radius * 2);
+    // Flung furniture: a motion streak behind it.
+    if (o.armed && Math.hypot(o.vx, o.vy) > 200) {
+      const sp = Math.hypot(o.vx, o.vy);
+      ctx.strokeStyle = this.isEnemy(o.ownerId) ? 'rgba(255,80,80,0.5)' : 'rgba(255,220,160,0.5)';
+      ctx.lineWidth = o.radius;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - (o.vx / sp) * o.radius * 2.5, y - (o.vy / sp) * o.radius * 2.5);
+      ctx.stroke();
+    }
+    if (sprite) this.drawSprite(sprite, x, y, o.spin, o.life < 1 ? 0.4 + 0.6 * o.life : 1, o.radius * 2, this.isEnemy(o.ownerId));
+    if (o.maxHp > 0 && o.hp < o.maxHp) {
+      const w = o.radius * 2;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(x - w / 2 - 2, y - o.radius - 16, w + 4, 8);
+      ctx.fillStyle = '#e05050';
+      ctx.fillRect(x - w / 2, y - o.radius - 14, w * Math.max(0, o.hp / o.maxHp), 4);
+    }
     if (o.switchT > 0) {
       this.ctx.strokeStyle = 'rgba(255,211,77,0.9)';
       this.ctx.lineWidth = 2;
@@ -401,7 +419,7 @@ export class Renderer {
       if (p.trail <= 0) continue;
       let t = this.trails.get(p.id);
       if (!t) {
-        t = { points: [], life: p.trail, color: TRAIL_COLORS[p.kind] ?? '#ffffff', alive: true };
+        t = { points: [], life: p.trail, color: this.isEnemy(p.ownerId) ? ENEMY_TRAIL : (TRAIL_COLORS[p.kind] ?? '#ffffff'), alive: true };
         this.trails.set(p.id, t);
       }
       t.alive = true;
@@ -435,14 +453,14 @@ export class Renderer {
   }
 
   /** Draw a sprite stretched along a line from (x1, y1) to (x2, y2). */
-  private drawStretched(s: Sprite, x1: number, y1: number, x2: number, y2: number, thickness: number, alpha = 1): void {
+  private drawStretched(s: Sprite, x1: number, y1: number, x2: number, y2: number, thickness: number, alpha = 1, enemy = false): void {
     const { ctx } = this;
     const len = Math.hypot(x2 - x1, y2 - y1);
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.translate((x1 + x2) / 2, (y1 + y2) / 2);
     ctx.rotate(Math.atan2(y2 - y1, x2 - x1));
-    ctx.drawImage(s.image, -len / 2, -thickness / 2, len, thickness);
+    ctx.drawImage(enemy ? this.tinted(s.image) : s.image, -len / 2, -thickness / 2, len, thickness);
     ctx.restore();
   }
 
@@ -450,9 +468,9 @@ export class Renderer {
     const { ctx } = this;
     const sprite = findSprite(p.kind);
     if (p.shape === 'segment') {
-      // Mirrors: flash white in their last moments.
+      // Mirrors / shield pieces: flash white in their last moments.
       const flash = p.breakT >= 0 && p.breakT < 0.6 ? 0.5 + 0.5 * Math.sin(this.clock * 40) : 0;
-      if (sprite) this.drawStretched(sprite, p.x1, p.y1, p.x2, p.y2, p.radius * 2 * 1.4);
+      if (sprite) this.drawStretched(sprite, p.x1, p.y1, p.x2, p.y2, p.radius * 2 * 1.4, 1, this.isEnemy(p.ownerId));
       if (flash) {
         ctx.strokeStyle = `rgba(255,255,255,${flash})`;
         ctx.lineWidth = p.radius * 2;
@@ -476,8 +494,22 @@ export class Renderer {
     if (p.kind === 'mage_watchtower') {
       progress = Math.min(1, p.age / Math.max(0.001, tuning.mage.watchtower.startup));
       alpha = 0.35 + 0.65 * progress;
+      // Its aura (the area where the Mage fires faster), once built.
+      if (progress >= 1) {
+        const enemy = this.isEnemy(p.ownerId);
+        const pulse = 0.5 + 0.5 * Math.sin(this.clock * 3);
+        ctx.fillStyle = enemy ? 'rgba(255,60,60,0.06)' : 'rgba(255,211,77,0.07)';
+        ctx.strokeStyle = enemy ? `rgba(255,80,80,${0.35 + 0.25 * pulse})` : `rgba(255,211,77,${0.35 + 0.25 * pulse})`;
+        ctx.lineWidth = 3;
+        ctx.setLineDash([12, 8]);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, tuning.mage.watchtower.auraRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
     }
-    if (sprite) this.drawSprite(sprite, p.x, p.y, p.angle, alpha);
+    if (sprite) this.drawSprite(sprite, p.x, p.y, p.angle, alpha, sprite.size, this.isEnemy(p.ownerId));
     if (progress < 1) {
       ctx.strokeStyle = '#ffd34d';
       ctx.lineWidth = 4;
@@ -553,6 +585,39 @@ export class Renderer {
       }
     }
 
+    // Stored uses of one ability (e.g. Refractor mirrors), as diamonds above the crosshair.
+    const slot = cls?.crosshairCharges;
+    if (me && slot && me.chargeMax[slot] > 0) {
+      const max = me.chargeMax[slot];
+      const n = me.charges[slot];
+      const gap = 16;
+      const recharge = me.cooldownTotals[slot] > 0 ? 1 - me.cooldowns[slot] / me.cooldownTotals[slot] : 0;
+      for (let i = 0; i < max; i++) {
+        const px = at.x - ((max - 1) * gap) / 2 + i * gap;
+        const py = at.y - 30;
+        const diamond = (size: number) => {
+          this.ctx.beginPath();
+          this.ctx.moveTo(px, py - size);
+          this.ctx.lineTo(px + size, py);
+          this.ctx.lineTo(px, py + size);
+          this.ctx.lineTo(px - size, py);
+          this.ctx.closePath();
+        };
+        diamond(7);
+        this.ctx.fillStyle = '#000';
+        this.ctx.fill();
+        diamond(5);
+        this.ctx.fillStyle = i < n ? '#bfe8ff' : '#2a2c36';
+        this.ctx.fill();
+        if (i === n && recharge > 0) {
+          // the one coming back: grows as it recharges
+          diamond(5 * recharge);
+          this.ctx.fillStyle = '#5a7a90';
+          this.ctx.fill();
+        }
+      }
+    }
+
     const bar = me ? cls?.crosshairBar?.(me, tuning) : null;
     if (!bar) return;
     // Grow the bar smoothly between ticks.
@@ -597,7 +662,7 @@ export class Renderer {
   }
 
   /** Draw a sprite centred on (x, y), rotated by `angle` radians. `size` overrides the asset-map size. */
-  private drawSprite(s: Sprite, x: number, y: number, angle: number, alpha = 1, size = s.size): void {
+  private drawSprite(s: Sprite, x: number, y: number, angle: number, alpha = 1, size = s.size, enemy = false): void {
     const w = size;
     const h = size * s.aspect;
     const { ctx } = this;
@@ -605,8 +670,71 @@ export class Renderer {
     ctx.globalAlpha = alpha;
     ctx.translate(x, y);
     if (angle) ctx.rotate(angle);
-    ctx.drawImage(s.image, -w / 2, -h / 2, w, h);
+    ctx.drawImage(enemy ? this.tinted(s.image) : s.image, -w / 2, -h / 2, w, h);
     ctx.restore();
+  }
+
+  /** Does this belong to the other side? */
+  private isEnemy(ownerId: number): boolean {
+    return ownerId !== this.localId;
+  }
+
+  /** A red-washed copy of an image (made once, then reused). */
+  private tinted(image: CanvasImageSource): HTMLCanvasElement {
+    let c = this.tintCache.get(image);
+    if (c) return c;
+    const src = image as HTMLCanvasElement | HTMLImageElement;
+    const w = (src as HTMLImageElement).naturalWidth || src.width;
+    const h = (src as HTMLImageElement).naturalHeight || src.height;
+    c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const g = c.getContext('2d')!;
+    g.drawImage(image, 0, 0);
+    g.globalCompositeOperation = 'source-atop'; // only colour the sprite's own pixels
+    g.fillStyle = ENEMY_TINT;
+    g.fillRect(0, 0, w, h);
+    this.tintCache.set(image, c);
+    return c;
+  }
+
+  /**
+   * Crosshair while in placing mode (mirrors, walls, watchtower...): a corner-bracket
+   * "build" reticle with the ability's icon, so it's obvious you won't shoot.
+   */
+  private drawPlacingCrosshair(me: Fighter, at: { x: number; y: number }): void {
+    const { ctx } = this;
+    const r = 18;
+    const c = 7;
+    const pulse = 0.75 + 0.25 * Math.sin(this.clock * 8);
+    const brackets = () => {
+      for (const [sx, sy] of [
+        [-1, -1],
+        [1, -1],
+        [1, 1],
+        [-1, 1],
+      ]) {
+        ctx.beginPath();
+        ctx.moveTo(at.x + sx * r, at.y + sy * (r - c));
+        ctx.lineTo(at.x + sx * r, at.y + sy * r);
+        ctx.lineTo(at.x + sx * (r - c), at.y + sy * r);
+        ctx.stroke();
+      }
+    };
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 6;
+    brackets();
+    ctx.strokeStyle = `rgba(80,230,120,${pulse})`;
+    ctx.lineWidth = 3;
+    brackets();
+    ctx.fillStyle = '#50e678';
+    ctx.fillRect(at.x - 2, at.y - 2, 4, 4);
+    const icon = me.placing ? findSprite(getClass(me.classId)?.abilities[me.placing].icon ?? '') : undefined;
+    if (icon) {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(at.x + r + 4, at.y - r - 26, 28, 28);
+      ctx.drawImage(icon.image, at.x + r + 6, at.y - r - 24, 24, 24);
+    }
   }
 
   private drawNumbers(tuning: Tuning, dt: number): void {

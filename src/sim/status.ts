@@ -6,7 +6,6 @@ import type { Fighter, World } from './types.ts';
 import { dist } from './math.ts';
 
 export function tickStatusTimers(f: Fighter, dt: number): void {
-  f.shieldT = Math.max(0, f.shieldT - dt);
   f.rootedT = Math.max(0, f.rootedT - dt);
   f.stunT = Math.max(0, f.stunT - dt);
   f.invulnT = Math.max(0, f.invulnT - dt);

@@ -40,7 +40,7 @@ export function tracePath(world: World, tuning: Tuning, x: number, y: number, an
     const ey = y + dy * left;
     // Find the closest thing along this straight piece.
     let bestT = 1;
-    let hit: { type: 'wall' } | { type: 'fighter'; id: number } | { type: 'shield' } | { type: 'placeable'; id: number } | null = null;
+    let hit: { type: 'wall' } | { type: 'fighter'; id: number } | { type: 'placeable'; id: number } | null = null;
 
     // Arena edge
     for (const [t] of [
@@ -53,15 +53,7 @@ export function tracePath(world: World, tuning: Tuning, x: number, y: number, an
       }
 
     for (const f of world.fighters) {
-      if (f.id === o.ownerId) continue;
-      if (f.shieldT > 0) {
-        const t = segmentCircle(x, y, ex, ey, f.x, f.y, f.shieldRadius + o.radius);
-        if (t >= 0 && t < bestT) {
-          bestT = t;
-          hit = { type: 'shield' };
-        }
-      }
-      if (f.invulnT > 0) continue;
+      if (f.id === o.ownerId || f.invulnT > 0) continue;
       for (const h of hitPoints(f)) {
         const t = segmentCircle(x, y, ex, ey, h.x, h.y, hitRadius(f, tuning) + o.radius);
         if (t >= 0 && t < bestT) {
@@ -73,7 +65,7 @@ export function tracePath(world: World, tuning: Tuning, x: number, y: number, an
 
     for (const p of world.placeables) {
       if (p.id === ignorePlaceable) continue;
-      if (p.ownerId === o.ownerId && !p.reflective) continue;
+      if (p.ownerId === o.ownerId && (!p.reflective || p.ownerPasses)) continue;
       const t = pathHits(p, x, y, ex, ey, o.radius);
       if (t >= 0 && t < bestT) {
         bestT = t;
@@ -91,7 +83,6 @@ export function tracePath(world: World, tuning: Tuning, x: number, y: number, an
       res.hitFighterId = hit.id;
       break;
     }
-    if (hit.type === 'shield') break;
 
     if (hit.type === 'wall') {
       if (!o.wallsBounce || bounces <= 0) break;

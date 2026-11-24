@@ -17,6 +17,7 @@ import { CLASS_ORDER } from '../sim/classes/registry.ts';
 import type { BotDifficulty } from '../sim/bot.ts';
 import { PauseMenu } from '../ui/pauseMenu.ts';
 import { DevPanel } from '../ui/devPanel.ts';
+import { NetOverlay } from '../ui/netOverlay.ts';
 import { MatchOverMenu } from '../ui/matchOverMenu.ts';
 import { CharacterSelect, HostScreen, JoinScreen, MainMenu, MessageScreen, type CharSelection } from '../ui/menus.ts';
 import { clearRoomFromUrl, copyText, roomFromUrl, shareLink } from '../platform/url.ts';
@@ -32,6 +33,7 @@ export class App {
   private lastBot: CharSelection = { classId: 'mage', botClass: 'random', difficulty: 'normal' };
 
   readonly devPanel: DevPanel;
+  private netOverlay: NetOverlay;
   private pauseMenu: PauseMenu;
   private matchOverMenu: MatchOverMenu;
   private mainMenu: MainMenu;
@@ -51,6 +53,7 @@ export class App {
     this.input = input;
     this.renderer = renderer;
 
+    this.netOverlay = new NetOverlay(uiRoot);
     this.mainMenu = new MainMenu(uiRoot, {
       host: () => void this.hostMatch(),
       join: () => this.showOnly(() => this.joinScreen.open()),
@@ -273,6 +276,7 @@ export class App {
     const dt = Math.min(0.1, (now - this.lastFrame) / 1000);
     this.lastFrame = now;
     const s = this.session;
+    this.netOverlay.update(!!s?.online && s.ready);
     if (!s || !s.ready) {
       // Menus: also let the dev panel key work here.
       if (this.input.consumeMenu('devPanel')) this.devPanel.toggle();

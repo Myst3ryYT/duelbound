@@ -1,14 +1,16 @@
 ﻿/**
  * MAGE - C - Watchtower (variable, static placeable)
  * Press C to see an outline at the crosshair, left click to place it.
- * After a build-up it fires bolts in 8 directions at regular intervals.
- * Its bolts belong to the Mage, so they only hurt the enemy.
+ * After a short build-up it gives off an aura: while the Mage stands inside it,
+ * the staff fires faster. It doesn't shoot. Enemies can shoot it down.
  * Numbers: tuning.mage.watchtower
  */
+import type { Tuning } from '../../../config/tuning.ts';
 import type { AbilityDef, PlaceableKindDef } from '../../abilities.ts';
+import type { Fighter, World } from '../../types.ts';
 import { canPlaceAt, removePlaceable, spawnPlaceable } from '../../placeables.ts';
-import { spawnProjectile } from '../../projectiles.ts';
 import { emitFx, emitSound } from '../../events.ts';
+import { dist } from '../../math.ts';
 
 export const watchtower: AbilityDef = {
   id: 'mage_watchtower',
@@ -32,33 +34,20 @@ export const watchtower: AbilityDef = {
   },
 };
 
-/** What a placed watchtower does every tick. */
+/** Is this Mage standing in the aura of one of their own finished watchtowers? */
+export function inWatchtowerAura(world: World, tuning: Tuning, f: Fighter): boolean {
+  const w = tuning.mage.watchtower;
+  return world.placeables.some((p) => p.kind === 'mage_watchtower' && p.ownerId === f.id && p.age >= w.startup && dist(p.x, p.y, f.x, f.y) <= w.auraRadius);
+}
+
+/** What a placed watchtower does every tick: just times out. */
 export const watchtowerStructure: PlaceableKindDef = {
   kind: 'mage_watchtower',
-  update(p, world, tuning, dt) {
+  update(p, world, tuning) {
     const w = tuning.mage.watchtower;
-    if (p.age < w.startup) return; // still building
     if (p.age >= w.startup + w.life) {
       emitFx(world, 'ring', p.x, p.y, '#7fb0ff', p.radius * 1.5, 0.3);
       removePlaceable(world, p);
-      return;
     }
-    p.timer -= dt;
-    if (p.timer > 0) return;
-    p.timer = w.fireInterval;
-    for (let i = 0; i < 8; i++) {
-      const angle = (i * Math.PI) / 4; // right, down-right, down, ... (all cardinals and diagonals)
-      spawnProjectile(world, tuning, {
-        ownerId: p.ownerId,
-        kind: 'mage_tower_bolt',
-        x: p.x + Math.cos(angle) * (p.radius + w.boltSize + 2),
-        y: p.y + Math.sin(angle) * (p.radius + w.boltSize + 2),
-        angle,
-        speed: w.boltSpeed,
-        radius: w.boltSize,
-        damage: w.boltDamage,
-      });
-    }
-    emitSound(world, 'tower_fire', p.x, p.y);
   },
 };

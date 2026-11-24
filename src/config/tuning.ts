@@ -57,9 +57,9 @@ export const TUNING = {
 
   net: {
     snapshotEvery: 2, // online: the host sends the world every this many ticks (2 = 30 times a second)
-    interpDelay: 0.1, // online: the guest draws other things this many seconds in the past, for smooth motion
+    interpDelay: 0.08, // online: the guest draws the opponent's side this many seconds in the past, for smooth motion
     reconnectWait: 10, // online: seconds to wait for a dropped player to come back before the other one wins
-    maxQueuedInputs: 6, // online: if more guest inputs than this pile up at the host, old ones are skipped
+    maxQueuedInputs: 3, // online: if more guest inputs than this pile up at the host, the oldest are merged so the guest isn't stuck in the past
   },
 
   bot: {    normal: {
@@ -67,7 +67,7 @@ export const TUNING = {
       aimJitter: 70, // random aim error, in world units (0 = perfect aim)
       leadFactor: 0.5, // how well it predicts where you're moving (1 = perfectly, 0 = shoots where you are)
       dodgeChance: 0.25, // chance it tries to dodge each shot it notices (0..1)
-      defendChance: 0.2, // chance it uses a defensive ability (shield, roll, refract...) against a close shot
+      defendChance: 0.2, // chance it uses a defensive ability (shield, roll, dash...) against a close shot
       abilityRate: 0.4, // how often per second it considers using a cooldown ability
       moveSpeed: 0.6, // share of full walking speed it uses (dodging always uses full speed)
       pauseChance: 0.35, // chance it stands still instead of strafing, each time it changes direction
@@ -77,7 +77,7 @@ export const TUNING = {
       aimJitter: 35, // random aim error, in world units (0 = perfect aim)
       leadFactor: 0.8, // how well it predicts where you're moving (1 = perfectly, 0 = shoots where you are)
       dodgeChance: 0.55, // chance it tries to dodge each shot it notices (0..1)
-      defendChance: 0.5, // chance it uses a defensive ability (shield, roll, refract...) against a close shot
+      defendChance: 0.5, // chance it uses a defensive ability (shield, roll, dash...) against a close shot
       abilityRate: 0.7, // how often per second it considers using a cooldown ability
       moveSpeed: 1, // share of full walking speed it uses (dodging always uses full speed)
       pauseChance: 0, // chance it stands still instead of strafing, each time it changes direction
@@ -87,34 +87,35 @@ export const TUNING = {
     rangeMage: 460, // both difficulties: distance it likes to keep as a Mage
     rangeSheriff: 380, // both difficulties: distance it likes to keep as a Sheriff
     rangeRefractor: 320, // both difficulties: distance it likes to keep as a Refractor
+    rangeBuilder: 260, // both difficulties: distance it likes to keep as a Builder
     wallMargin: 140, // both difficulties: how close to a wall it gets before steering back to the middle
   },
 
   // ---------------------------------------------------------------- MAGE ----
   mage: {
     staff: {
-      chargeTime: 1.3, // LC: seconds of holding to reach a full charge
-      damageMin: 20, // LC: damage of an uncharged shot
-      damageMax: 90, // LC: damage of a fully charged shot
-      speedMin: 300, // LC: speed of an uncharged shot
-      speedMax: 950, // LC: speed of a fully charged shot
-      sizeMin: 7, // LC: radius of an uncharged shot
-      sizeMax: 20, // LC: radius of a fully charged shot
-      fireInterval: 0.35, // LC: wait after a shot before you can start charging the next one
+      damage: 45, // LC: damage per bolt
+      speed: 650, // LC: bolt speed
+      size: 10, // LC: bolt radius
+      fireInterval: 0.45, // LC: seconds between bolts (hold to keep firing)
     },
     shield: {
-      duration: 2, // RC: seconds the reflective shield stays up
-      cooldown: 10, // RC: seconds before it can be used again (counts from when it goes up)
-      radius: 46, // RC: size of the shield bubble
+      charges: 2, // RC: shields stored up
+      chargeTime: 10, // RC: seconds for one stored shield to come back
+      duration: 3, // RC: seconds before the shield breaks by itself
+      speed: 110, // RC: how fast it drifts forward
+      distance: 60, // RC: how far in front of the Mage it appears
+      arcDegrees: 110, // RC: how far it curves around the Mage (degrees)
+      pieces: 5, // RC: straight pieces the curve is made of (more = smoother)
+      thickness: 10, // RC: thickness of the wall
+      hp: 120, // RC: health of each piece (enemy hits wear it down)
     },
     watchtower: {
-      startup: 1.5, // C: seconds to build before it starts shooting
+      startup: 1, // C: seconds to build before its aura switches on
       hp: 200, // C: health of the tower
-      life: 8, // C: seconds it keeps shooting once built
-      fireInterval: 1.2, // C: seconds between each ring of 8 bolts
-      boltDamage: 30, // C: damage of each bolt
-      boltSpeed: 380, // C: speed of each bolt
-      boltSize: 10, // C: radius of each bolt
+      life: 10, // C: seconds it lasts once built
+      auraRadius: 220, // C: size of the area around it where the Mage fires faster
+      fireRateBonus: 1.6, // C: staff fire rate multiplier inside the aura (1.6 = 60% faster)
       radius: 34, // C: size of the tower (for collisions and placement)
       cooldown: 18, // C: seconds before another tower can be placed (counts from placement)
     },
@@ -197,13 +198,13 @@ export const TUNING = {
     ray: {
       pool: 100, // RC: size of the resource pool (bar next to the crosshair)
       drain: 40, // RC: pool used per second while firing
-      refill: 25, // RC: pool regained per second when not firing
+      refill: 12, // RC: pool regained per second when not firing
       refillDelay: 1, // RC: seconds of not firing before the pool starts refilling
-      dps: 40, // RC: damage per second (doubles for every mirror the beam bounces off)
+      dps: 110, // RC: damage per second (same after bouncing off mirrors)
       maxReflections: 3, // RC: how many mirrors the beam can bounce off
       tickInterval: 0.1, // RC: seconds between damage ticks
       range: 2500, // RC: total beam length, including bounces
-      width: 6, // RC: beam thickness (grows with each mirror; looks only)
+      width: 8, // RC: beam thickness (looks only)
     },
     mirror: {
       maxMirrors: 3, // C: mirrors you can have at once (placing another removes your oldest)
@@ -215,15 +216,67 @@ export const TUNING = {
       life: 8, // C: seconds a mirror lasts before it breaks by itself
       thickness: 10, // C: mirror thickness (for collisions)
     },
-    refract: {
-      duration: 0.6, // SPACE: seconds you stay split
-      separation: 160, // SPACE: distance between the two halves
-      cooldown: 8, // SPACE: seconds before it can be used again
+    dash: {
+      distance: 240, // SPACE: how far the dash goes
+      duration: 0.15, // SPACE: seconds the dash takes
+      cooldown: 5, // SPACE: seconds before dashing again
     },
     shatter: {
       radius: 250, // V: distance from a mirror that gets hurt
       damage: 40, // V: damage per mirror (near 2 mirrors = hit twice)
       cooldown: 20, // V: seconds before it can be used again
+    },
+  },
+
+  // ------------------------------------------------------------- BUILDER ----
+  builder: {
+    nailgun: {
+      fireInterval: 0.1, // LC: seconds between nails (hold to keep firing)
+      speed: 1100, // LC: nail speed
+      damage: 9, // LC: damage per nail
+      size: 4, // LC: nail radius
+      spread: 5, // LC: random spread of the nails, in degrees
+    },
+    hammer: {
+      damage: 60, // RC: damage to an enemy player hit by the swing
+      structureDamage: 150, // RC: damage to enemy structures and furniture hit by the swing
+      range: 70, // RC: reach of the swing, from the edge of the Builder's body
+      arcDegrees: 120, // RC: how wide the swing is (degrees)
+      flingSpeed: 1000, // RC: speed your furniture flies at when you hit it
+      swingTime: 0.2, // RC: length of the swing animation (looks only)
+      cooldown: 0.9, // RC: seconds between swings
+    },
+    wall: {
+      maxWalls: 2, // C: walls you can have at once (placing another removes your oldest)
+      charges: 2, // C: walls stored up
+      chargeTime: 9, // C: seconds for one stored wall to come back
+      maxLength: 200, // C: longest wall (dragging further places it automatically)
+      minLength: 40, // C: shortest wall (shorter drags are ignored)
+      hp: 500, // C: wall health
+      life: 15, // C: seconds a wall lasts before it crumbles by itself
+      thickness: 18, // C: wall thickness
+      bricks: 5, // C: bricks fired when you smash your wall with the hammer
+      brickDamage: 50, // C: damage per brick
+      brickSpeed: 900, // C: brick speed
+      brickSize: 9, // C: brick radius
+      brickSpread: 8, // C: total spread of the bricks, in degrees (they all fly towards the crosshair)
+    },
+    furniture: {
+      cooldown: 7, // V: seconds before building another piece of furniture
+      hp: 150, // V: damage it takes from the enemy before it breaks
+      size: 30, // V: radius of the furniture
+      spawnDistance: 75, // V: how far in front of the Builder it appears
+      life: 30, // V: seconds before it falls apart by itself
+      flingDamage: 100, // V: damage when flung furniture hits the enemy
+      friction: 8, // V: how quickly it stops sliding when standing around
+      flungFriction: 0.6, // V: how quickly it slows down after being flung (lower = flies further)
+      minFlingSpeed: 200, // V: below this speed, flung furniture stops being dangerous
+      restitution: 0.4, // V: bounciness off walls and structures
+    },
+    dash: {
+      distance: 220, // SPACE: how far the dash goes
+      duration: 0.15, // SPACE: seconds the dash takes
+      cooldown: 5, // SPACE: seconds before dashing again
     },
   },
 

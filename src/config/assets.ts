@@ -33,9 +33,8 @@ export const SPRITES = {
 
   // ---- Mage ----
   mage_bolt: { file: 'mage_bolt.png', size: 0 }, // staff shot
-  mage_tower_bolt: { file: 'mage_tower_bolt.png', size: 0 }, // watchtower shot
   mage_watchtower: { file: 'mage_watchtower.png', size: 80 }, // the watchtower structure
-  mage_shield: { file: 'mage_shield.png', size: 0 }, // reflective shield bubble
+  mage_shield: { file: 'mage_shield.png', size: 0 }, // one piece of the curved shield wall (stretched like the mirror; draw it lying flat)
   teleport_marker: { file: 'teleport_marker.png', size: 56 }, // where a teleport will land
 
   // ---- Sheriff ----
@@ -49,6 +48,15 @@ export const SPRITES = {
   class_refractor: { file: 'refractor.png', size: 64 }, // the Refractor
   refractor_pellet: { file: 'refractor_pellet.png', size: 0 }, // shotgun pellet
   refractor_mirror: { file: 'refractor_mirror.png', size: 0 }, // mirror (stretched along its length; draw it lying flat, left to right)
+
+  // ---- Builder ----
+  class_builder: { file: 'builder.png', size: 64 }, // the Builder
+  builder_nail: { file: 'builder_nail.png', size: 0 }, // nail gun shot
+  builder_brick: { file: 'builder_brick.png', size: 0 }, // brick fired from a smashed wall
+  builder_wall: { file: 'builder_wall.png', size: 0 }, // brick wall (stretched along its length; draw it lying flat, left to right)
+  builder_furniture_chair: { file: 'builder_chair.png', size: 0 }, // furniture (drawn at its hitbox size)
+  builder_furniture_table: { file: 'builder_table.png', size: 0 },
+  builder_furniture_couch: { file: 'builder_couch.png', size: 0 },
 
   // ---- Training ----
   dummy_shot: { file: 'dummy_shot.png', size: 0 }, // what the dummy shoots
@@ -67,8 +75,13 @@ export const SPRITES = {
   icon_refractor_shotgun: { file: 'icon_refractor_shotgun.png', size: 64 },
   icon_refractor_ray: { file: 'icon_refractor_ray.png', size: 64 },
   icon_refractor_mirror: { file: 'icon_refractor_mirror.png', size: 64 },
-  icon_refractor_refract: { file: 'icon_refractor_refract.png', size: 64 },
+  icon_refractor_dash: { file: 'icon_refractor_dash.png', size: 64 },
   icon_refractor_shatter: { file: 'icon_refractor_shatter.png', size: 64 },
+  icon_builder_nailgun: { file: 'icon_builder_nailgun.png', size: 64 },
+  icon_builder_hammer: { file: 'icon_builder_hammer.png', size: 64 },
+  icon_builder_wall: { file: 'icon_builder_wall.png', size: 64 },
+  icon_builder_construction: { file: 'icon_builder_construction.png', size: 64 },
+  icon_builder_dash: { file: 'icon_builder_dash.png', size: 64 },
 };
 
 export const SOUNDS = {
@@ -81,7 +94,6 @@ export const SOUNDS = {
   staff_fire: { file: 'staff_fire.wav' }, // Mage LC
   shield_up: { file: 'shield_up.wav' }, // Mage RC
   tower_build: { file: 'tower_build.wav' }, // Mage C placed
-  tower_fire: { file: 'tower_fire.wav' }, // watchtower shoots
   switch: { file: 'switch.wav' }, // Mage V
   teleport_start: { file: 'teleport_start.wav' }, // Mage SPACE begins
   teleport: { file: 'teleport.wav' }, // Mage SPACE arrives
@@ -103,8 +115,15 @@ export const SOUNDS = {
   mirror_bounce: { file: 'mirror_bounce.wav' }, // a shot bounced off a mirror
   mirror_split: { file: 'mirror_split.wav' }, // a pellet doubled off a mirror
   mirror_break: { file: 'mirror_break.wav' }, // a mirror broke
-  refract: { file: 'refract.wav' }, // Refractor V
-  shatter: { file: 'shatter.wav' }, // Refractor SPACE
+  dash: { file: 'dash.wav' }, // Refractor / Builder SPACE
+  shatter: { file: 'shatter.wav' }, // Refractor V
+  nail_fire: { file: 'nail_fire.wav' }, // Builder LC
+  hammer_swing: { file: 'hammer_swing.wav' }, // Builder RC, hit nothing
+  hammer_hit: { file: 'hammer_hit.wav' }, // Builder RC, hit something
+  wall_place: { file: 'wall_place.wav' }, // Builder C placed
+  wall_break: { file: 'wall_break.wav' }, // Builder smashed their wall into bricks
+  furniture_build: { file: 'furniture_build.wav' }, // Builder V
+  furniture_hit: { file: 'furniture_hit.wav' }, // flung furniture hit someone
 };
 
 export type SpriteId = keyof typeof SPRITES;

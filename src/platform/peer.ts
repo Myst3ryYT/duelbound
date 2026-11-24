@@ -7,6 +7,12 @@
  * networks need a TURN relay (not free), so joining can fail there; the
  * error message says so.
  *
+ * Two channels per connection:
+ *  - reliable + ordered (PeerJS's own): lobby, events, anything that must arrive
+ *  - fast (unordered, never resent): snapshots and inputs. A lost packet is simply
+ *    skipped instead of holding up everything behind it, which matters a lot on
+ *    long-distance connections. The next packet carries newer data anyway.
+ *
  * The rest of the game only sees `NetLink` (send messages / receive messages),
  * so a desktop build or a dedicated server can swap this file out.
  */
@@ -18,22 +24,49 @@ const CODE_LENGTH = 5;
 
 /** A two-way message pipe to the other player. */
 export interface NetLink {
+  /** Guaranteed to arrive, in order. */
   send(msg: unknown): void;
+  /** Fast but may be lost or arrive out of order (falls back to `send` if unavailable). */
+  sendFast(msg: unknown): void;
   close(): void;
   readonly open: boolean;
-  onMessage: (msg: unknown) => void;
+  /** `fast` = it came over the fast (lossy) channel. */
+  onMessage: (msg: unknown, fast: boolean) => void;
   onClose: () => void;
 }
 
+/** Byte counters for the network overlay. */
+export const netBytes = { in: 0, out: 0 };
+
+// Both sides create this channel with the same fixed id, so no extra handshake is needed.
+const FAST_CHANNEL_ID = 50;
+
 class PeerLink implements NetLink {
-  onMessage: (msg: unknown) => void = () => {};
+  onMessage: (msg: unknown, fast: boolean) => void = () => {};
   onClose: () => void = () => {};
   private closed = false;
   private conn: DataConnection;
+  private fast: RTCDataChannel | null = null;
 
   constructor(conn: DataConnection) {
     this.conn = conn;
-    conn.on('data', (d) => this.onMessage(d));
+    conn.on('data', (d) => this.onMessage(d, false));
+    try {
+      const ch = conn.peerConnection?.createDataChannel('rebound-fast', { negotiated: true, id: FAST_CHANNEL_ID, ordered: false, maxRetransmits: 0 });
+      if (ch) {
+        ch.onmessage = (e) => {
+          netBytes.in += (e.data as string).length;
+          try {
+            this.onMessage(JSON.parse(e.data as string), true);
+          } catch {
+            /* ignore a garbled packet */
+          }
+        };
+        this.fast = ch;
+      }
+    } catch {
+      this.fast = null; // older browser: everything goes over the reliable channel
+    }
     const closed = () => {
       if (this.closed) return;
       this.closed = true;
@@ -53,8 +86,23 @@ class PeerLink implements NetLink {
   send(msg: unknown): void {
     if (this.open) this.conn.send(msg);
   }
+  sendFast(msg: unknown): void {
+    if (!this.open) return;
+    if (this.fast?.readyState === 'open') {
+      const text = JSON.stringify(msg);
+      netBytes.out += text.length;
+      try {
+        this.fast.send(text);
+        return;
+      } catch {
+        /* too big or channel busy: use the reliable one */
+      }
+    }
+    this.conn.send(msg);
+  }
   close(): void {
     this.closed = true;
+    this.fast?.close();
     this.conn.close();
   }
 }

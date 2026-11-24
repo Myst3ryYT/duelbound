@@ -5,6 +5,7 @@
  * Two shapes:
  *  - circle  (watchtower): centre + radius
  *  - segment (mirror):     a line from (x1, y1) to (x2, y2), `radius` = half its thickness
+ * Most stand still; some drift (vx, vy), like the Mage's shield.
  */
 import type { Tuning } from '../config/tuning.ts';
 import type { Fighter, Placeable, World } from './types.ts';
@@ -103,17 +104,38 @@ export function canStandAt(world: World, tuning: Tuning, self: Fighter, x: numbe
   const size = tuning.world.arenaSize;
   if (x - r < 0 || y - r < 0 || x + r > size || y + r > size) return false;
   for (const f of world.fighters) if (f !== self && dist(x, y, f.x, f.y) < r + f.radius) return false;
-  for (const p of world.placeables) if (distanceTo(p, x, y) < r + p.radius) return false;
+  for (const p of world.placeables) if (!passes(p, self.id) && distanceTo(p, x, y) < r + p.radius) return false;
   return true;
+}
+
+/** Can this fighter walk straight through this structure? (the Mage through their own shield) */
+export function passes(p: Placeable, fighterId: number): boolean {
+  return p.ownerPasses && p.ownerId === fighterId;
 }
 
 // --------------------------------------------------------- create/update ----
 
-type NewPlaceable = Omit<Placeable, 'id' | 'age' | 'timer' | 'shape' | 'x1' | 'y1' | 'x2' | 'y2' | 'reflective' | 'breakT'> &
-  Partial<Pick<Placeable, 'shape' | 'x1' | 'y1' | 'x2' | 'y2' | 'reflective' | 'breakT'>>;
+type Optional = 'shape' | 'x1' | 'y1' | 'x2' | 'y2' | 'reflective' | 'claims' | 'ownerPasses' | 'breakT' | 'vx' | 'vy';
+type NewPlaceable = Omit<Placeable, 'id' | 'age' | 'timer' | Optional> & Partial<Pick<Placeable, Optional>>;
 
 export function spawnPlaceable(world: World, props: NewPlaceable): Placeable {
-  const p: Placeable = { id: world.nextId++, age: 0, timer: 0, shape: 'circle', x1: 0, y1: 0, x2: 0, y2: 0, reflective: false, breakT: -1, ...props };
+  const p: Placeable = {
+    id: world.nextId++,
+    age: 0,
+    timer: 0,
+    shape: 'circle',
+    x1: 0,
+    y1: 0,
+    x2: 0,
+    y2: 0,
+    reflective: false,
+    claims: false,
+    ownerPasses: false,
+    breakT: -1,
+    vx: 0,
+    vy: 0,
+    ...props,
+  };
   world.placeables.push(p);
   return p;
 }
@@ -127,6 +149,17 @@ export function damagePlaceable(world: World, p: Placeable, amount: number): voi
 export function updatePlaceables(world: World, tuning: Tuning, dt: number): void {
   for (const p of world.placeables) {
     p.age += dt;
+    if (p.vx || p.vy) {
+      // Drifting structure: move the whole thing.
+      const mx = p.vx * dt;
+      const my = p.vy * dt;
+      p.x += mx;
+      p.y += my;
+      p.x1 += mx;
+      p.y1 += my;
+      p.x2 += mx;
+      p.y2 += my;
+    }
     if (p.breakT >= 0) {
       p.breakT -= dt;
       if (p.breakT <= 0) p.hp = 0;
@@ -152,6 +185,7 @@ export function collideFightersWithPlaceables(world: World): void {
   for (const f of world.fighters) {
     if (f.kind === 'dummy') continue;
     for (const p of world.placeables) {
+      if (passes(p, f.id)) continue;
       const overlap = f.radius + p.radius - distanceTo(p, f.x, f.y);
       if (overlap <= 0) continue;
       const n = surfaceNormal(p, f.x, f.y);

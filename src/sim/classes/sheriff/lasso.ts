@@ -2,7 +2,7 @@
  * SHERIFF - RC - Lasso (instant, projectile/misc)
  * Throws a lasso. If it catches the enemy, it deals a little damage and drags
  * them to the Sheriff. Structures block it; it flies straight through tumbleweeds.
- * A reflective shield snaps it.
+ * A Mage's reflective shield snaps it.
  * Numbers: tuning.sheriff.lasso
  */
 import type { AbilityDef, ProjectileHook } from '../../abilities.ts';

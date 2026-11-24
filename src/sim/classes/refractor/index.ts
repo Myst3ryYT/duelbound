@@ -6,7 +6,7 @@ import type { ClassDef } from '../../abilities.ts';
 import { shotgun } from './shotgun.ts';
 import { ray } from './ray.ts';
 import { mirror } from './mirror.ts';
-import { refract } from './refract.ts';
+import { makeDash } from '../shared/dash.ts';
 import { shatter } from './shatter.ts';
 
 export const REFRACTOR: ClassDef = {
@@ -18,8 +18,10 @@ export const REFRACTOR: ClassDef = {
     secondary: ray, // RC
     ability1: mirror, // C
     ability2: shatter, // V
-    mobility: refract, // SPACE
+    mobility: makeDash('refractor_dash', 'icon_refractor_dash', (t) => t.refractor.dash), // SPACE
   },
+
+  crosshairCharges: 'ability1', // mirrors left, shown above the crosshair
 
   // Mind Ray resource pool, shown next to the crosshair whenever it isn't full.
   crosshairBar(f, t) {

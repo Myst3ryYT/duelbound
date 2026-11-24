@@ -1,14 +1,14 @@
 ﻿/**
  * MAGE - LC - Staff (instant, projectile)
- * Hold to charge, release to fire. Longer charge = faster, bigger, more damage.
- * Reaching a full charge fires automatically. Keep holding to start charging the next shot.
- * Numbers: tuning.mage.staff
+ * Hold to keep firing a steady, middle-of-the-road magic bolt.
+ * Fires faster while the Mage stands inside one of their Watchtowers' aura.
+ * Numbers: tuning.mage.staff (fire-rate bonus: tuning.mage.watchtower)
  */
 import type { AbilityDef } from '../../abilities.ts';
 import { isReady, startCooldown } from '../../abilities.ts';
 import { spawnProjectile } from '../../projectiles.ts';
 import { emitSound } from '../../events.ts';
-import { lerp } from '../../math.ts';
+import { inWatchtowerAura } from './watchtower.ts';
 
 export const staff: AbilityDef = {
   id: 'mage_staff',
@@ -18,40 +18,22 @@ export const staff: AbilityDef = {
   icon: 'icon_mage_staff',
   cooldown: (t) => t.mage.staff.fireInterval,
 
-  update({ world, tuning, fighter: f, slot, held, stunned, dt }) {
+  update({ world, tuning, fighter: f, slot, held }) {
+    if (!held || !isReady(f, slot)) return;
     const s = tuning.mage.staff;
-    if (stunned) {
-      f.vars.staffCharging = 0; // a stun cancels the charge
-      return;
-    }
-    // Start charging as soon as the button is down and the staff is ready.
-    if (!f.vars.staffCharging && held && isReady(f, slot)) {
-      f.vars.staffCharging = 1;
-      f.vars.staffCharge = 0;
-    }
-    if (!f.vars.staffCharging) return;
-
-    f.vars.staffCharge = Math.min(s.chargeTime, (f.vars.staffCharge ?? 0) + dt);
-    const full = f.vars.staffCharge >= s.chargeTime;
-    if (held && !full) return;
-
-    // Released, or fully charged: fire.
-    const k = s.chargeTime > 0 ? f.vars.staffCharge / s.chargeTime : 1; // 0 = tap, 1 = full charge
-    const radius = lerp(s.sizeMin, s.sizeMax, k);
     spawnProjectile(world, tuning, {
       ownerId: f.id,
       kind: 'mage_bolt',
-      x: f.x + Math.cos(f.aimAngle) * (f.radius + radius),
-      y: f.y + Math.sin(f.aimAngle) * (f.radius + radius),
+      x: f.x + Math.cos(f.aimAngle) * (f.radius + s.size),
+      y: f.y + Math.sin(f.aimAngle) * (f.radius + s.size),
       angle: f.aimAngle,
-      speed: lerp(s.speedMin, s.speedMax, k),
-      radius,
-      damage: lerp(s.damageMin, s.damageMax, k),
+      speed: s.speed,
+      radius: s.size,
+      damage: s.damage,
       from: { x: f.x, y: f.y },
     });
-    f.vars.staffCharging = 0;
-    f.vars.staffCharge = 0;
-    startCooldown(world, f, slot, s.fireInterval);
+    const buffed = inWatchtowerAura(world, tuning, f);
+    startCooldown(world, f, slot, buffed ? s.fireInterval / tuning.mage.watchtower.fireRateBonus : s.fireInterval);
     emitSound(world, 'staff_fire', f.x, f.y);
   },
 };

@@ -150,14 +150,6 @@ function mageBolt(): HTMLCanvasElement {
   return p.canvas;
 }
 
-function mageTowerBolt(): HTMLCanvasElement {
-  const p = new Pixels(10, 10);
-  p.disc(5, 5, 5, 'rgba(255,211,77,0.5)');
-  p.disc(5, 5, 3.6, GOLD);
-  p.disc(5, 5, 2, BLUE_LIGHT);
-  return p.canvas;
-}
-
 function mageWatchtower(): HTMLCanvasElement {
   const p = new Pixels(20, 20);
   for (let i = 0; i < 8; i++) {
@@ -174,12 +166,11 @@ function mageWatchtower(): HTMLCanvasElement {
 }
 
 function mageShield(): HTMLCanvasElement {
-  const p = new Pixels(24, 24);
-  p.disc(12, 12, 12, 'rgba(90,160,255,0.18)');
-  p.ring(12, 12, 12, 1.5, 'rgba(150,200,255,0.9)');
-  p.ring(12, 12, 10.5, 1, 'rgba(90,160,255,0.45)');
-  p.rect(6, 6, 2, 1, 'rgba(255,255,255,0.8)'); // shine
-  p.rect(5, 7, 1, 2, 'rgba(255,255,255,0.8)');
+  // One piece of the curved wall, lying flat (stretched along its length in game).
+  const p = new Pixels(24, 4);
+  p.rect(0, 0, 24, 4, 'rgba(90,160,255,0.55)');
+  p.rect(0, 1, 24, 2, 'rgba(170,210,255,0.95)');
+  for (let x = 3; x < 24; x += 8) p.px(x, 1, GOLD);
   return p.canvas;
 }
 
@@ -397,10 +388,12 @@ function iconMirror(): HTMLCanvasElement {
   p.px(7, 8, '#fff');
   return p.canvas;
 }
-function iconRefract(): HTMLCanvasElement {
+function iconDash(): HTMLCanvasElement {
   const p = iconBase('#2a2440');
-  p.disc(5.5, 8, 3, 'rgba(224,90,208,0.9)');
-  p.disc(10.5, 8, 3, 'rgba(90,224,232,0.9)');
+  p.disc(10.5, 8, 3, GLASS);
+  p.line(1, 6, 6, 6, MAGENTA); // speed lines
+  p.line(2, 8, 7, 8, CYAN);
+  p.line(1, 10, 6, 10, MAGENTA);
   return p.canvas;
 }
 function iconShatter(): HTMLCanvasElement {
@@ -413,6 +406,113 @@ function iconShatter(): HTMLCanvasElement {
   return p.canvas;
 }
 
+// --------------------------------------------------------------- BUILDER ----
+const ORANGE = '#f0902a';
+const ORANGE_DARK = '#a85a12';
+const BRICK = '#b04a32';
+const BRICK_DARK = '#6e2a1c';
+const WOOD = '#9a6a3a';
+const WOOD_DARK = '#5e3c1e';
+
+function builder(): HTMLCanvasElement {
+  const p = new Pixels(20, 20);
+  p.rect(12, 14, 7, 2, '#7a7f8c'); // hammer handle held forward
+  p.rect(17, 12, 3, 6, '#5b5e70'); // hammer head
+  p.disc(10, 10, 8, OUTLINE);
+  p.disc(10, 10, 7, '#3d5a8a'); // overalls / shoulders
+  p.rect(6, 4, 2, 12, ORANGE); // hi-vis straps
+  p.rect(12, 4, 2, 12, ORANGE);
+  p.disc(10, 10, 4.8, ORANGE_DARK); // hard hat rim
+  p.disc(10, 10, 4, ORANGE); // hard hat
+  p.rect(9, 6, 2, 8, '#ffd08a'); // ridge
+  p.px(14, 10, OUTLINE); // brim facing right
+  return p.canvas;
+}
+function builderNail(): HTMLCanvasElement {
+  const p = new Pixels(8, 4);
+  p.rect(0, 1, 6, 2, '#c9cddb');
+  p.rect(6, 1, 2, 2, '#ffffff');
+  p.rect(0, 0, 1, 4, '#9aa3b5'); // head
+  return p.canvas;
+}
+function builderBrick(): HTMLCanvasElement {
+  const p = new Pixels(10, 8);
+  p.rect(0, 0, 10, 8, BRICK_DARK);
+  p.rect(1, 1, 8, 6, BRICK);
+  p.rect(1, 3, 8, 1, '#d8a080'); // mortar line
+  return p.canvas;
+}
+function builderWall(): HTMLCanvasElement {
+  // Lying flat, left to right; stretched along the wall's length in game.
+  const p = new Pixels(32, 6);
+  p.rect(0, 0, 32, 6, BRICK_DARK);
+  for (let row = 0; row < 2; row++)
+    for (let x = row * 3; x < 32; x += 6) p.rect(x + 1, 1 + row * 2.5, 4, 2, BRICK);
+  return p.canvas;
+}
+function furnitureChair(): HTMLCanvasElement {
+  const p = new Pixels(16, 16);
+  p.rect(2, 2, 12, 12, OUTLINE);
+  p.rect(3, 3, 10, 10, WOOD); // seat
+  p.rect(3, 3, 3, 10, WOOD_DARK); // backrest
+  p.rect(7, 6, 5, 4, '#b8864e');
+  return p.canvas;
+}
+function furnitureTable(): HTMLCanvasElement {
+  const p = new Pixels(16, 16);
+  p.disc(8, 8, 7.5, OUTLINE);
+  p.disc(8, 8, 6.5, WOOD);
+  p.ring(8, 8, 6.5, 1, WOOD_DARK);
+  p.line(4, 8, 12, 8, WOOD_DARK); // planks
+  p.disc(6, 6, 1, '#e8e0d0'); // a cup
+  return p.canvas;
+}
+function furnitureCouch(): HTMLCanvasElement {
+  const p = new Pixels(16, 16);
+  p.rect(1, 2, 14, 12, OUTLINE);
+  p.rect(2, 3, 12, 10, '#5a8a4a'); // cushions
+  p.rect(2, 3, 3, 10, '#3e6a32'); // back
+  p.rect(2, 3, 12, 2, '#3e6a32'); // arms
+  p.rect(2, 11, 12, 2, '#3e6a32');
+  p.line(5, 8, 13, 8, '#3e6a32');
+  return p.canvas;
+}
+function iconNailgun(): HTMLCanvasElement {
+  const p = iconBase('#3a2a1a');
+  p.rect(2, 6, 8, 4, ORANGE);
+  p.rect(4, 10, 3, 4, ORANGE_DARK); // grip
+  for (const x of [11, 13]) p.rect(x, 7, 1, 2, '#c9cddb'); // nails
+  return p.canvas;
+}
+function iconHammer(): HTMLCanvasElement {
+  const p = iconBase('#3a2a1a');
+  p.line(3, 13, 10, 6, WOOD);
+  p.rect(8, 2, 6, 5, '#7a7f8c');
+  p.rect(8, 2, 6, 1, '#c9cddb');
+  return p.canvas;
+}
+function iconWall(): HTMLCanvasElement {
+  const p = iconBase('#3a2a1a');
+  for (let row = 0; row < 3; row++) for (let x = (row % 2) * 2 + 1; x < 14; x += 4) p.rect(x, 3 + row * 4, 3, 3, BRICK);
+  return p.canvas;
+}
+function iconConstruction(): HTMLCanvasElement {
+  const p = iconBase('#3a2a1a');
+  p.rect(3, 5, 10, 7, WOOD); // a chair-ish box
+  p.rect(3, 5, 3, 7, WOOD_DARK);
+  p.line(10, 2, 13, 2, '#ffd34d'); // sparkle
+  p.line(12, 1, 12, 3, '#ffd34d');
+  return p.canvas;
+}
+function iconBuilderDash(): HTMLCanvasElement {
+  const p = iconBase('#3a2a1a');
+  p.disc(10.5, 8, 3, ORANGE);
+  p.line(1, 6, 6, 6, '#c9cddb');
+  p.line(2, 8, 7, 8, '#c9cddb');
+  p.line(1, 10, 6, 10, '#c9cddb');
+  return p.canvas;
+}
+
 /** One placeholder per sprite id. Adding a sprite? Add its painter here too. */
 export const PLACEHOLDERS: Record<SpriteId, () => HTMLCanvasElement> = {
   fighter_default: fighterDefault,
@@ -422,7 +522,6 @@ export const PLACEHOLDERS: Record<SpriteId, () => HTMLCanvasElement> = {
   crosshair,
   class_mage: mage,
   mage_bolt: mageBolt,
-  mage_tower_bolt: mageTowerBolt,
   mage_watchtower: mageWatchtower,
   mage_shield: mageShield,
   teleport_marker: teleportMarker,
@@ -448,6 +547,18 @@ export const PLACEHOLDERS: Record<SpriteId, () => HTMLCanvasElement> = {
   icon_refractor_shotgun: iconShotgun,
   icon_refractor_ray: iconRay,
   icon_refractor_mirror: iconMirror,
-  icon_refractor_refract: iconRefract,
+  icon_refractor_dash: iconDash,
   icon_refractor_shatter: iconShatter,
+  class_builder: builder,
+  builder_nail: builderNail,
+  builder_brick: builderBrick,
+  builder_wall: builderWall,
+  builder_furniture_chair: furnitureChair,
+  builder_furniture_table: furnitureTable,
+  builder_furniture_couch: furnitureCouch,
+  icon_builder_nailgun: iconNailgun,
+  icon_builder_hammer: iconHammer,
+  icon_builder_wall: iconWall,
+  icon_builder_construction: iconConstruction,
+  icon_builder_dash: iconBuilderDash,
 };

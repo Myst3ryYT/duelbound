@@ -1,6 +1,6 @@
 ﻿/**
  * Projectiles: spawning, flying, bouncing, turning around (Switch), reflecting
- * off shields, and hitting fighters, structures and physics objects.
+ * off mirrors and shields, and hitting fighters, structures and physics objects.
  *
  * Each tick a projectile moves in small steps (at most STEP units) and checks
  * the whole path of every step, so even very fast shots can't skip through things.
@@ -13,7 +13,8 @@ import { bounceNormal, closestPoint, damagePlaceable, pathHits } from './placeab
 import { hitPoints, hitRadius } from './hitbox.ts';
 import { emitFx, emitSound } from './events.ts';
 import { cancelSwitch, updateSwitch } from './switching.ts';
-import { getProjectileHook } from './classes/registry.ts';
+import { getObjectKind, getProjectileHook } from './classes/registry.ts';
+import { damageObject } from './objects.ts';
 
 const STEP = 24; // world units per collision sub-step
 
@@ -31,7 +32,7 @@ export interface ProjectileSpawn {
   falloffRange?: number; // distance to reach damageFar [0 = no falloff]
   bounces?: number; // bounces off walls / structures [0]
   behavior?: string; // special on-hit behaviour ['']
-  reflectable?: boolean; // can shields reflect it [true]
+  reflectable?: boolean; // can a Mage shield reflect it [true]
   trail?: number; // seconds of visual trail [0]
   splits?: boolean; // doubles off its owner's mirrors, up to maxDoublings times [false]
   stunnedMultiplier?: number; // damage multiplier against a stunned target [1]
@@ -83,7 +84,7 @@ function startAtFirstObstacle(world: World, tuning: Tuning, p: Projectile, fromX
   const hitR = p.radius * tuning.projectiles.hitboxScale;
   let best = -1;
   for (const pl of world.placeables) {
-    if (pl.ownerId === p.ownerId && !pl.reflective) continue; // shots pass through your own structures
+    if (pl.ownerId === p.ownerId && (!pl.reflective || pl.ownerPasses)) continue; // shots pass through your own structures
     const t = pathHits(pl, fromX, fromY, p.x, p.y, hitR);
     if (t >= 0 && (best < 0 || t < best)) best = t;
   }
@@ -142,68 +143,59 @@ export function updateProjectiles(world: World, tuning: Tuning, dt: number): voi
       let nx = p.x + p.vx * sdt;
       let ny = p.y + p.vy * sdt;
 
-      // ---- Reflective shields ----
-      for (const f of world.fighters) {
-        if (!alive || f.shieldT <= 0 || f.id === p.ownerId) continue;
-        const t = segmentCircle(ox, oy, nx, ny, f.x, f.y, f.shieldRadius + hitR);
-        if (t < 0) continue;
-        const hx = ox + (nx - ox) * t;
-        const hy = oy + (ny - oy) * t;
-        if (!p.reflectable) {
-          alive = false; // e.g. a lasso just snaps on the shield
-          emitFx(world, 'burst', hx, hy, '#7fd0ff', 14, 0.2);
-          break;
-        }
-        const len = Math.hypot(hx - f.x, hy - f.y) || 1;
-        const nX = (hx - f.x) / len;
-        const nY = (hy - f.y) / len;
-        reflect(p, nX, nY);
-        cancelSwitch(p);
-        p.ownerId = f.id; // the shield's owner takes over the projectile
-        nx = hx + nX * 2;
-        ny = hy + nY * 2;
-        emitSound(world, 'reflect', hx, hy);
-        emitFx(world, 'burst', hx, hy, '#7fd0ff', 18, 0.25);
-      }
-      if (!alive) break;
-
       // ---- Structures ----
       //  mirrors:  always bounce the shot. Enemy shots also damage the mirror.
-      //            Your own shotgun pellets double once off your own mirror.
+      //            Your own shotgun pellets double off your own mirror.
+      //  shields:  (Mage) like a mirror, but the bounced shot becomes the Mage's,
+      //            and the Mage's own shots pass through.
       //  others:   your own shots pass through; enemy shots damage it and
       //            bounce if they have bounces left, otherwise stop.
+      // Find the structure this step touches FIRST (matters where pieces meet, like the
+      // joints of the Mage's curved shield).
+      let first: { pl: (typeof world.placeables)[number]; t: number; n: { x: number; y: number } } | null = null;
       for (const pl of world.placeables) {
-        const own = pl.ownerId === p.ownerId;
-        if (own && !pl.reflective) continue;
+        if (pl.ownerId === p.ownerId && (!pl.reflective || pl.ownerPasses)) continue;
         const t = pathHits(pl, ox, oy, nx, ny, hitR);
-        if (t < 0) continue;
+        if (t < 0 || (first && t >= first.t)) continue;
+        const n = bounceNormal(pl, ox, oy, ox + (nx - ox) * t, oy + (ny - oy) * t);
+        if (p.vx * n.x + p.vy * n.y >= 0) continue; // already moving away from it
+        first = { pl, t, n };
+      }
+      if (first) {
+        const { pl, t, n } = first;
+        const own = pl.ownerId === p.ownerId;
         const hx = ox + (nx - ox) * t;
         const hy = oy + (ny - oy) * t;
-        const n = bounceNormal(pl, ox, oy, hx, hy);
-        if (p.vx * n.x + p.vy * n.y >= 0) continue; // already moving away from it
         if (!own) damagePlaceable(world, pl, damageOf(p));
-        if (!pl.reflective && p.bounces <= 0) {
-          alive = false;
+        if ((!pl.reflective && p.bounces <= 0) || (pl.claims && !p.reflectable)) {
+          alive = false; // stopped (e.g. a lasso snaps on a shield)
           break;
         }
         reflect(p, n.x, n.y);
         cancelSwitch(p);
+        if (pl.claims) p.ownerId = pl.ownerId; // the shield's owner takes over the shot
         if (!pl.reflective) p.bounces--;
         // push the shot back out to just outside the surface
         const c = closestPoint(pl, hx, hy);
         nx = c.x + n.x * (pl.radius + hitR + 1);
         ny = c.y + n.y * (pl.radius + hitR + 1);
         if (pl.reflective && own && p.splits && p.doublings < tuning.refractor.shotgun.maxDoublings) splitPellet(world, p, tuning, nx, ny);
-        emitSound(world, pl.reflective ? 'mirror_bounce' : 'bounce', hx, hy);
+        emitSound(world, pl.claims ? 'reflect' : pl.reflective ? 'mirror_bounce' : 'bounce', hx, hy);
         world.events.push({ type: 'bounce', projectileId: p.id, x: hx, y: hy });
-        break;
       }
       if (!alive) break;
 
-      // ---- Physics objects: knock them away ----
+      // ---- Physics objects: knock them away (or, for solid ones like furniture, hit them) ----
       for (const o of world.objects) {
         if (p.behavior === 'lasso') continue; // the lasso flies straight through tumbleweeds
+        const solid = getObjectKind(o.kind)?.solid;
+        if (solid && o.ownerId === p.ownerId) continue; // your own shots pass your own furniture
         if (segmentCircle(ox, oy, nx, ny, o.x, o.y, o.radius + hitR) < 0) continue;
+        if (solid) {
+          damageObject(world, o, damageOf(p));
+          alive = false;
+          break;
+        }
         const sp = Math.hypot(p.vx, p.vy) || 1;
         o.vx += (p.vx / sp) * tuning.sheriff.bramble.shotImpulse;
         o.vy += (p.vy / sp) * tuning.sheriff.bramble.shotImpulse;

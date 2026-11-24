@@ -6,11 +6,13 @@ import type { ClassDef, ObjectKindDef, PlaceableKindDef, ProjectileHook } from '
 import { MAGE } from './mage/index.ts';
 import { SHERIFF } from './sheriff/index.ts';
 import { REFRACTOR } from './refractor/index.ts';
+import { BUILDER } from './builder/index.ts';
 
 export const CLASSES: Record<string, ClassDef> = {
   mage: MAGE,
   sheriff: SHERIFF,
   refractor: REFRACTOR,
+  builder: BUILDER,
 };
 
 /** Class ids in menu order. */

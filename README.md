@@ -31,9 +31,10 @@ Good to know:
 
 - Both players need internet access, even on the same network (a free public service introduces the two browsers; after that they talk directly).
 - Some strict networks (some schools, offices, mobile hotspots) block direct connections. The game then says it could not connect. Fixing that needs a paid relay server, which this free setup doesn't have.
-- The host's computer runs the real game, so the host has no delay. The guest's own movement is instant too; everything else is shown about 0.1 s behind so it moves smoothly.
+- The host's computer runs the real game, so the host has no delay. The guest's own side (walking, shots, abilities, cooldowns, structures) also reacts instantly: the guest's browser predicts it with the same rules and quietly corrects itself if the host disagrees. The opponent is shown about 0.08 s behind so they move smoothly. Hits and damage are always decided by the host.
 - If someone drops out, the game freezes and waits 10 seconds for them to come back, then the other player wins.
 - **Testing alone:** open the game in two separate browser *windows* side by side (not two tabs: a tab you aren't looking at stops drawing). Host in one, join with the code in the other.
+- **Testing a bad connection:** open the dev panel (`) in one window. The **Network test** section at the top adds fake latency (0 to 200 ms), jitter and packet loss to that window, and can show a **network overlay** (ping, snapshots per second, data use) during online matches.
 
 ## Controls
 
@@ -52,9 +53,9 @@ Good to know:
 
 | Key | Does |
 | --- | --- |
-| Left click | Staff: hold to charge (bar under the crosshair), release to fire. Fires by itself at full charge. |
-| Right click | Reflective shield: bounces enemy shots back, and they become yours |
-| C | Watchtower: shows an outline, left click to place, right click or C to cancel |
+| Left click | Staff: hold to keep firing magic bolts |
+| Right click | Reflective shield: a curved wall that drifts forward for a few seconds. Enemy shots bounce off it and become yours; you and your shots go through it. 2 stored uses. |
+| C | Watchtower: shows an outline, left click to place, right click or C to cancel. While you stand in its glowing ring, your staff fires faster. |
 | V | Switch: every projectile and tumbleweed slows down and comes back the other way |
 | Space | Teleport to the crosshair |
 
@@ -73,25 +74,23 @@ Good to know:
 | Key | Does |
 | --- | --- |
 | Left click | Mind Shotgun: 4 pellets. Pellets that bounce off your own mirror double (up to 3 mirrors: 4 → 8 → 16 → 32). |
-| Right click | Mind Ray: hold for a beam. Uses the purple bar by the crosshair. Double damage for each mirror it bounces off. |
-| C | Mirror mode on / off. In mirror mode, hold left click where a mirror starts, drag, release where it ends; place as many as you have uses (3 stored). Mirrors break after 8 seconds. |
+| Right click | Mind Ray: hold for a strong beam (bounces off mirrors). Uses the purple bar by the crosshair, which refills slowly. |
+| C | Mirror mode on / off. In mirror mode, hold left click where a mirror starts, drag, release where it ends; place as many as you have uses (3 stored, shown as diamonds above the crosshair). Mirrors break after 8 seconds. |
 | V | Shatter: breaks every mirror; enemies near a mirror take damage for each one |
-| Space | Refract: split into two halves for a moment (they turn with your mouse); a shot can pass between them |
+| Space | Dash in the direction you're walking |
 
---- | --- |
-| W A S D | move |
-| Mouse | aim (the crosshair) |
-| R | refill the dummy's HP |
-| T | switch ability cooldowns on / off |
-| B | start a best-of-3 match against the Normal bot |
-| H | start a best-of-3 match against the Hard bot |
-| Left click | Mage staff: hold to charge, release to fire |
-| Right click | Mage reflective shield |
-| C | Mage watchtower: shows an outline, left click to place, right click or C to cancel |
-| V | Mage switch: every projectile turns around |
-| Space | Mage teleport to the crosshair |
-| ` (the key left of 1) | open the dev panel |
-| Esc | pause menu (volume, mute, leave match). Online games keep running while it's open. |
+**Builder**
+
+| Key | Does |
+| --- | --- |
+| Left click | Nail Gun: hold to spray fast, weak nails |
+| Right click | Sledge Hammer: a swing in front of you. Hurts the enemy, wrecks enemy structures, smashes your own brick walls into a volley of bricks (they fly at your crosshair), and flings your own furniture. |
+| C | Brick wall mode on / off. Placed like mirrors (drag with left click). Lots of health, blocks enemy shots; your shots go through. 2 stored uses. |
+| V | Construction: builds a random piece of furniture in front of you. It's cover until the enemy breaks it. Hit it with the hammer to fling it: 100 damage to the enemy it hits. |
+| Space | Dash in the direction you're walking |
+
+Anything that belongs to your **opponent** (shots, walls, mirrors, furniture, beams) is tinted **red**.
+In any placing mode (watchtower, mirrors, walls) the crosshair turns into green corner brackets.
 
 ---
 
@@ -146,7 +145,7 @@ Volume and mute are in the pause menu.
 
 ### Abilities and classes
 
-The numbers for every ability are in `src/config/tuning.ts` (look for the `mage:`, `sheriff:` and `refractor:` groups).
+The numbers for every ability are in `src/config/tuning.ts` (look for the `mage:`, `sheriff:`, `refractor:` and `builder:` groups).
 
 How an ability *behaves* is in `src/sim/classes/<class>/`, one file per ability, for example
 `src/sim/classes/mage/staff.ts`. Each file starts with a short description. The class's

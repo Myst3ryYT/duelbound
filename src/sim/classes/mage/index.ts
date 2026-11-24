@@ -21,11 +21,5 @@ export const MAGE: ClassDef = {
     mobility: teleport, // SPACE
   },
   placeables: [watchtowerStructure],
-
-  // Staff charge shown as a bar under the crosshair.
-  crosshairBar(f, t) {
-    if (!f.vars.staffCharging) return null;
-    const fill = t.mage.staff.chargeTime > 0 ? f.vars.staffCharge / t.mage.staff.chargeTime : 1;
-    return { fill, rate: 1 / Math.max(0.001, t.mage.staff.chargeTime), color: fill >= 1 ? '#ffd34d' : '#7fb0ff' };
-  },
+  crosshairCharges: 'secondary', // shields left, shown above the crosshair
 };

@@ -5,8 +5,11 @@
  * - "Save to tuning.ts" writes the current values back into the file
  *   (only while running `npm run dev`).
  * - Test buttons for dealing damage / healing.
+ * - "Network test": fake latency / jitter / packet loss and the network overlay
+ *   (these only affect this window and are not saved to the file).
  */
 import type { Tuning } from '../config/tuning.ts';
+import { NET_DEBUG } from '../net/netDebug.ts';
 import { flattenTuning, deepAssignNumbers, parseTuningSource, type TuningLine } from '../dev/tuningFile.ts';
 
 export interface DevPanelActions {
@@ -78,6 +81,8 @@ export class DevPanel {
       this.status.style.color = oldStatus.color;
     } else if (!import.meta.env.DEV) this.setStatus('Saving to the file only works with npm run dev.');
 
+    this.buildNetworkSection();
+
     // Group rows by their first path part ("player", "mage.staff" -> "mage"...).
     let currentGroup = '';
     for (const line of lines) {
@@ -91,6 +96,55 @@ export class DevPanel {
       this.addRow(line);
     }
     this.refresh();
+  }
+
+  /** Fake bad-connection settings for testing online play. */
+  private buildNetworkSection(): void {
+    const gh = document.createElement('h3');
+    gh.textContent = 'Network test (this window only)';
+    this.root.appendChild(gh);
+    const slider = (label: string, key: 'latencyMs' | 'jitterMs' | 'lossPct', max: number, hint: string) => {
+      const row = document.createElement('div');
+      row.className = 'dev-row';
+      const top = document.createElement('div');
+      top.className = 'top';
+      const name = document.createElement('span');
+      name.className = 'name';
+      name.textContent = label;
+      const range = document.createElement('input');
+      range.type = 'range';
+      range.min = '0';
+      range.max = String(max);
+      range.step = '1';
+      range.value = String(NET_DEBUG[key]);
+      const num = document.createElement('input');
+      num.type = 'number';
+      num.value = String(NET_DEBUG[key]);
+      const apply = (v: number) => {
+        if (!Number.isFinite(v)) return;
+        NET_DEBUG[key] = Math.max(0, v);
+        range.value = num.value = String(NET_DEBUG[key]);
+      };
+      range.addEventListener('input', () => apply(Number(range.value)));
+      num.addEventListener('change', () => apply(Number(num.value)));
+      const h = document.createElement('div');
+      h.className = 'hint';
+      h.textContent = hint;
+      top.append(name, range, num);
+      row.append(top, h);
+      this.root.appendChild(row);
+    };
+    slider('fake latency', 'latencyMs', 200, 'extra ping in milliseconds (round trip)');
+    slider('fake jitter', 'jitterMs', 100, 'random extra delay per message, 0 to this many ms');
+    slider('packet loss', 'lossPct', 30, '% of snapshots / inputs that get lost (each way)');
+    const label = document.createElement('label');
+    label.className = 'dev-check';
+    const box = document.createElement('input');
+    box.type = 'checkbox';
+    box.checked = NET_DEBUG.overlay;
+    box.addEventListener('change', () => (NET_DEBUG.overlay = box.checked));
+    label.append(box, ' show network overlay (ping, snapshot rate) during online matches');
+    this.root.appendChild(label);
   }
 
   private buttonRow(): HTMLDivElement {

@@ -11,6 +11,7 @@ import type { Renderer } from '../render/Renderer.ts';
 import { deepAssignNumbers } from '../dev/tuningFile.ts';
 import { HostRoom, GuestPeer, type NetLink } from '../platform/peer.ts';
 import type { GuestMsg, HostMsg, LobbyState } from '../net/protocol.ts';
+import { DebugLink, NET_STATS } from '../net/netDebug.ts';
 import { HostSession } from './HostSession.ts';
 import { GuestSession } from './GuestSession.ts';
 import type { Session } from './Session.ts';
@@ -70,11 +71,13 @@ export class OnlineHost {
     return this.phase === 'waiting';
   }
 
-  private send(msg: HostMsg): void {
-    this.link?.send(msg);
+  private send(msg: HostMsg, fast = false): void {
+    if (fast) this.link?.sendFast(msg);
+    else this.link?.send(msg);
   }
 
-  private onGuest(link: NetLink): void {
+  private onGuest(realLink: NetLink): void {
+    const link = new DebugLink(realLink); // adds fake lag when testing (dev panel)
     const linkGone = !this.link || !this.link.open;
     // The same guest coming back mid-match after a drop:
     const reconnecting = this.phase === 'match' && !!this.session && !this.session.matchOver && linkGone;
@@ -87,6 +90,7 @@ export class OnlineHost {
     this.link = link;
     link.onMessage = (m) => this.onMessage(m as GuestMsg);
     link.onClose = () => this.onClose(link);
+    startPinging(link);
     if (reconnecting) {
       this.session!.linkRestored();
       return;
@@ -119,8 +123,14 @@ export class OnlineHost {
         this.sendLobby(false);
         this.maybeStart();
         return;
-      case 'input':
-        this.session?.receiveInput(m.input);
+      case 'inputs':
+        this.session?.receiveInputs(m.inputs);
+        return;
+      case 'ping':
+        this.send({ t: 'pong', at: m.at }, true);
+        return;
+      case 'pong':
+        notePong(m.at);
         return;
       case 'rematch':
         this.votes.guest = true;
@@ -161,7 +171,7 @@ export class OnlineHost {
     const d = this.deps;
     const classes: [string, string] = [this.lobby.hostClass, this.lobby.guestClass];
     this.send({ t: 'start', tuning: d.tuning, classes });
-    this.session = new HostSession(d.tuning, d.keybinds, d.input, d.renderer, classes, (msg) => this.send(msg));
+    this.session = new HostSession(d.tuning, d.keybinds, d.input, d.renderer, classes, (msg, fast) => this.send(msg, fast));
     this.phase = 'match';
     this.votes = { host: false, guest: false };
     d.ui.startSession(this.session);
@@ -225,14 +235,17 @@ export class OnlineGuest {
     return g;
   }
 
-  private attach(link: NetLink): void {
+  private attach(realLink: NetLink): void {
+    const link = new DebugLink(realLink); // adds fake lag when testing (dev panel)
     this.link = link;
     link.onMessage = (m) => this.onMessage(m as HostMsg);
     link.onClose = () => this.onClose(link);
+    startPinging(link);
   }
 
-  private send(msg: GuestMsg): void {
-    this.link?.send(msg);
+  private send(msg: GuestMsg, fast = false): void {
+    if (fast) this.link?.sendFast(msg);
+    else this.link?.send(msg);
   }
 
   private onMessage(m: HostMsg): void {
@@ -249,13 +262,22 @@ export class OnlineGuest {
         // Both players use the host's numbers so the game looks the same on both screens.
         deepAssignNumbers(this.deps.tuning, m.tuning as object);
         const d = this.deps;
-        this.session = new GuestSession(d.tuning, d.keybinds, d.input, d.renderer, (msg) => this.send(msg));
+        this.session = new GuestSession(d.tuning, d.keybinds, d.input, d.renderer, (msg, fast) => this.send(msg, fast));
         this.phase = 'match';
         d.ui.startSession(this.session);
         return;
       }
       case 'snap':
         this.session?.receiveSnapshot(m.s);
+        return;
+      case 'events':
+        this.session?.receiveEvents(m.events);
+        return;
+      case 'ping':
+        this.send({ t: 'pong', at: m.at }, true);
+        return;
+      case 'pong':
+        notePong(m.at);
         return;
       case 'rematch':
         this.deps.ui.rematchVotes(m.guest, m.host);
@@ -323,3 +345,19 @@ export class OnlineGuest {
 }
 
 export type OnlineGame = OnlineHost | OnlineGuest;
+
+// ===================================================================== PING ====
+
+/** Send a ping twice a second while the link is open (for the network overlay). */
+function startPinging(link: NetLink): void {
+  const timer = setInterval(() => {
+    if (!link.open) return clearInterval(timer);
+    link.sendFast({ t: 'ping', at: performance.now() });
+  }, 500);
+}
+
+/** A ping came back: update the shown ping (smoothed a little). */
+function notePong(at: number): void {
+  const rtt = performance.now() - at;
+  NET_STATS.pingMs = NET_STATS.pingMs ? NET_STATS.pingMs * 0.7 + rtt * 0.3 : rtt;
+}

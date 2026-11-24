@@ -63,8 +63,6 @@ export interface Fighter {
   rootedT: number; // seconds left where the fighter can't walk
   stunT: number; // seconds left where the fighter can't walk or use abilities
   invulnT: number; // seconds left where projectiles and objects pass through
-  shieldT: number; // seconds left of a reflective shield
-  shieldRadius: number; // size of that shield
   pullById: number; // id of whoever is dragging this fighter (Sheriff lasso), 0 = nobody
   pullT: number; // seconds left of being dragged (safety limit)
   /** Free-form numbers abilities use to remember things (charge time, teleport target...). */
@@ -96,7 +94,7 @@ export interface Projectile extends Switchable {
   falloffRange: number; // 0 = no falloff
   traveled: number; // distance flown so far
   bounces: number; // walls / structures it can still bounce off (0 = dies on contact)
-  reflectable: boolean; // can shields reflect it? (if not, a shield just destroys it)
+  reflectable: boolean; // can a Mage shield reflect it? (if not, the shield just destroys it)
   trail: number; // seconds a visual trail lingers behind it (0 = no trail)
   splits: boolean; // doubles when it bounces off its owner's mirror (Refractor shotgun)
   doublings: number; // how many times it (or the pellet it split from) has doubled so far
@@ -118,6 +116,10 @@ export interface Placeable {
   angle: number;
   radius: number; // circle: its radius. segment: half its thickness
   reflective: boolean; // bounces projectiles instead of stopping them (mirrors)
+  claims: boolean; // a shot bouncing off it becomes the structure owner's (Mage shield)
+  ownerPasses: boolean; // the owner and the owner's shots go straight through it (Mage shield)
+  vx: number; // drifting speed (most structures stand still: 0)
+  vy: number;
   breakT: number; // seconds until it breaks by itself (-1 = never)
   hp: number;
   maxHp: number;
@@ -125,7 +127,10 @@ export interface Placeable {
   timer: number; // free timer for the behaviour (e.g. time to next shot)
 }
 
-/** A physics object (e.g. the Bramble tumbleweed): rolls, bounces, gets knocked around by shots. */
+/**
+ * A physics object (Bramble tumbleweed, Builder furniture): rolls, bounces, and
+ * gets knocked around by shots or blocks them (see ObjectKindDef.solid).
+ */
 export interface PhysObject extends Switchable {
   id: number;
   ownerId: number;
@@ -135,6 +140,9 @@ export interface PhysObject extends Switchable {
   radius: number;
   life: number; // seconds left
   spin: number; // rotation, for looks
+  hp: number; // health, for objects that can be shot to pieces (0 = can't be)
+  maxHp: number;
+  armed: number; // 1 while it's been flung and hurts on contact (Builder furniture)
 }
 
 /** Things that happened during a tick. The game layer turns these into sounds and effects. */

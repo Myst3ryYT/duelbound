@@ -77,7 +77,13 @@ export interface PlaceableKindDef {
 export interface ObjectKindDef {
   kind: string;
   restitution(t: Tuning): number; // bounciness, 1 = keeps all speed
-  friction(t: Tuning): number; // how fast it slows down by itself
+  friction(t: Tuning, o: PhysObject): number; // how fast it slows down by itself
+  /**
+   * Solid objects (furniture) block players and shots like cover: enemy shots
+   * damage them instead of knocking them around, the owner's shots pass through.
+   * Non-solid ones (tumbleweed) get knocked around by every shot.
+   */
+  solid?: boolean;
   carry?(t: Tuning): number; // share of its speed a carried (stunned) fighter moves at
   carryDrag?(t: Tuning): number; // extra slowdown while carrying someone
   /** It touched a fighter. Return true to remove the object. */
@@ -104,6 +110,8 @@ export interface ClassDef {
   projectileHooks?: Record<string, ProjectileHook>;
   /** Optional bar next to the crosshair, e.g. the Mage's staff charge. */
   crosshairBar?(f: Fighter, t: Tuning): CrosshairBar | null;
+  /** Optional: show this ability's stored uses next to the crosshair (e.g. Refractor mirrors). */
+  crosshairCharges?: ActionName;
   /** Optional ammo count, shown as pips under the crosshair and on the LC icon. */
   ammo?(f: Fighter, t: Tuning): { current: number; max: number; reloading: boolean } | null;
 }

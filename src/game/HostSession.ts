@@ -2,7 +2,8 @@
  * Online match, host side. The host's browser runs the real game:
  *  - its own player uses the keyboard and mouse directly (no delay)
  *  - the guest's inputs arrive over the network and are applied in order
- *  - every few ticks the whole world is sent to the guest as a snapshot
+ *  - every few ticks the whole world is sent to the guest as a snapshot (fast channel),
+ *    and sounds / damage numbers are sent separately (reliable channel) so they're never lost
  * Hits, damage and deaths are only ever decided here.
  */
 import type { Tuning } from '../config/tuning.ts';
@@ -13,10 +14,13 @@ import { createMatchWorld } from '../sim/world.ts';
 import { getClass } from '../sim/classes/registry.ts';
 import type { Renderer } from '../render/Renderer.ts';
 import { makeSnapshot, type HostMsg } from '../net/protocol.ts';
+import { NET_STATS, RateCounter } from '../net/netDebug.ts';
 import { Session } from './Session.ts';
 
 export class HostSession extends Session {
-  private send: (msg: HostMsg) => void;
+  private send: (msg: HostMsg, fast?: boolean) => void;
+  private lastQueuedSeq = 0; // newest guest input already queued (inputs arrive several times over)
+  private snapRate = new RateCounter();
   private queue: PlayerInput[] = []; // guest inputs waiting to be applied
   private lastGuest: PlayerInput = emptyInput(); // reused if no new input arrived in time
   private ack = 0; // last guest input applied
@@ -25,7 +29,7 @@ export class HostSession extends Session {
   private lostAt: number | null = null; // when the guest dropped (seconds, performance clock)
   private ended: string | null = null; // reason text if the match ended early
 
-  constructor(tuning: Tuning, keybinds: Keybinds, input: InputSource, renderer: Renderer, classes: [string, string], send: (msg: HostMsg) => void) {
+  constructor(tuning: Tuning, keybinds: Keybinds, input: InputSource, renderer: Renderer, classes: [string, string], send: (msg: HostMsg, fast?: boolean) => void) {
     super(tuning, keybinds, input, renderer);
     this.send = send;
     this.world = createMatchWorld(tuning, 'online', classes, ['You', 'Opponent']);
@@ -42,14 +46,26 @@ export class HostSession extends Session {
     return this.world.fighters.find((f) => f.side === 1)!;
   }
 
-  /** A guest input arrived. */
-  receiveInput(input: PlayerInput): void {
-    this.queue.push(input);
+  /** Guest inputs arrived (the newest few ticks; most were already received before). */
+  receiveInputs(inputs: PlayerInput[]): void {
+    for (const input of inputs) {
+      if (input.seq <= this.lastQueuedSeq) continue; // already have it
+      this.queue.push(input);
+      this.lastQueuedSeq = input.seq;
+    }
   }
 
   protected gatherInputs(local: PlayerInput): Map<number, PlayerInput> {
-    // Too many piled up (lag spike)? Skip ahead so the guest isn't stuck in the past.
-    while (this.queue.length > this.tuning.net.maxQueuedInputs) this.queue.shift();
+    // Too many piled up (lag spike)? Catch up by merging the oldest ones, so the guest
+    // isn't stuck in the past. Button presses in skipped inputs are kept.
+    while (this.queue.length > this.tuning.net.maxQueuedInputs) {
+      const skipped = this.queue.shift()!;
+      const b = this.queue[0].buttons;
+      for (const k of Object.keys(b) as (keyof typeof b)[]) b[k] ||= skipped.buttons[k];
+    }
+    NET_STATS.role = 'host';
+    NET_STATS.inputBuffer = this.queue.length;
+    NET_STATS.snapshotsPerSec = this.snapRate.perSecond;
     const next = this.queue.shift();
     if (next) {
       this.lastGuest = next;
@@ -78,10 +94,13 @@ export class HostSession extends Session {
     super.flushEvents();
   }
 
-  private sendSnapshot(): void {
+  /** Send the world (fast channel; `reliable` for ones that must arrive, like the final result). */
+  private sendSnapshot(reliable = false): void {
     this.ticksSinceSnap = 0;
-    this.send({ t: 'snap', s: makeSnapshot(this.world, this.ack, this.outbox) });
+    if (this.outbox.length) this.send({ t: 'events', events: this.outbox });
     this.outbox = [];
+    this.send({ t: 'snap', s: makeSnapshot(this.world, this.ack) }, !reliable);
+    this.snapRate.hit();
   }
 
   // ---- Connection problems ----
@@ -97,7 +116,8 @@ export class HostSession extends Session {
   /** The guest came back: carry on. */
   linkRestored(): void {
     this.lostAt = null;
-    this.sendSnapshot();
+    this.lastQueuedSeq = 0; // a rejoined guest may count again from the start
+    this.sendSnapshot(true);
   }
 
   /** End the match now, with the host as the winner (the guest left or never came back). */
@@ -108,7 +128,7 @@ export class HostSession extends Session {
     this.lostAt = null;
     m.matchWinner = 0;
     m.phase = 'matchOver';
-    this.sendSnapshot();
+    this.sendSnapshot(true);
   }
 
   get endReason(): string | null {

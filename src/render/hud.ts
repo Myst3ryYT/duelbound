@@ -15,7 +15,10 @@ export interface HudAbility {
   cooldown: number; // seconds left
   total: number; // full cooldown length
   active: boolean; // highlighted (e.g. currently placing it)
-  count?: number; // stored uses or ammo, shown in the corner
+  count?: number; // ammo, shown in the corner
+  charges?: number; // stored uses (abilities with charges)
+  chargeMax?: number;
+  ready: boolean; // can be used right now
 }
 
 /** Extra things the game screen wants shown. */
@@ -32,10 +35,12 @@ const BAR_H = 30;
 const BAR_Y = 14;
 const BAR_MARGIN = 60;
 
-const ICON = 64;
-const ICON_GAP = 12;
-const ICONS_X = 26;
-const ICONS_Y = SCREEN_H - ICON - 44;
+// Ability icons: two rows (3 + 2) in the empty space left of the arena.
+const ICON = 104;
+const ICON_GAP = 16;
+const ICONS_X = 30;
+const ICON_ROW_H = ICON + 44; // icon + its name underneath
+const ICONS_Y = SCREEN_H - 2 * ICON_ROW_H - 10; // top of the first row
 
 export function drawHud(ctx: CanvasRenderingContext2D, world: World, info: HudInfo, trailHpOf: (id: number) => number): void {
   for (const f of world.fighters) drawHpBar(ctx, f, trailHpOf(f.id));
@@ -97,38 +102,85 @@ function drawMatch(ctx: CanvasRenderingContext2D, world: World, info: HudInfo): 
   else if (m.phase === 'roundOver' || m.phase === 'matchOver') big(`${wins(m.matchWinner)} THE MATCH`, undefined, '#ffd34d');
 }
 
+/**
+ * Ability icons. At a glance:
+ *  - ready:        full colour with a bright frame
+ *  - cooling down: dark, a sweep filling up clockwise, big seconds number, dull frame
+ *  - charges:      pips along the bottom; a small timer while one is coming back
+ */
 function drawAbilityBar(ctx: CanvasRenderingContext2D, abilities: HudAbility[]): void {
   abilities.forEach((a, i) => {
-    const x = ICONS_X + i * (ICON + ICON_GAP);
-    const y = ICONS_Y;
+    const row = i < 3 ? 0 : 1;
+    const col = i < 3 ? i : i - 3;
+    const x = ICONS_X + col * (ICON + ICON_GAP);
+    const y = ICONS_Y + row * ICON_ROW_H;
+    const cx = x + ICON / 2;
+    const cy = y + ICON / 2;
+    const cooling = !a.ready;
+
+    // Frame: bright when ready, dull while cooling down, gold while placing.
+    ctx.fillStyle = a.active ? '#ffd34d' : cooling ? '#2a2c36' : '#e8ecf5';
+    ctx.fillRect(x - 5, y - 5, ICON + 10, ICON + 10);
     ctx.fillStyle = '#000';
-    ctx.fillRect(x - 3, y - 3, ICON + 6, ICON + 6);
+    ctx.fillRect(x - 2, y - 2, ICON + 4, ICON + 4);
     const sprite = findSprite(a.icon);
     if (sprite) ctx.drawImage(sprite.image, x, y, ICON, ICON);
 
-    // Cooldown: a dark "clock hand" sweep plus the seconds left.
-    if (a.cooldown > 0 && a.total > 0) {
-      const frac = Math.min(1, a.cooldown / a.total);
-      ctx.fillStyle = 'rgba(0,0,0,0.65)';
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(x, y, ICON, ICON);
-      ctx.clip();
-      ctx.beginPath();
-      ctx.moveTo(x + ICON / 2, y + ICON / 2);
-      ctx.arc(x + ICON / 2, y + ICON / 2, ICON, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-      outlinedText(ctx, a.cooldown >= 1 ? String(Math.ceil(a.cooldown)) : a.cooldown.toFixed(1), x + ICON / 2, y + ICON / 2, 'bold 24px monospace', '#fff', 'center');
+    const timer = (secs: number) => (secs >= 1 ? String(Math.ceil(secs)) : secs.toFixed(1));
+    if (cooling) {
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(x, y, ICON, ICON);
+      // The part that has already come back is uncovered, sweeping clockwise from the top.
+      if (a.total > 0) {
+        const done = 1 - Math.min(1, a.cooldown / a.total);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, y, ICON, ICON);
+        ctx.clip();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, ICON, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * done);
+        ctx.closePath();
+        ctx.clip();
+        if (sprite) {
+          ctx.globalAlpha = 0.45;
+          ctx.drawImage(sprite.image, x, y, ICON, ICON);
+          ctx.globalAlpha = 1;
+        }
+        ctx.restore();
+      }
+      if (a.cooldown > 0) outlinedText(ctx, timer(a.cooldown), cx, cy + 2, 'bold 44px monospace', '#ffffff', 'center');
+    } else if (a.cooldown > 0 && a.chargeMax) {
+      // Has a use ready, and another one recharging: small timer in the corner.
+      outlinedText(ctx, timer(a.cooldown), x + ICON - 8, y + 16, 'bold 20px monospace', '#c9cddb', 'right');
     }
-    if (a.count !== undefined) outlinedText(ctx, String(a.count), x + ICON - 6, y + 12, 'bold 18px monospace', '#ffe27a', 'right');
-    if (a.active) {
-      ctx.strokeStyle = '#ffd34d';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(x - 2, y - 2, ICON + 4, ICON + 4);
+
+    // Charge pips along the bottom.
+    if (a.chargeMax) {
+      const size = 14;
+      const gap = 6;
+      const total = a.chargeMax * size + (a.chargeMax - 1) * gap;
+      for (let k = 0; k < a.chargeMax; k++) {
+        const px = cx - total / 2 + k * (size + gap);
+        const py = y + ICON - size - 6;
+        ctx.fillStyle = '#000';
+        ctx.fillRect(px - 2, py - 2, size + 4, size + 4);
+        ctx.fillStyle = k < (a.charges ?? 0) ? '#7fe0ff' : '#2a2c36';
+        ctx.fillRect(px, py, size, size);
+      }
     }
-    outlinedText(ctx, a.key, x + ICON / 2, y + ICON + 18, 'bold 16px monospace', '#c9cddb', 'center');
+    if (a.count !== undefined) outlinedText(ctx, String(a.count), x + ICON - 8, y + 18, 'bold 24px monospace', '#ffe27a', 'right');
+
+    // Key badge (top-left) and name underneath.
+    ctx.fillStyle = '#000';
+    const keyW = Math.max(30, a.key.length * 13 + 12);
+    ctx.fillRect(x - 6, y - 6, keyW, 28);
+    outlinedText(ctx, a.key, x - 6 + keyW / 2, y + 8, 'bold 18px monospace', '#ffd34d', 'center');
+    // Long names get a smaller font so they don't run into the next icon.
+    let size = 16;
+    ctx.font = `bold ${size}px monospace`;
+    while (size > 10 && ctx.measureText(a.name).width > ICON + ICON_GAP - 4) ctx.font = `bold ${--size}px monospace`;
+    outlinedText(ctx, a.name, cx, y + ICON + 22, `bold ${size}px monospace`, cooling ? '#6a6f80' : '#e8ecf5', 'center');
   });
 }
 

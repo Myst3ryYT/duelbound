@@ -16,7 +16,6 @@ const BEEPS: Record<SoundId, { wave: OscillatorType; from: number; to: number; d
   staff_fire: { wave: 'triangle', from: 600, to: 300, dur: 0.1, vol: 0.3 },
   shield_up: { wave: 'sine', from: 300, to: 900, dur: 0.2, vol: 0.4 },
   tower_build: { wave: 'square', from: 120, to: 240, dur: 0.25, vol: 0.25 },
-  tower_fire: { wave: 'triangle', from: 500, to: 350, dur: 0.07, vol: 0.2 },
   switch: { wave: 'sine', from: 1000, to: 200, dur: 0.4, vol: 0.4 },
   teleport_start: { wave: 'sine', from: 400, to: 1200, dur: 0.3, vol: 0.3 },
   teleport: { wave: 'sine', from: 1200, to: 500, dur: 0.15, vol: 0.35 },
@@ -38,8 +37,15 @@ const BEEPS: Record<SoundId, { wave: OscillatorType; from: number; to: number; d
   mirror_bounce: { wave: 'triangle', from: 1800, to: 2400, dur: 0.04, vol: 0.15 },
   mirror_split: { wave: 'triangle', from: 2000, to: 1000, dur: 0.1, vol: 0.25 },
   mirror_break: { wave: 'sawtooth', from: 2200, to: 300, dur: 0.25, vol: 0.3 },
-  refract: { wave: 'sine', from: 900, to: 450, dur: 0.2, vol: 0.3 },
+  dash: { wave: 'sine', from: 500, to: 1100, dur: 0.12, vol: 0.25 },
   shatter: { wave: 'sawtooth', from: 2500, to: 150, dur: 0.45, vol: 0.45 },
+  nail_fire: { wave: 'square', from: 1200, to: 600, dur: 0.03, vol: 0.15 },
+  hammer_swing: { wave: 'triangle', from: 300, to: 150, dur: 0.12, vol: 0.25 },
+  hammer_hit: { wave: 'square', from: 160, to: 50, dur: 0.18, vol: 0.45 },
+  wall_place: { wave: 'square', from: 140, to: 100, dur: 0.15, vol: 0.3 },
+  wall_break: { wave: 'sawtooth', from: 250, to: 60, dur: 0.3, vol: 0.4 },
+  furniture_build: { wave: 'square', from: 200, to: 400, dur: 0.15, vol: 0.25 },
+  furniture_hit: { wave: 'sawtooth', from: 180, to: 40, dur: 0.3, vol: 0.5 },
 };
 
 /** Play a sound by name if it exists (the simulation reports sounds by name). */

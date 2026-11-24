@@ -40,8 +40,6 @@ function newFighter(world: World, props: Partial<Fighter> & Pick<Fighter, 'kind'
     rootedT: 0,
     stunT: 0,
     invulnT: 0,
-    shieldT: 0,
-    shieldRadius: 0,
     pullById: 0,
     pullT: 0,
     vars: {},

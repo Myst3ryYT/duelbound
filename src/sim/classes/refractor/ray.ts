@@ -2,7 +2,7 @@
  * REFRACTOR - RC - Mind Ray (instant, projectile)
  * Hold to fire a beam from the head. It uses a resource pool (the bar next to
  * the crosshair) that refills after a short rest. Damage comes in small fast
- * ticks, and doubles for every mirror the beam bounces off (up to 3).
+ * ticks. It can bounce off mirrors (up to 3) but doesn't get stronger from them.
  * The beam's path is worked out by sim/trace.ts.
  * Numbers: tuning.refractor.ray
  */
@@ -58,7 +58,7 @@ export const ray: AbilityDef = {
 
     // One damage tick along the beam.
     const beam = traceRay(world, tuning, f, f.aimAngle);
-    const damage = r.dps * r.tickInterval * Math.pow(2, beam.mirrors);
+    const damage = r.dps * r.tickInterval;
     const target = world.fighters.find((x) => x.id === beam.hitFighterId);
     if (target) applyDamage(world, target, damage, f.id);
     const structure = world.placeables.find((p) => p.id === beam.hitPlaceableId);

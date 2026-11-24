@@ -22,7 +22,7 @@ export const shatter: AbilityDef = {
   update({ world, tuning, fighter: f, slot, pressed }) {
     if (!pressed || !isReady(f, slot)) return;
     const s = tuning.refractor.shatter;
-    const mirrors = world.placeables.filter((p) => p.reflective);
+    const mirrors = world.placeables.filter((p) => p.kind === 'refractor_mirror');
     if (mirrors.length === 0) return;
 
     for (const target of world.fighters) {
@@ -34,7 +34,7 @@ export const shatter: AbilityDef = {
       emitFx(world, 'ring', m.x, m.y, '#bfe8ff', s.radius, 0.4);
       emitFx(world, 'burst', m.x, m.y, '#e8f8ff', 60, 0.4);
     }
-    world.placeables = world.placeables.filter((p) => !p.reflective);
+    world.placeables = world.placeables.filter((p) => p.kind !== 'refractor_mirror');
     startCooldown(world, f, slot, s.cooldown);
     emitSound(world, 'shatter', f.x, f.y);
   },
