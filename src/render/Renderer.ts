@@ -104,6 +104,14 @@ export class Renderer {
     }
   }
 
+  /** Blank the screen (used behind the menus). */
+  clear(): void {
+    this.view.fit();
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.ctx.fillStyle = '#0b0c10';
+    this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+  }
+
   /** Forget visual state (e.g. when a new match starts). */
   reset(): void {
     this.numbers = [];

@@ -1,6 +1,5 @@
-/**
+﻿/**
  * End of match: winner, Rematch, and leave.
- * (Leaving goes back to training until the main menu exists in build step 4.)
  */
 import { playSound } from '../audio/sfx.ts';
 
@@ -15,8 +14,9 @@ export class MatchOverMenu {
     this.root.innerHTML = `
       <div class="menu-box">
         <h1 data-id="title"></h1>
+        <div class="status" data-id="status"></div>
         <button data-id="rematch">Rematch</button>
-        <button data-id="leave">Back to training</button>
+        <button data-id="leave">Back to menu</button>
       </div>`;
     parent.appendChild(this.root);
     this.title = this.root.querySelector('[data-id="title"]')!;
@@ -34,9 +34,14 @@ export class MatchOverMenu {
     return !this.root.hidden;
   }
 
-  show(winnerText: string): void {
+  show(winnerText: string, status = ''): void {
     this.title.textContent = winnerText;
+    this.setStatus(status);
     this.root.hidden = false;
+  }
+
+  setStatus(text: string): void {
+    (this.root.querySelector('[data-id="status"]') as HTMLElement).textContent = text;
   }
 
   hide(): void {

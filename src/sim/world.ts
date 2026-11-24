@@ -161,7 +161,7 @@ export function stepWorld(world: World, inputs: Map<number, PlayerInput>, tuning
  * classes and 
 ames are [left player, right player].
  */
-export function createMatchWorld(tuning: Tuning, mode: 'bot', classes: [string, string], names: [string, string]): World {
+export function createMatchWorld(tuning: Tuning, mode: 'bot' | 'online', classes: [string, string], names: [string, string]): World {
   const world: World = {
     mode,
     tick: 0,

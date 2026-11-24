@@ -55,8 +55,14 @@ export const TUNING = {
     tieTime: 2.5, // seconds the tie screen is shown before the round is replayed
   },
 
-  bot: {
-    normal: {
+  net: {
+    snapshotEvery: 2, // online: the host sends the world every this many ticks (2 = 30 times a second)
+    interpDelay: 0.1, // online: the guest draws other things this many seconds in the past, for smooth motion
+    reconnectWait: 10, // online: seconds to wait for a dropped player to come back before the other one wins
+    maxQueuedInputs: 6, // online: if more guest inputs than this pile up at the host, old ones are skipped
+  },
+
+  bot: {    normal: {
       reactionTime: 0.35, // seconds after a shot is fired before the bot notices it
       aimJitter: 70, // random aim error, in world units (0 = perfect aim)
       leadFactor: 0.5, // how well it predicts where you're moving (1 = perfectly, 0 = shoots where you are)

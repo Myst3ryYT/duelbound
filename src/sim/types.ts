@@ -144,8 +144,8 @@ export type GameEvent =
   | { type: 'bounce'; projectileId: number; x: number; y: number } // so trails can show the exact corner
   | { type: 'fx'; fx: 'ring' | 'burst'; x: number; y: number; color: string; radius: number; duration: number };
 
-/** Match modes. Online play arrives in build step 5. */
-export type GameMode = 'training' | 'bot';
+/** Match modes. */
+export type GameMode = 'training' | 'bot' | 'online';
 
 /** Round flow of a real match (not used in training). */
 export interface MatchState {

@@ -10,10 +10,10 @@ import { createMatchWorld } from '../sim/world.ts';
 import { getClass } from '../sim/classes/registry.ts';
 import { BotBrain, type BotDifficulty } from '../sim/bot.ts';
 import type { Renderer } from '../render/Renderer.ts';
-import { Session, type SessionRequest } from './Session.ts';
+import { Session } from './Session.ts';
 
 /** Training-only keys: ignored (and cleared) during a match. */
-const TRAINING_KEYS: MenuAction[] = ['resetDummy', 'toggleCooldowns', 'toggleDummyFire', 'nextClass', 'startBotMatch', 'startBotMatchHard'];
+const TRAINING_KEYS: MenuAction[] = ['resetDummy', 'toggleCooldowns', 'toggleDummyFire', 'nextClass'];
 
 export class BotMatchSession extends Session {
   readonly playerClass: string;
@@ -46,9 +46,8 @@ export class BotMatchSession extends Session {
     ]);
   }
 
-  handleMenuKeys(): SessionRequest {
+  handleMenuKeys(): void {
     for (const k of TRAINING_KEYS) this.input.consumeMenu(k);
-    return null;
   }
 
   protected helpLines(): string[] {

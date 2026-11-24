@@ -3,7 +3,7 @@
 A top-down 1v1 arena fighting game for keyboard and mouse, playable in the browser.
 The full design spec is in [GAME_BRIEF.md](GAME_BRIEF.md).
 
-**Current build: step 3 of 6 done.** All three classes, the training dummy, and best-of-3 matches against a bot (countdown, 90 s clock, tie screen, rematch). Until the menus arrive in step 4: press Tab in training to switch class, and B (Normal) or H (Hard) to fight the bot with your current class (the bot picks a random class).
+**Current build: steps 4 and 5 of 6 done.** Main menu, character select, training, best-of-3 vs a bot (Normal / Hard), and online 1v1 by room code or link. Next: a debug menu with fake lag, then putting it online on Cloudflare Pages.
 
 ## Running the game
 
@@ -21,20 +21,32 @@ Other commands:
 - `npm run build` checks the code and builds the finished site into `dist/`
 - `npm run typecheck` only checks the code for mistakes
 
-## Controls (training)
+## Playing online
+
+1. One player clicks **Host Match**. A 5-letter room code and a link appear.
+2. Send the link (or the code) to a friend. They open the link, or click **Join Match** and type the code.
+3. Both pick a class and click **Ready**. The match starts when both are ready.
+
+Good to know:
+
+- Both players need internet access, even on the same network (a free public service introduces the two browsers; after that they talk directly).
+- Some strict networks (some schools, offices, mobile hotspots) block direct connections. The game then says it could not connect. Fixing that needs a paid relay server, which this free setup doesn't have.
+- The host's computer runs the real game, so the host has no delay. The guest's own movement is instant too; everything else is shown about 0.1 s behind so it moves smoothly.
+- If someone drops out, the game freezes and waits 10 seconds for them to come back, then the other player wins.
+- **Testing alone:** open the game in two separate browser *windows* side by side (not two tabs: a tab you aren't looking at stops drawing). Host in one, join with the code in the other.
+
+## Controls
 
 | Key | Does |
 | --- | --- |
 | W A S D | move |
 | Mouse | aim (the crosshair) |
-| Tab | switch class |
-| R | put the dummy back and refill its HP |
-| F | make the dummy shoot at you (on / off) |
-| T | switch ability cooldowns on / off |
-| B | start a best-of-3 match against the Normal bot |
-| H | start a best-of-3 match against the Hard bot |
+| Tab | training: switch class |
+| R | training: put the dummy back and refill its HP |
+| F | training: make the dummy shoot at you (on / off) |
+| T | training: switch ability cooldowns on / off |
 | ` (the key left of 1) | open the dev panel |
-| Esc | pause menu (volume, mute, leave match) |
+| Esc | pause menu (volume, mute, leave match). Online games keep running while it's open. |
 
 **Mage**
 
@@ -79,7 +91,7 @@ Other commands:
 | V | Mage switch: every projectile turns around |
 | Space | Mage teleport to the crosshair |
 | ` (the key left of 1) | open the dev panel |
-| Esc | pause menu (volume, mute, leave match) |
+| Esc | pause menu (volume, mute, leave match). Online games keep running while it's open. |
 
 ---
 
@@ -145,7 +157,14 @@ To add a class later: copy the `mage` folder, rename it, edit the abilities, the
 
 ### Menus
 
-Arrive in build step 4. For now, the pause menu is `src/ui/pauseMenu.ts`.
+All menu screens (main menu, host, join, character select) are in `src/ui/menus.ts`: button
+text and titles are near the top of each screen. The pause menu is `src/ui/pauseMenu.ts` and the
+end-of-match screen is `src/ui/matchOverMenu.ts`. Their look is in `src/style.css`.
+
+### Online settings
+
+The `net:` group in `src/config/tuning.ts`: how often the host sends updates, how far behind
+the guest draws, and how long to wait for a dropped player.
 
 ---
 
@@ -160,7 +179,8 @@ Arrive in build step 4. For now, the pause menu is `src/ui/pauseMenu.ts`.
 | `src/audio/` | Sound effects. |
 | `src/ui/` | HTML menus and the dev panel. |
 | `src/game/` | Glue: runs a session (input â†’ simulation â†’ visuals/sound). |
-| `src/platform/` | Browser-only services (saved settings now; links and PeerJS later). Swap these for a desktop build. |
+| `src/platform/` | Browser-only services: saved settings, room links, PeerJS connections. Swap these for a desktop build. |
+| `src/net/` | The online message format (snapshots, inputs, lobby). |
 | `src/dev/`, `tools/` | Dev-panel helpers and the dev-server hook that saves `tuning.ts`. |
 
 The simulation runs at a fixed 60 ticks per second, independent of the screen's frame rate.

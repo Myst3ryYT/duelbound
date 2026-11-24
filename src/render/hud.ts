@@ -1,4 +1,4 @@
-/**
+﻿/**
  * The HUD: HP bars across the top, ability icons with cooldowns, and help text.
  * Everything here is in 1920x1080 screen units. The arena fills the middle,
  * so the ability bar and help text sit in the empty space on the left.
@@ -24,6 +24,7 @@ export interface HudInfo {
   abilities: HudAbility[];
   roundTimeTotal: number; // full round clock (for the "FIGHT!" flash)
   roundsToWin: number; // number of round-win pips under each HP bar
+  banner?: string | null; // a notice across the screen (e.g. opponent disconnected)
 }
 
 const BAR_W = 780;
@@ -40,6 +41,11 @@ export function drawHud(ctx: CanvasRenderingContext2D, world: World, info: HudIn
   for (const f of world.fighters) drawHpBar(ctx, f, trailHpOf(f.id));
   drawAbilityBar(ctx, info.abilities);
   drawMatch(ctx, world, info);
+  if (info.banner) {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(0, 120, SCREEN_W, 70);
+    outlinedText(ctx, info.banner, SCREEN_W / 2, 155, 'bold 34px monospace', '#ff9a6a', 'center');
+  }
 
   ctx.font = '18px monospace';
   ctx.textAlign = 'left';
@@ -77,6 +83,7 @@ function drawMatch(ctx: CanvasRenderingContext2D, world: World, info: HudInfo): 
 
   // Big centre text
   const name = (side: number) => world.fighters.find((f) => f.side === side)?.name ?? '';
+  const wins = (side: number) => (name(side) === 'You' ? 'YOU WIN' : `${name(side).toUpperCase()} WINS`);
   const big = (text: string, sub?: string, color = '#ffffff') => {
     ctx.fillStyle = 'rgba(0,0,0,0.45)';
     ctx.fillRect(0, SCREEN_H / 2 - 110, SCREEN_W, sub ? 200 : 160);
@@ -85,9 +92,9 @@ function drawMatch(ctx: CanvasRenderingContext2D, world: World, info: HudInfo): 
   };
   if (m.phase === 'countdown') big(String(Math.ceil(m.phaseT)), `ROUND ${m.round}`);
   else if (m.phase === 'fight' && info.roundTimeTotal - m.roundTime < 0.7) big('FIGHT!', undefined, '#ffd34d');
-  else if (m.phase === 'roundOver' && m.matchWinner < 0) big(`${name(m.roundWinner).toUpperCase()} WINS`, `round ${m.round}`, '#ffd34d');
+  else if (m.phase === 'roundOver' && m.matchWinner < 0) big(wins(m.roundWinner), `round ${m.round}`, '#ffd34d');
   else if (m.phase === 'tie') big('TIE!', `replaying round ${m.round}`, '#7fb0ff');
-  else if (m.phase === 'roundOver' || m.phase === 'matchOver') big(`${name(m.matchWinner).toUpperCase()} WINS THE MATCH`, undefined, '#ffd34d');
+  else if (m.phase === 'roundOver' || m.phase === 'matchOver') big(`${wins(m.matchWinner)} THE MATCH`, undefined, '#ffd34d');
 }
 
 function drawAbilityBar(ctx: CanvasRenderingContext2D, abilities: HudAbility[]): void {

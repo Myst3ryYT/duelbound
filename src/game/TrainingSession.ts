@@ -11,7 +11,7 @@ import { createTrainingWorld, resetHp } from '../sim/world.ts';
 import { CLASS_ORDER, getClass } from '../sim/classes/registry.ts';
 import type { Renderer } from '../render/Renderer.ts';
 import { playSound } from '../audio/sfx.ts';
-import { Session, type SessionRequest } from './Session.ts';
+import { Session } from './Session.ts';
 
 export class TrainingSession extends Session {
   classId: string;
@@ -42,7 +42,7 @@ export class TrainingSession extends Session {
     return new Map([[this.player.id, local]]);
   }
 
-  handleMenuKeys(): SessionRequest {
+  handleMenuKeys(): void {
     if (this.input.consumeMenu('resetDummy')) {
       const d = this.opponent;
       d.x = d.vars.homeX;
@@ -68,9 +68,6 @@ export class TrainingSession extends Session {
       this.world = this.newWorld();
       playSound('ui_click');
     }
-    if (this.input.consumeMenu('startBotMatch')) return 'startBotMatch';
-    if (this.input.consumeMenu('startBotMatchHard')) return 'startBotMatchHard';
-    return null;
   }
 
   protected helpLines(): string[] {
@@ -81,8 +78,6 @@ export class TrainingSession extends Session {
       `${this.key('resetDummy')}  reset dummy`,
       `${this.key('toggleDummyFire')}  dummy shoots: ${onOff(this.world.options.dummyFires)}`,
       `${this.key('toggleCooldowns')}  cooldowns: ${onOff(!this.world.options.cooldownsDisabled)}`,
-      `${this.key('startBotMatch')}  fight the bot (normal)`,
-      `${this.key('startBotMatchHard')}  fight the bot (hard)`,
       `${this.key('devPanel')}  dev panel   ${this.key('pause')}  pause`,
     ];
   }

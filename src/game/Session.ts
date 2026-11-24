@@ -7,16 +7,13 @@ import type { Tuning } from '../config/tuning.ts';
 import type { Keybinds } from '../config/keybinds.ts';
 import type { InputSource } from '../input/InputSource.ts';
 import { keyLabel } from '../input/keyLabels.ts';
-import { ACTIONS, type Fighter, type PlayerInput, type World } from '../sim/types.ts';
+import { ACTIONS, type Fighter, type GameEvent, type PlayerInput, type World } from '../sim/types.ts';
 import { applyDamage, resetHp, stepWorld } from '../sim/world.ts';
 import { getClass } from '../sim/classes/registry.ts';
 import { isReady } from '../sim/abilities.ts';
 import type { LocalView, Renderer } from '../render/Renderer.ts';
 import type { HudAbility, HudInfo } from '../render/hud.ts';
 import { playSound, playSoundByName } from '../audio/sfx.ts';
-
-/** Something a session asks the main loop to do (e.g. switch to a bot match). */
-export type SessionRequest = 'startBotMatch' | 'startBotMatchHard' | null;
 
 export abstract class Session {
   world!: World;
@@ -56,9 +53,33 @@ export abstract class Session {
   }
 
   /** Session-specific keys. Call once per frame. */
-  handleMenuKeys(): SessionRequest {
+  handleMenuKeys(): void {}
+
+  /** False until there is something to draw (the online guest waits for the first snapshot). */
+  get ready(): boolean {
+    return true;
+  }
+
+  /** Online sessions keep running while the pause menu is open. */
+  get online(): boolean {
+    return false;
+  }
+
+  /** A message across the screen (e.g. 'Opponent disconnected'), or null. */
+  banner(): string | null {
     return null;
   }
+
+  /**
+   * What to draw this frame. Normally the current world, blended with the previous
+   * tick by lpha. The online guest overrides this to draw slightly in the past.
+   */
+  renderState(alpha: number): { world: World; prev: Map<number, { x: number; y: number }>; alpha: number } {
+    return { world: this.world, prev: this.prev, alpha };
+  }
+
+  /** Clean up when leaving this session. */
+  dispose(): void {}
 
   /** True when the match has ended (training never ends). */
   get matchOver(): boolean {
@@ -84,6 +105,7 @@ export abstract class Session {
       abilities: this.abilityHud(),
       roundTimeTotal: this.tuning.match.roundTime,
       roundsToWin: this.tuning.match.roundsToWin,
+      banner: this.banner(),
     };
   }
 
@@ -122,12 +144,17 @@ export abstract class Session {
 
   /** Turn simulation events into sounds and visual effects, then clear them. */
   protected flushEvents(): void {
-    for (const e of this.world.events) {
-      this.renderer.onEvent(e, this.world);
+    this.playEvents(this.world.events, this.world);
+    this.world.events.length = 0;
+  }
+
+  /** Play sounds and effects for simulation events. */
+  protected playEvents(events: GameEvent[], world: World): void {
+    for (const e of events) {
+      this.renderer.onEvent(e, world);
       if (e.type === 'damage') playSound('hit');
       if (e.type === 'hpReset') playSound('reset');
       if (e.type === 'sound') playSoundByName(e.sound);
     }
-    this.world.events.length = 0;
   }
 }
