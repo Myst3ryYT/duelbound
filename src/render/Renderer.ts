@@ -41,6 +41,18 @@ interface Effect {
   age: number;
 }
 
+/** A tiny spark flying out of a hit or burst (looks only). */
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  age: number;
+  life: number;
+  size: number;
+  color: string;
+}
+
 /** A fading line left behind a fast projectile (looks only). */
 interface Trail {
   points: { x: number; y: number; t: number }[];
@@ -76,6 +88,11 @@ export class Renderer {
   private mergeWindow = 0.35; // copied from tuning.visuals.damageNumberMerge every frame
   private localId = 0; // the local player's fighter id (anything owned by someone else is "enemy")
   private tintCache = new Map<CanvasImageSource, HTMLCanvasElement>();
+  private whiteCache = new Map<CanvasImageSource, HTMLCanvasElement>();
+  private vis: Tuning['visuals'] | null = null; // copied from tuning every frame (the juice settings)
+  private flash = new Map<number, number>(); // fighter id -> seconds left of the white hit flash
+  private shakeAmp = 0; // current screen shake strength (pixels), fades to 0
+  private particles: Particle[] = [];
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -103,11 +120,35 @@ export class Renderer {
       }
       const fx = this.fx.get(e.targetId);
       if (fx) fx.trailHold = 0;
+      this.hitJuice(e.targetId, e.amount, e.x, e.y);
     } else if (e.type === 'fx') {
       this.effects.push({ ...e, age: 0 });
+      if (this.vis) this.sparks(e.x, e.y, e.fx === 'burst' ? 5 : 3, e.color, e.radius * 2);
     } else if (e.type === 'bounce') {
       this.trails.get(e.projectileId)?.points.push({ x: e.x, y: e.y, t: this.clock });
     }
+  }
+
+  /** Juice for a hit: white flash on most hits, screen shake on big ones, sparks on all. */
+  private hitJuice(targetId: number, amount: number, x: number, y: number): void {
+    const v = this.vis;
+    if (!v) return;
+    if (amount >= v.flashMinDamage) this.flash.set(targetId, v.flashTime);
+    if (amount >= v.shakeMinDamage) this.shakeAmp = Math.max(this.shakeAmp, Math.min(v.shakeMax, v.shakeBase + amount * v.shakePerDamage));
+    this.sparks(x, y, Math.min(12, 3 + Math.round(amount / 10)), '#ffffff', 220);
+  }
+
+  /** Spawn `n` little sparks flying out from (x, y). */
+  private sparks(x: number, y: number, n: number, color: string, speed: number): void {
+    const v = this.vis;
+    if (!v || v.particles <= 0) return;
+    const count = Math.max(1, Math.round(n * v.particles));
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const s = speed * (0.4 + Math.random() * 0.6);
+      this.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, age: 0, life: 0.2 + Math.random() * 0.25, size: 3 + Math.random() * 3, color: i % 3 === 0 ? '#ffd34d' : color });
+    }
+    if (this.particles.length > 300) this.particles.splice(0, this.particles.length - 300);
   }
 
   /** Blank the screen (used behind the menus). */
@@ -122,6 +163,9 @@ export class Renderer {
   reset(): void {
     this.numbers = [];
     this.effects = [];
+    this.particles = [];
+    this.flash.clear();
+    this.shakeAmp = 0;
     this.trails.clear();
     this.fx.clear();
   }
@@ -145,6 +189,7 @@ export class Renderer {
     this.clock += dt;
     this.localId = local.playerId;
     this.mergeWindow = tuning.visuals.damageNumberMerge;
+    this.vis = tuning.visuals;
     view.arenaSize = tuning.world.arenaSize;
     view.fit();
 
@@ -168,7 +213,15 @@ export class Renderer {
 
     // ---- World space (arena) ----
     ctx.save();
-    ctx.translate(view.arenaX, view.arenaY);
+    // Screen shake: the arena jumps around a little, then settles. (The HUD stays still.)
+    this.shakeAmp = Math.max(0, this.shakeAmp - tuning.visuals.shakeDecay * dt);
+    const shakeX = (Math.random() * 2 - 1) * this.shakeAmp;
+    const shakeY = (Math.random() * 2 - 1) * this.shakeAmp;
+    ctx.translate(view.arenaX + shakeX, view.arenaY + shakeY);
+    for (const [id, t] of this.flash) {
+      if (t - dt <= 0) this.flash.delete(id);
+      else this.flash.set(id, t - dt);
+    }
     this.drawArena(tuning.world.arenaSize);
     for (const p of world.placeables) this.drawPlaceable(p, tuning);
     for (const o of world.objects) {
@@ -191,6 +244,7 @@ export class Renderer {
     }
     if (local.preview) this.drawPreview(local.preview);
     this.drawEffects(dt);
+    this.drawParticles(dt);
     this.drawNumbers(tuning, dt);
     ctx.restore();
 
@@ -309,7 +363,12 @@ export class Renderer {
     if (f.vars.dashT > 0) {
       for (let i = 1; i <= 3; i++) this.drawSprite(sprite, x - f.vars.dashDX * i * 18, y - f.vars.dashDY * i * 18, angle, 0.25 / i);
     }
-    this.drawSprite(sprite, x, y, f.kind === 'dummy' ? 0 : angle + spin, alpha);
+    // Hit flash: solid white for a moment after most hits, and shaking + white for the whole hitstun.
+    const stunned = f.hitstunT > 0;
+    const white = stunned || (this.flash.get(f.id) ?? 0) > 0;
+    const jx = stunned ? (Math.random() - 0.5) * 8 : 0;
+    const jy = stunned ? (Math.random() - 0.5) * 8 : 0;
+    this.drawSprite(sprite, x + jx, y + jy, f.kind === 'dummy' ? 0 : angle + spin, alpha, sprite.size, false, white);
 
 
     // Builder hammer swing: a quick sweeping arc in front.
@@ -635,6 +694,24 @@ export class Renderer {
     ctx.fillRect(x, y, w * fill, h);
   }
 
+  private drawParticles(dt: number): void {
+    const { ctx } = this;
+    for (const p of this.particles) {
+      p.age += dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vx *= 0.92;
+      p.vy *= 0.92;
+      const k = Math.min(1, p.age / p.life);
+      ctx.globalAlpha = 1 - k;
+      ctx.fillStyle = p.color;
+      const s = p.size * (1 - 0.5 * k);
+      ctx.fillRect(p.x - s / 2, p.y - s / 2, s, s);
+    }
+    ctx.globalAlpha = 1;
+    this.particles = this.particles.filter((p) => p.age < p.life);
+  }
+
   private drawEffects(dt: number): void {
     const { ctx } = this;
     for (const e of this.effects) {
@@ -662,7 +739,7 @@ export class Renderer {
   }
 
   /** Draw a sprite centred on (x, y), rotated by `angle` radians. `size` overrides the asset-map size. */
-  private drawSprite(s: Sprite, x: number, y: number, angle: number, alpha = 1, size = s.size, enemy = false): void {
+  private drawSprite(s: Sprite, x: number, y: number, angle: number, alpha = 1, size = s.size, enemy = false, white = false): void {
     const w = size;
     const h = size * s.aspect;
     const { ctx } = this;
@@ -670,13 +747,32 @@ export class Renderer {
     ctx.globalAlpha = alpha;
     ctx.translate(x, y);
     if (angle) ctx.rotate(angle);
-    ctx.drawImage(enemy ? this.tinted(s.image) : s.image, -w / 2, -h / 2, w, h);
+    ctx.drawImage(white ? this.whitened(s.image) : enemy ? this.tinted(s.image) : s.image, -w / 2, -h / 2, w, h);
     ctx.restore();
   }
 
   /** Does this belong to the other side? */
   private isEnemy(ownerId: number): boolean {
     return ownerId !== this.localId;
+  }
+
+  /** A solid-white copy of an image (for hit flashes; made once, then reused). */
+  private whitened(image: CanvasImageSource): HTMLCanvasElement {
+    let c = this.whiteCache.get(image);
+    if (c) return c;
+    const src = image as HTMLCanvasElement | HTMLImageElement;
+    const w = (src as HTMLImageElement).naturalWidth || src.width;
+    const h = (src as HTMLImageElement).naturalHeight || src.height;
+    c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const g = c.getContext('2d')!;
+    g.drawImage(image, 0, 0);
+    g.globalCompositeOperation = 'source-atop';
+    g.fillStyle = '#ffffff';
+    g.fillRect(0, 0, w, h);
+    this.whiteCache.set(image, c);
+    return c;
   }
 
   /** A red-washed copy of an image (made once, then reused). */

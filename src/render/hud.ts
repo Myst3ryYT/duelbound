@@ -19,6 +19,7 @@ export interface HudAbility {
   charges?: number; // stored uses (abilities with charges)
   chargeMax?: number;
   ready: boolean; // can be used right now
+  disabled?: boolean; // switched off: drawn greyed out
 }
 
 /** Extra things the game screen wants shown. */
@@ -116,16 +117,21 @@ function drawAbilityBar(ctx: CanvasRenderingContext2D, abilities: HudAbility[]):
     const y = ICONS_Y + row * ICON_ROW_H;
     const cx = x + ICON / 2;
     const cy = y + ICON / 2;
-    const cooling = !a.ready;
+    const cooling = !a.ready && !a.disabled;
 
     // Frame: bright when ready, dull while cooling down, gold while placing.
-    ctx.fillStyle = a.active ? '#ffd34d' : cooling ? '#2a2c36' : '#e8ecf5';
+    ctx.fillStyle = a.active ? '#ffd34d' : cooling || a.disabled ? '#2a2c36' : '#e8ecf5';
     ctx.fillRect(x - 5, y - 5, ICON + 10, ICON + 10);
     ctx.fillStyle = '#000';
     ctx.fillRect(x - 2, y - 2, ICON + 4, ICON + 4);
     const sprite = findSprite(a.icon);
     if (sprite) ctx.drawImage(sprite.image, x, y, ICON, ICON);
 
+    if (a.disabled) {
+      ctx.fillStyle = 'rgba(20,20,26,0.82)';
+      ctx.fillRect(x, y, ICON, ICON);
+      outlinedText(ctx, 'OFF', cx, cy + 2, 'bold 32px monospace', '#7a7f90', 'center');
+    }
     const timer = (secs: number) => (secs >= 1 ? String(Math.ceil(secs)) : secs.toFixed(1));
     if (cooling) {
       ctx.fillStyle = 'rgba(0,0,0,0.7)';
@@ -180,7 +186,7 @@ function drawAbilityBar(ctx: CanvasRenderingContext2D, abilities: HudAbility[]):
     let size = 16;
     ctx.font = `bold ${size}px monospace`;
     while (size > 10 && ctx.measureText(a.name).width > ICON + ICON_GAP - 4) ctx.font = `bold ${--size}px monospace`;
-    outlinedText(ctx, a.name, cx, y + ICON + 22, `bold ${size}px monospace`, cooling ? '#6a6f80' : '#e8ecf5', 'center');
+    outlinedText(ctx, a.name, cx, y + ICON + 22, `bold ${size}px monospace`, cooling || a.disabled ? '#6a6f80' : '#e8ecf5', 'center');
   });
 }
 

@@ -29,6 +29,7 @@ export interface DragWallOptions {
   name: string;
   icon: string;
   reflective: boolean; // bounces shots (mirror) or blocks them (wall)
+  blocksOwn?: boolean; // also blocks the owner's own shots [false]
   placeSound: string;
   numbers: (t: Tuning) => WallNumbers;
 }
@@ -112,6 +113,7 @@ export function makeDragWall(o: DragWallOptions): AbilityDef {
         hp: m.hp,
         maxHp: m.hp,
         reflective: o.reflective,
+        blocksOwn: o.blocksOwn ?? false,
         breakT: m.life,
       });
       emitSound(world, o.placeSound, (sx + ex) / 2, (sy + ey) / 2);

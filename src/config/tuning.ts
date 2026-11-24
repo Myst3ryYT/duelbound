@@ -40,10 +40,10 @@ export const TUNING = {
 
   // Hitstun: a short freeze (no moving, no abilities) for whoever takes a big hit. In frames (60 per second).
   hitstun: {
-    hammer: 2, // Builder RC: sledge hammer hit
-    furniture: 2, // Builder V: flung furniture hit
-    pierce: 2, // Sheriff V: piercing bullet hit
-    shatter: 1, // Refractor V: shatter hit
+    hammer: 6, // Builder RC: sledge hammer hit
+    furniture: 8, // Builder V: flung furniture hit
+    pierce: 8, // Sheriff V: piercing bullet hit
+    shatter: 5, // Refractor V: shatter hit
   },
 
   training: {
@@ -70,7 +70,8 @@ export const TUNING = {
     maxQueuedInputs: 3, // online: if more guest inputs than this pile up at the host, the oldest are merged so the guest isn't stuck in the past
   },
 
-  bot: {    normal: {
+  bot: {
+    normal: {
       reactionTime: 0.35, // seconds after a shot is fired before the bot notices it
       aimJitter: 70, // random aim error, in world units (0 = perfect aim)
       leadFactor: 0.5, // how well it predicts where you're moving (1 = perfectly, 0 = shoots where you are)
@@ -268,13 +269,17 @@ export const TUNING = {
       brickRange: 450, // C: distance over which a brick slows to a stop (then it vanishes)
     },
     furniture: {
-      cooldown: 4, // V: seconds before building another piece of furniture
+      charges: 3, // V: pieces of furniture stored up (like walls)
+      chargeTime: 5, // V: seconds for one stored piece to come back
+      maxFurniture: 6, // V: furniture you can have at once (building more removes your oldest)
+      pushShare: 0.7, // V: when a player shoves it, this share of the movement goes to the furniture (1 = slides like nothing, 0 = immovable)
+      shotImpulse: 1.5, // V: speed added to it per point of damage of a shot that hits it (gunfire nudges it)
       hp: 150, // V: damage it takes from the enemy before it breaks
       size: 40, // V: radius of the furniture
       spawnDistance: 75, // V: how far in front of the Builder it appears
       life: 30, // V: seconds before it falls apart by itself
       flingDamage: 100, // V: damage when flung furniture hits the enemy
-      friction: 8, // V: how quickly it stops sliding when standing around
+      friction: 3, // V: how quickly it stops sliding when standing around
       flungFriction: 0.6, // V: how quickly it slows down after being flung (lower = flies further)
       minFlingSpeed: 200, // V: below this speed, flung furniture stops being dangerous
       restitution: 0.4, // V: bounciness off walls and structures
@@ -292,6 +297,14 @@ export const TUNING = {
     damageNumberMerge: 0.35, // hits on the same target this close together (seconds) add up into one number
     hpTrailDelay: 0.5, // seconds before the white "recent damage" chunk of an HP bar starts shrinking
     hpTrailSpeed: 600, // how fast (HP per second) the white damage chunk shrinks
+    flashMinDamage: 15, // a hit this big (or bigger) flashes the victim white (small hits like nails and the Mind Ray don't)
+    flashTime: 0.12, // seconds of the white hit flash
+    shakeMinDamage: 40, // a hit this big (or bigger) shakes the screen
+    shakeBase: 3, // screen shake strength (pixels) of the smallest shaking hit
+    shakePerDamage: 0.05, // extra shake strength per point of damage
+    shakeMax: 10, // strongest screen shake (pixels)
+    shakeDecay: 60, // how fast the shake settles (pixels per second)
+    particles: 1, // amount of spark particles (1 = normal, 0 = none, 2 = double)
   },
 };
 

@@ -299,3 +299,33 @@ body {
   margin: 6px 0 4px;
   font-size: 12px;
 }
+
+/* Dev panel folders + search */
+.dev-search {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 8px 0 4px;
+  padding: 5px 8px;
+  background: #0c0d12;
+  color: #fff;
+  border: 1px solid #4b4e5e;
+  font: inherit;
+}
+.dev-folder > summary {
+  cursor: pointer;
+  padding: 4px 6px;
+  margin-top: 4px;
+  color: #e0b030;
+  text-transform: uppercase;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.dev-folder .dev-folder > summary {
+  color: #c9cddb;
+  text-transform: none;
+  background: rgba(255, 255, 255, 0.03);
+}
+.dev-folder-body {
+  padding-left: 8px;
+  border-left: 2px solid #2a2c36;
+}

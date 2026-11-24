@@ -90,7 +90,7 @@ function startAtFirstObstacle(world: World, tuning: Tuning, p: Projectile, fromX
   const hitR = p.radius * tuning.projectiles.hitboxScale;
   let best = -1;
   for (const pl of world.placeables) {
-    if (pl.ownerId === p.ownerId && (!pl.reflective || pl.ownerPasses)) continue; // shots pass through your own structures
+    if (pl.ownerId === p.ownerId && !pl.blocksOwn && (!pl.reflective || pl.ownerPasses)) continue; // shots pass through your own structures
     const t = pathHits(pl, fromX, fromY, p.x, p.y, hitR);
     if (t >= 0 && (best < 0 || t < best)) best = t;
   }
@@ -168,7 +168,7 @@ export function updateProjectiles(world: World, tuning: Tuning, dt: number): voi
       // joints of the Mage's curved shield).
       let first: { pl: (typeof world.placeables)[number]; t: number; n: { x: number; y: number } } | null = null;
       for (const pl of world.placeables) {
-        if (pl.ownerId === p.ownerId && (!pl.reflective || pl.ownerPasses)) continue;
+        if (pl.ownerId === p.ownerId && !pl.blocksOwn && (!pl.reflective || pl.ownerPasses)) continue;
         const t = pathHits(pl, ox, oy, nx, ny, hitR);
         if (t < 0 || (first && t >= first.t)) continue;
         const n = bounceNormal(pl, ox, oy, ox + (nx - ox) * t, oy + (ny - oy) * t);
@@ -203,10 +203,13 @@ export function updateProjectiles(world: World, tuning: Tuning, dt: number): voi
       for (const o of world.objects) {
         if (p.behavior === 'lasso') continue; // the lasso flies straight through tumbleweeds
         const solid = getObjectKind(o.kind)?.solid;
-        if (solid && o.ownerId === p.ownerId) continue; // your own shots pass your own furniture
         if (segmentCircle(ox, oy, nx, ny, o.x, o.y, o.radius + hitR) < 0) continue;
         if (solid) {
-          damageObject(world, o, damageOf(p));
+          if (o.ownerId !== p.ownerId) damageObject(world, o, damageOf(p)); // your own shots don't hurt your furniture
+          const sp = Math.hypot(p.vx, p.vy) || 1;
+          const push = damageOf(p) * (getObjectKind(o.kind)?.shotImpulse?.(tuning) ?? 0); // heavy things budge a little
+          o.vx += (p.vx / sp) * push;
+          o.vy += (p.vy / sp) * push;
           alive = false;
           break;
         }

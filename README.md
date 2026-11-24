@@ -56,7 +56,7 @@ Good to know:
 | Left click | Staff: hold to keep firing magic bolts |
 | Right click | Reflective shield: a curved wall that drifts forward for a few seconds. Enemy shots bounce off it and become yours; you and your shots go through it. 2 stored uses. |
 | C | Watchtower: shows an outline, left click to place, right click or C to cancel. While you stand in its glowing ring, your staff fires faster. |
-| V | Switch: every projectile and tumbleweed slows down and comes back the other way |
+| V | Switch: switched off for now (shown greyed out) |
 | Space | Teleport to the crosshair |
 
 **Sheriff**
@@ -85,8 +85,8 @@ Good to know:
 | --- | --- |
 | Left click | Nail Gun: hold to spray fast, weak nails |
 | Right click | Sledge Hammer: a swing in front of you. Hurts the enemy, wrecks enemy structures, smashes your own brick walls into a volley of bricks (they fly straight out of the wall on the crosshair's side, slowing to a stop), and flings your own furniture. |
-| C | Brick wall mode on / off. Placed like mirrors (drag with left click). Lots of health, blocks enemy shots; your shots go through. 2 stored uses. |
-| V | Construction: builds a random piece of furniture in front of you. It's cover until the enemy breaks it. Hit it with the hammer to fling it: 100 damage to the enemy it hits. |
+| C | Brick wall mode on / off. Placed like mirrors (drag with left click). Lots of health, blocks everyone's shots (yours too). 2 stored uses. |
+| V | Construction: builds a random piece of furniture in front of you (3 stored uses). It's heavy, movable cover: players can shove it, shots nudge it, it blocks everyone's shots until it's broken. Hit it with the hammer to fling it: 100 damage to the enemy it hits. |
 | Space | Dash in the direction you're walking |
 
 Anything that belongs to your **opponent** (shots, walls, mirrors, furniture, beams) is tinted **red**.
@@ -109,7 +109,7 @@ line saying what it does. Change the number, save, done.
 Keep the layout the same: one value per line, like `moveSpeed: 420, // ...`.
 
 **Or tweak them while playing:** press ` to open the **dev panel**. Every number
-has a slider and a box. Changes apply instantly. Values you changed turn yellow.
+has a slider and a box, tucked into folders (click a folder to open it, e.g. builder > hammer) so you don't have to scroll. The search box finds a value by name. Changes apply instantly. Values you changed turn yellow.
 
 - **Save to tuning.ts** writes the current values into the file for you (only works with `npm run dev`).
 - **Revert to file** throws away slider changes.

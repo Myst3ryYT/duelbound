@@ -15,6 +15,7 @@ export const switchAbility: AbilityDef = {
   type: 'misc',
   activation: 'instant',
   icon: 'icon_mage_switch',
+  disabled: true, // switched off for now (remove this line to bring it back)
   cooldown: (t) => t.mage.switch.cooldown,
 
   update({ world, tuning, fighter: f, slot, pressed }) {

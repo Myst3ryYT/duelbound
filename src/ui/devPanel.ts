@@ -2,6 +2,7 @@
  * Dev panel (toggle with the ` key by default).
  *
  * - A slider + number box for every value in config/tuning.ts. Changes apply live.
+ *   They sit in collapsible folders (mage > staff ...); the search box filters them.
  * - "Save to tuning.ts" writes the current values back into the file
  *   (only while running `npm run dev`).
  * - Test buttons for dealing damage / healing.
@@ -24,6 +25,9 @@ export class DevPanel {
   private rows = new Map<string, { range: HTMLInputElement; num: HTMLInputElement; row: HTMLDivElement }>();
   /** The values as they are in the file right now (for "Revert" and change highlighting). */
   private fileValues: Record<string, number> = {};
+  /** Folders that are open (kept across rebuilds, e.g. after saving). */
+  private openFolders = new Set<string>();
+  private search = '';
 
   constructor(
     parent: HTMLElement,
@@ -81,28 +85,79 @@ export class DevPanel {
       this.status.style.color = oldStatus.color;
     } else if (!import.meta.env.DEV) this.setStatus('Saving to the file only works with npm run dev.');
 
-    this.buildNetworkSection();
+    const find = document.createElement('input');
+    find.type = 'search';
+    find.placeholder = 'search values (e.g. dash, damage)...';
+    find.className = 'dev-search';
+    find.value = this.search;
+    find.addEventListener('input', () => {
+      this.search = find.value.trim().toLowerCase();
+      this.applySearch();
+    });
+    this.root.appendChild(find);
 
-    // Group rows by their first path part ("player", "mage.staff" -> "mage"...).
-    let currentGroup = '';
+    this.buildNetworkSection(this.folder(this.root, 'network test', 'Network test (this window only)'));
+
+    // Folders: "mage.staff.damage" goes in folder "mage" > "staff".
+    const folders = new Map<string, HTMLElement>();
     for (const line of lines) {
-      const group = line.path.split('.').slice(0, -1).join('.');
-      if (group !== currentGroup) {
-        currentGroup = group;
-        const gh = document.createElement('h3');
-        gh.textContent = group;
-        this.root.appendChild(gh);
+      const parts = line.path.split('.');
+      let parent: HTMLElement = this.root;
+      let key = '';
+      for (const part of parts.slice(0, -1)) {
+        key = key ? key + '.' + part : part;
+        let body = folders.get(key);
+        if (!body) {
+          body = this.folder(parent, key, part);
+          folders.set(key, body);
+        }
+        parent = body;
       }
-      this.addRow(line);
+      this.addRow(line, parent);
     }
     this.refresh();
+    this.applySearch();
+  }
+
+  /** A collapsible folder; returns the element to put its contents in. */
+  private folder(parent: HTMLElement, key: string, title: string): HTMLElement {
+    const d = document.createElement('details');
+    d.className = 'dev-folder';
+    d.dataset.key = key;
+    d.open = this.openFolders.has(key);
+    d.addEventListener('toggle', () => {
+      if (this.search) return; // searching force-opens folders; don't remember that
+      if (d.open) this.openFolders.add(key);
+      else this.openFolders.delete(key);
+    });
+    const s = document.createElement('summary');
+    s.textContent = title;
+    d.appendChild(s);
+    const body = document.createElement('div');
+    body.className = 'dev-folder-body';
+    d.appendChild(body);
+    parent.appendChild(d);
+    return body;
+  }
+
+  /** Show only rows matching the search text (and open the folders that hold them). */
+  private applySearch(): void {
+    const q = this.search;
+    for (const [path, r] of this.rows) r.row.hidden = !!q && !(path.toLowerCase().includes(q) || (r.row.textContent ?? '').toLowerCase().includes(q));
+    for (const d of Array.from(this.root.querySelectorAll<HTMLDetailsElement>('details.dev-folder')).reverse()) {
+      if (!q) {
+        d.hidden = false;
+        d.open = this.openFolders.has(d.dataset.key ?? '');
+      } else {
+        const any = d.querySelector('.dev-row:not([hidden])') !== null;
+        d.hidden = !any;
+        d.open = any;
+      }
+    }
   }
 
   /** Fake bad-connection settings for testing online play. */
-  private buildNetworkSection(): void {
-    const gh = document.createElement('h3');
-    gh.textContent = 'Network test (this window only)';
-    this.root.appendChild(gh);
+  private buildNetworkSection(body: HTMLElement): void {
     const slider = (label: string, key: 'latencyMs' | 'jitterMs' | 'lossPct', max: number, hint: string) => {
       const row = document.createElement('div');
       row.className = 'dev-row';
@@ -132,7 +187,7 @@ export class DevPanel {
       h.textContent = hint;
       top.append(name, range, num);
       row.append(top, h);
-      this.root.appendChild(row);
+      body.appendChild(row);
     };
     slider('fake latency', 'latencyMs', 200, 'extra ping in milliseconds (round trip)');
     slider('fake jitter', 'jitterMs', 100, 'random extra delay per message, 0 to this many ms');
@@ -144,7 +199,7 @@ export class DevPanel {
     box.checked = NET_DEBUG.overlay;
     box.addEventListener('change', () => (NET_DEBUG.overlay = box.checked));
     label.append(box, ' show network overlay (ping, snapshot rate) during online matches');
-    this.root.appendChild(label);
+    body.appendChild(label);
   }
 
   private buttonRow(): HTMLDivElement {
@@ -161,7 +216,7 @@ export class DevPanel {
     parent.appendChild(b);
   }
 
-  private addRow(line: TuningLine): void {
+  private addRow(line: TuningLine, parent: HTMLElement): void {
     const row = document.createElement('div');
     row.className = 'dev-row';
     const top = document.createElement('div');
@@ -198,7 +253,7 @@ export class DevPanel {
 
     top.append(name, range, num);
     row.append(top, hint);
-    this.root.appendChild(row);
+    parent.appendChild(row);
     this.rows.set(line.path, { range, num, row });
   }
 

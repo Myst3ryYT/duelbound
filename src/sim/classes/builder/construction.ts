@@ -24,7 +24,8 @@ export const construction: AbilityDef = {
   type: 'object',
   activation: 'instant',
   icon: 'icon_builder_construction',
-  cooldown: (t) => t.builder.furniture.cooldown,
+  cooldown: (t) => t.builder.furniture.chargeTime,
+  charges: (t) => t.builder.furniture.charges,
 
   update({ world, tuning, fighter: f, slot, pressed }) {
     if (!pressed || !isReady(f, slot)) return;
@@ -48,7 +49,9 @@ export const construction: AbilityDef = {
     // "Random" pick, worked out from the tick so every computer picks the same one.
     const kind = FURNITURE[(world.tick * 7 + f.id * 3) % FURNITURE.length];
     spawnObject(world, { ownerId: f.id, kind, x, y, vx: 0, vy: 0, radius: c.size, life: c.life, hp: c.hp, maxHp: c.hp });
-    startCooldown(world, f, slot, c.cooldown);
+    const mine = world.objects.filter((o) => o.ownerId === f.id && o.kind.startsWith('builder_furniture'));
+    if (mine.length >= c.maxFurniture) mine[0].life = 0; // the oldest falls apart
+    startCooldown(world, f, slot, c.chargeTime);
     emitSound(world, 'furniture_build', x, y);
     emitFx(world, 'burst', x, y, '#c8a060', c.size * 1.5, 0.3);
   },
@@ -59,6 +62,8 @@ export const furnitureObjects: ObjectKindDef[] = FURNITURE.map((kind) => ({
   kind,
   solid: true,
   restitution: (t) => t.builder.furniture.restitution,
+  pushShare: (t) => t.builder.furniture.pushShare,
+  shotImpulse: (t) => t.builder.furniture.shotImpulse,
   // Barely slides when standing; flies far when flung.
   friction: (t, o) => (o.armed && Math.hypot(o.vx, o.vy) > t.builder.furniture.minFlingSpeed ? t.builder.furniture.flungFriction : t.builder.furniture.friction),
   onTouch(world, tuning, o, f) {

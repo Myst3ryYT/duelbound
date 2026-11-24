@@ -121,6 +121,7 @@ export interface Placeable {
   radius: number; // circle: its radius. segment: half its thickness
   reflective: boolean; // bounces projectiles instead of stopping them (mirrors)
   claims: boolean; // a shot bouncing off it becomes the structure owner's (Mage shield)
+  blocksOwn: boolean; // the owner's own shots are blocked by it too (Builder wall); normally your shots pass your structures
   ownerPasses: boolean; // the owner and the owner's shots go straight through it (Mage shield)
   vx: number; // drifting speed (most structures stand still: 0)
   vy: number;

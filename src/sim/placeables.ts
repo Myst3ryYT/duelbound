@@ -115,7 +115,7 @@ export function passes(p: Placeable, fighterId: number): boolean {
 
 // --------------------------------------------------------- create/update ----
 
-type Optional = 'shape' | 'x1' | 'y1' | 'x2' | 'y2' | 'reflective' | 'claims' | 'ownerPasses' | 'breakT' | 'vx' | 'vy';
+type Optional = 'shape' | 'x1' | 'y1' | 'x2' | 'y2' | 'reflective' | 'claims' | 'ownerPasses' | 'blocksOwn' | 'breakT' | 'vx' | 'vy';
 type NewPlaceable = Omit<Placeable, 'id' | 'age' | 'timer' | Optional> & Partial<Pick<Placeable, Optional>>;
 
 export function spawnPlaceable(world: World, props: NewPlaceable): Placeable {
@@ -131,6 +131,7 @@ export function spawnPlaceable(world: World, props: NewPlaceable): Placeable {
     reflective: false,
     claims: false,
     ownerPasses: false,
+    blocksOwn: false,
     breakT: -1,
     vx: 0,
     vy: 0,

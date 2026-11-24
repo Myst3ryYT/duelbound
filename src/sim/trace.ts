@@ -65,7 +65,7 @@ export function tracePath(world: World, tuning: Tuning, x: number, y: number, an
 
     for (const p of world.placeables) {
       if (p.id === ignorePlaceable) continue;
-      if (p.ownerId === o.ownerId && (!p.reflective || p.ownerPasses)) continue;
+      if (p.ownerId === o.ownerId && !p.blocksOwn && (!p.reflective || p.ownerPasses)) continue;
       const t = pathHits(p, x, y, ex, ey, o.radius);
       if (t >= 0 && t < bestT) {
         bestT = t;

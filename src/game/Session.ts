@@ -127,6 +127,7 @@ export abstract class Session {
       count: slot === 'primary' ? cls.ammo?.(me, this.tuning)?.current : undefined,
       charges: me.chargeMax[slot] > 0 ? me.charges[slot] : undefined,
       chargeMax: me.chargeMax[slot] > 0 ? me.chargeMax[slot] : undefined,
+      disabled: cls.abilities[slot].disabled,
       ready: isReady(me, slot) || (me.chargeMax[slot] === 0 && me.cooldownTotals[slot] < 0.75), // tiny cooldowns (fire rate) don't flash the icon
     }));
   }

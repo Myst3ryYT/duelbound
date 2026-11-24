@@ -47,6 +47,7 @@ export interface AbilityDef {
   type: AbilityType;
   activation: 'instant' | 'variable';
   icon: string; // sprite id for the HUD icon (config/assets.ts)
+  disabled?: boolean; // switched off for now: the HUD shows it greyed out and it does nothing
   /** Cooldown length in seconds (read from tuning so it can be tweaked live). */
   cooldown(t: Tuning): number;
   /** Runs every tick for the fighter that has this ability. */
@@ -84,6 +85,8 @@ export interface ObjectKindDef {
    * Non-solid ones (tumbleweed) get knocked around by every shot.
    */
   solid?: boolean;
+  pushShare?(t: Tuning): number; // solid objects: share (0..1) of a player shoving it that the object moves away (the rest moves the player)
+  shotImpulse?(t: Tuning): number; // solid objects: speed added per point of damage of a shot that hits it
   /** It touched a fighter. Return true to remove the object. */
   onTouch(world: World, tuning: Tuning, o: PhysObject, f: Fighter): boolean;
 }
@@ -238,6 +241,6 @@ export function runAbilities(world: World, tuning: Tuning, f: Fighter, input: Pl
       f.vars.placeDrag = 0;
       continue;
     }
-    def.update?.(ctx(slot, e));
+    if (!def.disabled) def.update?.(ctx(slot, e));
   }
 }

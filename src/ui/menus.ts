@@ -267,7 +267,7 @@ export class CharacterSelect extends Screen {
       const list = document.createElement('ul');
       for (const slot of ACTIONS) {
         const li = document.createElement('li');
-        li.innerHTML = `<b>${keyLabel(this.keybinds[slot][0])}</b> ${cls.abilities[slot].name}`;
+        li.innerHTML = `<b>${keyLabel(this.keybinds[slot][0])}</b> ${cls.abilities[slot].name}${cls.abilities[slot].disabled ? ' (off)' : ''}`;
         list.appendChild(li);
       }
       card.append(pic, name, list);

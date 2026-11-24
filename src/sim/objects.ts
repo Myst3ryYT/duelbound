@@ -79,6 +79,30 @@ export function updateObjects(world: World, tuning: Tuning, dt: number): void {
         }
       }
 
+      // Other solid objects: furniture bumps into furniture (equal masses, so they swap some speed)
+      if (getObjectKind(o.kind)?.solid) {
+        for (const q of world.objects) {
+          if (q === o || !getObjectKind(q.kind)?.solid) continue;
+          const d = dist(o.x, o.y, q.x, q.y) || 0.001;
+          const push = o.radius + q.radius - d;
+          if (push <= 0) continue;
+          const nx = (o.x - q.x) / d;
+          const ny = (o.y - q.y) / d;
+          o.x += (nx * push) / 2;
+          o.y += (ny * push) / 2;
+          q.x -= (nx * push) / 2;
+          q.y -= (ny * push) / 2;
+          const rel = (o.vx - q.vx) * nx + (o.vy - q.vy) * ny;
+          if (rel < 0) {
+            const j = ((1 + restitution) * rel) / 2;
+            o.vx -= j * nx;
+            o.vy -= j * ny;
+            q.vx += j * nx;
+            q.vy += j * ny;
+          }
+        }
+      }
+
       // Fighters: the object's own behaviour decides what touching does
       for (const f of world.fighters) {
         if (!hitPoints(f).some((h) => dist(o.x, o.y, h.x, h.y) <= o.radius + f.radius)) continue;
@@ -91,8 +115,14 @@ export function updateObjects(world: World, tuning: Tuning, dt: number): void {
           const d = dist(o.x, o.y, f.x, f.y) || 0.001;
           const push = o.radius + f.radius - d;
           if (push > 0) {
-            f.x += ((f.x - o.x) / d) * push;
-            f.y += ((f.y - o.y) / d) * push;
+            // The player shoves it: the object gives way by its pushShare, the player by the rest.
+            const share = kind.pushShare?.(tuning) ?? 0;
+            const nx = (f.x - o.x) / d;
+            const ny = (f.y - o.y) / d;
+            f.x += nx * push * (1 - share);
+            f.y += ny * push * (1 - share);
+            o.x -= nx * push * share;
+            o.y -= ny * push * share;
           }
         }
       }
