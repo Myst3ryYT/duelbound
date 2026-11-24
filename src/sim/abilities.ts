@@ -85,6 +85,7 @@ export interface ObjectKindDef {
    * Non-solid ones (tumbleweed) get knocked around by every shot.
    */
   solid?: boolean;
+  weight?(t: Tuning): number; // how heavy it is when objects collide (default 1; lower = gets pushed around more)
   pushShare?(t: Tuning): number; // solid objects: share (0..1) of a player shoving it that the object moves away (the rest moves the player)
   shotImpulse?(t: Tuning): number; // solid objects: speed added per point of damage of a shot that hits it
   /** It touched a fighter. Return true to remove the object. */

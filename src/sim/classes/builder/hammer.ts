@@ -67,6 +67,11 @@ export const hammer: AbilityDef = {
         o.vx = Math.cos(f.aimAngle) * h.flingSpeed;
         o.vy = Math.sin(f.aimAngle) * h.flingSpeed;
         o.armed = 1;
+      } else if (o.maxHp <= 0) {
+        // Not breakable (a tumbleweed): knock it away.
+        const a = Math.atan2(o.y - f.y, o.x - f.x);
+        o.vx = Math.cos(a) * h.flingSpeed;
+        o.vy = Math.sin(a) * h.flingSpeed;
       } else if (o.ownerId !== f.id) damageObject(world, o, h.structureDamage);
     }
 

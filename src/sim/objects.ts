@@ -79,27 +79,30 @@ export function updateObjects(world: World, tuning: Tuning, dt: number): void {
         }
       }
 
-      // Other solid objects: furniture bumps into furniture (equal masses, so they swap some speed)
-      if (getObjectKind(o.kind)?.solid) {
-        for (const q of world.objects) {
-          if (q === o || !getObjectKind(q.kind)?.solid) continue;
-          const d = dist(o.x, o.y, q.x, q.y) || 0.001;
-          const push = o.radius + q.radius - d;
-          if (push <= 0) continue;
-          const nx = (o.x - q.x) / d;
-          const ny = (o.y - q.y) / d;
-          o.x += (nx * push) / 2;
-          o.y += (ny * push) / 2;
-          q.x -= (nx * push) / 2;
-          q.y -= (ny * push) / 2;
-          const rel = (o.vx - q.vx) * nx + (o.vy - q.vy) * ny;
-          if (rel < 0) {
-            const j = ((1 + restitution) * rel) / 2;
-            o.vx -= j * nx;
-            o.vy -= j * ny;
-            q.vx += j * nx;
-            q.vy += j * ny;
-          }
+      // Other objects: every object bumps into every other one (tumbleweeds, furniture...).
+      // Heavier ones (bigger, or a higher weight) get pushed less.
+      const massOf = (x: PhysObject) => x.radius * x.radius * (getObjectKind(x.kind)?.weight?.(tuning) ?? 1);
+      for (const q of world.objects) {
+        if (q === o) continue;
+        const d = dist(o.x, o.y, q.x, q.y) || 0.001;
+        const push = o.radius + q.radius - d;
+        if (push <= 0) continue;
+        const nx = (o.x - q.x) / d;
+        const ny = (o.y - q.y) / d;
+        const mo = massOf(o);
+        const mq = massOf(q);
+        const shareO = mq / (mo + mq); // the lighter one moves more
+        o.x += nx * push * shareO;
+        o.y += ny * push * shareO;
+        q.x -= nx * push * (1 - shareO);
+        q.y -= ny * push * (1 - shareO);
+        const rel = (o.vx - q.vx) * nx + (o.vy - q.vy) * ny;
+        if (rel < 0) {
+          const j = ((1 + restitution) * rel) / (1 / mo + 1 / mq);
+          o.vx -= (j / mo) * nx;
+          o.vy -= (j / mo) * ny;
+          q.vx += (j / mq) * nx;
+          q.vy += (j / mq) * ny;
         }
       }
 

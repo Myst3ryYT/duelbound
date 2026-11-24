@@ -177,7 +177,9 @@ export class BotBrain {
   }
 
   private playSheriff(tuning: Tuning, input: PlayerInput, me: Fighter, d: number, threat: Threat | null, tryAbility: () => boolean): void {
-    if (d < 750) input.buttons.primary = true;
+    // The revolver fires once per click, so click about 6 times a second.
+    me.vars.botClick = ((me.vars.botClick ?? 0) + 1) % 10;
+    if (d < 750 && me.vars.botClick < 5) input.buttons.primary = true;
     if (threat && isReady(me, 'mobility')) {
       input.moveX = threat.sideX;
       input.moveY = threat.sideY;

@@ -64,7 +64,7 @@ Good to know:
 
 | Key | Does |
 | --- | --- |
-| Left click | Revolver: hold to keep firing. Hits harder up close. 6 shots, then it reloads by itself. |
+| Left click | Revolver: one shot per click, no ammo or reload (click as fast as you can). Hits harder up close and harder on stunned targets. |
 | Right click | Lasso: catches the enemy and drags them to you (flies through tumbleweeds) |
 | C | Bramble: throws a tumbleweed that stops and stuns whoever touches it (you too), and is used up. Shoot it to knock it around. 3 stored uses. |
 | V | Piercing bullet: aim for a moment (red line), then a very fast shot. Triple damage against a stunned enemy. |

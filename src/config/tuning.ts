@@ -43,6 +43,7 @@ export const TUNING = {
   hitstun: {
     hammer: 6, // Builder RC: sledge hammer hit
     kick: 3, // F: kick hit
+    gun: 2, // Sheriff LC: revolver hit (tiny, shots come fast)
     furniture: 8, // Builder V: flung furniture hit
     pierce: 8, // Sheriff V: piercing bullet hit
     shatter: 5, // Refractor V: shatter hit
@@ -153,15 +154,14 @@ export const TUNING = {
   // ------------------------------------------------------------- SHERIFF ----
   sheriff: {
     gun: {
-      fireInterval: 0.6, // LC: seconds between shots (hold to keep firing)
+      fireInterval: 0.1, // LC: shortest time between shots (one shot per click; this just stops auto-clickers)
       speed: 1100, // LC: bullet speed
-      damageNear: 70, // LC: damage at point blank
+      damageNear: 22, // LC: damage at point blank (a shot per click, so this adds up fast)
+      stunnedMultiplier: 2, // LC: damage is multiplied by this if the target is stunned (like the Piercing Bullet)
       physics: 1, // LC: how hard bullets shove physics objects like tumbleweeds and furniture (1 = normal)
-      damageFar: 30, // LC: damage at long range
+      damageFar: 10, // LC: damage at long range
       falloffRange: 700, // LC: distance travelled at which damage has dropped to damageFar
       size: 10.5, // LC: bullet radius
-      ammo: 6, // LC: shots before the Sheriff has to reload
-      reloadTime: 1.5, // LC: seconds to reload (starts by itself when the gun is empty)
     },
     lasso: {
       range: 800, // RC: how far the lasso flies
@@ -178,9 +178,10 @@ export const TUNING = {
       damage: 30, // C: damage to whoever it touches (the Sheriff too)
       stun: 1.3, // C: seconds the touched player can't move or use abilities
       restitution: 0.9, // C: bounciness off walls and structures (1 = no speed lost)
-      shotImpulse: 350, // C: how much speed a projectile hit adds to it
+      shotImpulse: 700, // C: how much speed a projectile hit adds to it
+      weight: 0.3, // C: how heavy it is when objects bump into each other (1 = like furniture; lower = gets knocked around more)
       friction: 0.6, // C: how quickly it slows down by itself (0 = rolls forever)
-      size: 33, // C: radius of the tumbleweed
+      size: 50, // C: radius of the tumbleweed
       charges: 3, // C: tumbleweeds stored up (like mirrors)
       chargeTime: 10, // C: seconds for one stored tumbleweed to come back
     },
@@ -199,7 +200,7 @@ export const TUNING = {
       duration: 0.35, // SPACE: seconds the roll lasts
       invincible: 0.2, // SPACE: seconds of invincibility at the start of the roll
       distance: 300, // SPACE: how far the roll goes
-      cooldown: 4, // SPACE: seconds before rolling again
+      cooldown: 2.5, // SPACE: seconds before rolling again
     },
   },
 

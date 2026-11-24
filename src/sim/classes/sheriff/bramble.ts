@@ -47,6 +47,7 @@ export const brambleObject: ObjectKindDef = {
   kind: 'sheriff_bramble',
   restitution: (t) => t.sheriff.bramble.restitution,
   friction: (t) => t.sheriff.bramble.friction,
+  weight: (t) => t.sheriff.bramble.weight,
   onTouch(world, tuning, o, f) {
     const b = tuning.sheriff.bramble;
     applyDamage(world, f, b.damage, o.ownerId);
