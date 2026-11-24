@@ -1,4 +1,4 @@
-/**
+﻿/**
  * The bot opponent. Each tick it looks at the World and produces a PlayerInput,
  * exactly like a human's keyboard and mouse would. So it plays by the same rules,
  * and it runs headless (the host will run it in online games later, too).
@@ -9,7 +9,8 @@
  *  - fires its weapon and sometimes uses its other abilities
  *  - sometimes dodges shots coming at it, or uses a defensive ability
  *
- * One fixed difficulty for now. Its numbers are in tuning.bot.
+ * Two difficulties, 'normal' and 'hard'. Their numbers are in tuning.bot.normal and tuning.bot.hard;
+ * the bot only notices a shot eactionTime seconds after it appears.
  */
 import type { Tuning } from '../config/tuning.ts';
 import { emptyInput, type Fighter, type PlayerInput, type Projectile, type World } from './types.ts';
@@ -28,6 +29,8 @@ function makeRng(seed: number): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+export type BotDifficulty = 'normal' | 'hard';
 
 /** One planned tick of a multi-step move (like placing a structure). */
 type ScriptStep = (input: PlayerInput, me: Fighter, enemy: Fighter) => void;
@@ -53,11 +56,14 @@ export class BotBrain {
   private script: ScriptStep[] = [];
   private dodgeDecisions = new Map<number, boolean>(); // projectile id -> decided to dodge it?
   private defendDecisions = new Map<number, boolean>();
+  private firstSeen = new Map<number, number>(); // projectile id -> world time the bot first saw it
+  private difficulty: BotDifficulty;
 
   private fighterId: number;
 
-  constructor(fighterId: number, seed: number) {
+  constructor(fighterId: number, seed: number, difficulty: BotDifficulty = 'normal') {
     this.fighterId = fighterId;
+    this.difficulty = difficulty;
     this.rng = makeRng(seed);
   }
 
@@ -68,6 +74,7 @@ export class BotBrain {
     const enemy = world.fighters.find((f) => f.id !== this.fighterId);
     if (!me || !enemy) return input;
     const b = tuning.bot;
+    const skill = tuning.bot[this.difficulty];
     const dt = 1 / tuning.world.tickRate;
     const d = dist(me.x, me.y, enemy.x, enemy.y);
 
@@ -75,10 +82,10 @@ export class BotBrain {
     this.noiseT -= dt;
     if (this.noiseT <= 0) {
       this.noiseT = 0.25 + this.rng() * 0.25;
-      this.noiseX = (this.rng() * 2 - 1) * b.aimJitter;
-      this.noiseY = (this.rng() * 2 - 1) * b.aimJitter;
+      this.noiseX = (this.rng() * 2 - 1) * skill.aimJitter;
+      this.noiseY = (this.rng() * 2 - 1) * skill.aimJitter;
     }
-    const lead = (d / weaponSpeed(me.classId, tuning)) * b.leadFactor;
+    const lead = (d / weaponSpeed(me.classId, tuning)) * skill.leadFactor;
     input.aimX = enemy.x + enemy.vx * lead + this.noiseX;
     input.aimY = enemy.y + enemy.vy * lead + this.noiseY;
 
@@ -86,7 +93,7 @@ export class BotBrain {
     this.strafeT -= dt;
     if (this.strafeT <= 0) {
       this.strafeT = b.strafeMin + this.rng() * (b.strafeMax - b.strafeMin);
-      this.strafeDir = this.rng() < 0.5 ? -1 : 1;
+      this.strafeDir = this.rng() < skill.pauseChance ? 0 : this.rng() < 0.5 ? -1 : 1;
     }
     const toX = (enemy.x - me.x) / (d || 1);
     const toY = (enemy.y - me.y) / (d || 1);
@@ -101,15 +108,17 @@ export class BotBrain {
     if (me.y > size - b.wallMargin) my -= 1.5;
 
     // ---- Dodge: step out of the path of a shot coming at us ----
-    const threat = this.findThreat(world, tuning, me);
-    if (threat && this.decide(this.dodgeDecisions, threat.p.id, b.dodgeChance)) {
+    const threat = this.findThreat(world, tuning, me, skill.reactionTime);
+    let speed = skill.moveSpeed;
+    if (threat && this.decide(this.dodgeDecisions, threat.p.id, skill.dodgeChance)) {
       mx = threat.sideX;
       my = threat.sideY;
+      speed = 1;
     }
     const len = Math.hypot(mx, my);
     if (len > 0.01) {
-      input.moveX = mx / len;
-      input.moveY = my / len;
+      input.moveX = (mx / len) * speed;
+      input.moveY = (my / len) * speed;
     }
 
     // ---- A planned multi-tick move (placing a structure) takes over ----
@@ -120,8 +129,8 @@ export class BotBrain {
     }
 
     // ---- Use abilities ----
-    const tryAbility = () => this.rng() < b.abilityRate * dt;
-    const urgent = threat && threat.time < 0.3 && this.decide(this.defendDecisions, threat.p.id, b.defendChance);
+    const tryAbility = () => this.rng() < skill.abilityRate * dt;
+    const urgent = threat && threat.time < 0.3 && this.decide(this.defendDecisions, threat.p.id, skill.defendChance);
     if (me.classId === 'mage') this.playMage(world, tuning, input, me, enemy, d, urgent ? threat : null, tryAbility);
     else if (me.classId === 'sheriff') this.playSheriff(tuning, input, me, d, urgent ? threat : null, tryAbility);
     else if (me.classId === 'refractor') this.playRefractor(world, tuning, input, me, enemy, d, urgent ? threat : null, tryAbility, dt);
@@ -246,10 +255,15 @@ export class BotBrain {
   }
 
   /** The enemy shot that will pass closest to us soon, if it would hit. */
-  private findThreat(world: World, tuning: Tuning, me: Fighter): Threat | null {
+  private findThreat(world: World, tuning: Tuning, me: Fighter, reactionTime: number): Threat | null {
     let best: Threat | null = null;
+    // Forget shots that no longer exist.
+    for (const id of this.firstSeen.keys()) if (!world.projectiles.some((p) => p.id === id)) this.firstSeen.delete(id);
     for (const p of world.projectiles) {
       if (p.ownerId === me.id) continue;
+      // Reaction time: a shot is ignored until the bot has 'seen' it for long enough.
+      if (!this.firstSeen.has(p.id)) this.firstSeen.set(p.id, world.time);
+      if (world.time - this.firstSeen.get(p.id)! < reactionTime) continue;
       const speed2 = p.vx * p.vx + p.vy * p.vy;
       if (speed2 < 1) continue;
       const rx = me.x - p.x;

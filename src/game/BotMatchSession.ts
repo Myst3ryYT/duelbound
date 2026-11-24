@@ -1,4 +1,4 @@
-/**
+﻿/**
  * A best-of-3 match against the bot. You are the left player, the bot the right.
  * The round flow (countdown, clock, tie screen...) lives in the simulation (sim/match.ts).
  */
@@ -8,25 +8,27 @@ import type { InputSource, MenuAction } from '../input/InputSource.ts';
 import type { Fighter, PlayerInput } from '../sim/types.ts';
 import { createMatchWorld } from '../sim/world.ts';
 import { getClass } from '../sim/classes/registry.ts';
-import { BotBrain } from '../sim/bot.ts';
+import { BotBrain, type BotDifficulty } from '../sim/bot.ts';
 import type { Renderer } from '../render/Renderer.ts';
 import { Session, type SessionRequest } from './Session.ts';
 
 /** Training-only keys: ignored (and cleared) during a match. */
-const TRAINING_KEYS: MenuAction[] = ['resetDummy', 'toggleCooldowns', 'toggleDummyFire', 'nextClass', 'startBotMatch'];
+const TRAINING_KEYS: MenuAction[] = ['resetDummy', 'toggleCooldowns', 'toggleDummyFire', 'nextClass', 'startBotMatch', 'startBotMatchHard'];
 
 export class BotMatchSession extends Session {
   readonly playerClass: string;
   readonly botClass: string;
+  readonly difficulty: BotDifficulty;
   private brain: BotBrain;
 
-  constructor(tuning: Tuning, keybinds: Keybinds, input: InputSource, renderer: Renderer, playerClass: string, botClass: string) {
+  constructor(tuning: Tuning, keybinds: Keybinds, input: InputSource, renderer: Renderer, playerClass: string, botClass: string, difficulty: BotDifficulty) {
     super(tuning, keybinds, input, renderer);
     this.playerClass = playerClass;
     this.botClass = botClass;
+    this.difficulty = difficulty;
     const botName = `Bot (${getClass(botClass)?.name ?? botClass})`;
     this.world = createMatchWorld(tuning, 'bot', [playerClass, botClass], ['You', botName]);
-    this.brain = new BotBrain(this.opponent.id, Math.floor(Math.random() * 1e9));
+    this.brain = new BotBrain(this.opponent.id, Math.floor(Math.random() * 1e9), difficulty);
     renderer.reset();
   }
 
@@ -52,6 +54,6 @@ export class BotMatchSession extends Session {
   protected helpLines(): string[] {
     const me = getClass(this.playerClass)?.name ?? '';
     const them = getClass(this.botClass)?.name ?? '';
-    return [`BOT MATCH - ${me} vs ${them}`, `${this.key('devPanel')}  dev panel   ${this.key('pause')}  pause`];
+    return [`BOT MATCH (${this.difficulty.toUpperCase()}) - ${me} vs ${them}`, `${this.key('devPanel')}  dev panel   ${this.key('pause')}  pause`];
   }
 }

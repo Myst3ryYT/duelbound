@@ -3,7 +3,7 @@
 A top-down 1v1 arena fighting game for keyboard and mouse, playable in the browser.
 The full design spec is in [GAME_BRIEF.md](GAME_BRIEF.md).
 
-**Current build: step 3 of 6 done.** All three classes, the training dummy, and best-of-3 matches against a bot (countdown, 90 s clock, tie screen, rematch). Until the menus arrive in step 4: press Tab in training to switch class, and B to fight the bot with your current class (the bot picks a random class).
+**Current build: step 3 of 6 done.** All three classes, the training dummy, and best-of-3 matches against a bot (countdown, 90 s clock, tie screen, rematch). Until the menus arrive in step 4: press Tab in training to switch class, and B (Normal) or H (Hard) to fight the bot with your current class (the bot picks a random class).
 
 ## Running the game
 
@@ -31,7 +31,8 @@ Other commands:
 | R | put the dummy back and refill its HP |
 | F | make the dummy shoot at you (on / off) |
 | T | switch ability cooldowns on / off |
-| B | start a best-of-3 match against the bot |
+| B | start a best-of-3 match against the Normal bot |
+| H | start a best-of-3 match against the Hard bot |
 | ` (the key left of 1) | open the dev panel |
 | Esc | pause menu (volume, mute, leave match) |
 
@@ -70,7 +71,8 @@ Other commands:
 | Mouse | aim (the crosshair) |
 | R | refill the dummy's HP |
 | T | switch ability cooldowns on / off |
-| B | start a best-of-3 match against the bot |
+| B | start a best-of-3 match against the Normal bot |
+| H | start a best-of-3 match against the Hard bot |
 | Left click | Mage staff: hold to charge, release to fire |
 | Right click | Mage reflective shield |
 | C | Mage watchtower: shows an outline, left click to place, right click or C to cancel |
@@ -105,7 +107,7 @@ has a slider and a box. Changes apply instantly. Values you changed turn yellow.
 ### Round rules and the bot
 
 Also in `src/config/tuning.ts`: the `match:` group (countdown, round clock, rounds to win) and the
-`bot:` group (aim error, how often it dodges, how far it likes to stay from you, and so on).
+`bot:` group, with separate `normal:` and `hard:` settings (reaction time, aim error, how often it dodges, how fast it moves, and so on).
 
 ### Keys
 

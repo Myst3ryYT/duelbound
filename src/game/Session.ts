@@ -1,4 +1,4 @@
-/**
+﻿/**
  * A Session runs one World: it gathers inputs, steps the simulation, and turns
  * the simulation's events into sounds and visuals. Training and bot matches are
  * both sessions (online matches will be too). This base class holds what they share.
@@ -16,7 +16,7 @@ import type { HudAbility, HudInfo } from '../render/hud.ts';
 import { playSound, playSoundByName } from '../audio/sfx.ts';
 
 /** Something a session asks the main loop to do (e.g. switch to a bot match). */
-export type SessionRequest = 'startBotMatch' | null;
+export type SessionRequest = 'startBotMatch' | 'startBotMatchHard' | null;
 
 export abstract class Session {
   world!: World;

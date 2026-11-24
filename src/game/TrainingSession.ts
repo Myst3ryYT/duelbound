@@ -69,6 +69,7 @@ export class TrainingSession extends Session {
       playSound('ui_click');
     }
     if (this.input.consumeMenu('startBotMatch')) return 'startBotMatch';
+    if (this.input.consumeMenu('startBotMatchHard')) return 'startBotMatchHard';
     return null;
   }
 
@@ -80,7 +81,8 @@ export class TrainingSession extends Session {
       `${this.key('resetDummy')}  reset dummy`,
       `${this.key('toggleDummyFire')}  dummy shoots: ${onOff(this.world.options.dummyFires)}`,
       `${this.key('toggleCooldowns')}  cooldowns: ${onOff(!this.world.options.cooldownsDisabled)}`,
-      `${this.key('startBotMatch')}  fight the bot`,
+      `${this.key('startBotMatch')}  fight the bot (normal)`,
+      `${this.key('startBotMatchHard')}  fight the bot (hard)`,
       `${this.key('devPanel')}  dev panel   ${this.key('pause')}  pause`,
     ];
   }

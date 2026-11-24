@@ -34,7 +34,8 @@ export const KEYBINDS = {
   toggleCooldowns: ['KeyT'], // training: switch ability cooldowns on / off
   toggleDummyFire: ['KeyF'], // training: make the dummy shoot at you (on / off)
   nextClass: ['Tab'], // training: switch to the next class (until character select exists)
-  startBotMatch: ['KeyB'], // training: start a match against the bot (until menus exist)
+  startBotMatch: ['KeyB'], // training: start a match against the Normal bot (until menus exist)
+  startBotMatchHard: ['KeyH'], // training: start a match against the Hard bot (until menus exist)
 };
 
 export type Keybinds = typeof KEYBINDS;

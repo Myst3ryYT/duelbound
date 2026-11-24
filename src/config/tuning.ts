@@ -56,17 +56,32 @@ export const TUNING = {
   },
 
   bot: {
-    aimJitter: 35, // random aim error, in world units (0 = perfect aim)
-    leadFactor: 0.8, // how well it predicts where you're moving (1 = perfectly, 0 = shoots where you are)
-    dodgeChance: 0.55, // chance it tries to dodge each shot coming at it (0..1)
-    defendChance: 0.5, // chance it uses a defensive ability (shield, roll, refract...) against a close shot
-    abilityRate: 0.7, // how often per second it considers using a cooldown ability
-    strafeMin: 0.8, // shortest time (s) before it changes strafing direction
-    strafeMax: 2.2, // longest time (s) before it changes strafing direction
-    rangeMage: 460, // distance it likes to keep as a Mage
-    rangeSheriff: 380, // distance it likes to keep as a Sheriff
-    rangeRefractor: 320, // distance it likes to keep as a Refractor
-    wallMargin: 140, // how close to a wall it gets before steering back to the middle
+    normal: {
+      reactionTime: 0.35, // seconds after a shot is fired before the bot notices it
+      aimJitter: 70, // random aim error, in world units (0 = perfect aim)
+      leadFactor: 0.5, // how well it predicts where you're moving (1 = perfectly, 0 = shoots where you are)
+      dodgeChance: 0.25, // chance it tries to dodge each shot it notices (0..1)
+      defendChance: 0.2, // chance it uses a defensive ability (shield, roll, refract...) against a close shot
+      abilityRate: 0.4, // how often per second it considers using a cooldown ability
+      moveSpeed: 0.6, // share of full walking speed it uses (dodging always uses full speed)
+      pauseChance: 0.35, // chance it stands still instead of strafing, each time it changes direction
+    },
+    hard: {
+      reactionTime: 0.1, // seconds after a shot is fired before the bot notices it
+      aimJitter: 35, // random aim error, in world units (0 = perfect aim)
+      leadFactor: 0.8, // how well it predicts where you're moving (1 = perfectly, 0 = shoots where you are)
+      dodgeChance: 0.55, // chance it tries to dodge each shot it notices (0..1)
+      defendChance: 0.5, // chance it uses a defensive ability (shield, roll, refract...) against a close shot
+      abilityRate: 0.7, // how often per second it considers using a cooldown ability
+      moveSpeed: 1, // share of full walking speed it uses (dodging always uses full speed)
+      pauseChance: 0, // chance it stands still instead of strafing, each time it changes direction
+    },
+    strafeMin: 0.8, // both difficulties: shortest time (s) before it changes strafing direction
+    strafeMax: 2.2, // both difficulties: longest time (s) before it changes strafing direction
+    rangeMage: 460, // both difficulties: distance it likes to keep as a Mage
+    rangeSheriff: 380, // both difficulties: distance it likes to keep as a Sheriff
+    rangeRefractor: 320, // both difficulties: distance it likes to keep as a Refractor
+    wallMargin: 140, // both difficulties: how close to a wall it gets before steering back to the middle
   },
 
   // ---------------------------------------------------------------- MAGE ----
@@ -75,8 +90,8 @@ export const TUNING = {
       chargeTime: 1.3, // LC: seconds of holding to reach a full charge
       damageMin: 20, // LC: damage of an uncharged shot
       damageMax: 90, // LC: damage of a fully charged shot
-      speedMin: 400, // LC: speed of an uncharged shot
-      speedMax: 1300, // LC: speed of a fully charged shot
+      speedMin: 300, // LC: speed of an uncharged shot
+      speedMax: 950, // LC: speed of a fully charged shot
       sizeMin: 7, // LC: radius of an uncharged shot
       sizeMax: 20, // LC: radius of a fully charged shot
       fireInterval: 0.35, // LC: wait after a shot before you can start charging the next one
@@ -92,7 +107,7 @@ export const TUNING = {
       life: 8, // C: seconds it keeps shooting once built
       fireInterval: 1.2, // C: seconds between each ring of 8 bolts
       boltDamage: 30, // C: damage of each bolt
-      boltSpeed: 500, // C: speed of each bolt
+      boltSpeed: 380, // C: speed of each bolt
       boltSize: 10, // C: radius of each bolt
       radius: 34, // C: size of the tower (for collisions and placement)
       cooldown: 18, // C: seconds before another tower can be placed (counts from placement)

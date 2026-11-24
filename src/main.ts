@@ -16,6 +16,7 @@ import { Renderer } from './render/Renderer.ts';
 import { loadSprites } from './render/sprites.ts';
 import { TrainingSession } from './game/TrainingSession.ts';
 import { BotMatchSession } from './game/BotMatchSession.ts';
+import type { BotDifficulty } from './sim/bot.ts';
 import type { Session } from './game/Session.ts';
 import { CLASS_ORDER } from './sim/classes/registry.ts';
 import { MatchOverMenu } from './ui/matchOverMenu.ts';
@@ -45,8 +46,8 @@ function toTraining(): void {
 }
 
 /** Start a best-of-3 against the bot, with your current class. The bot picks a random class for now. */
-function toBotMatch(playerClass: string, botClass = CLASS_ORDER[Math.floor(Math.random() * CLASS_ORDER.length)]): void {
-  session = new BotMatchSession(tuning, keybinds, input, renderer, playerClass, botClass);
+function toBotMatch(playerClass: string, difficulty: BotDifficulty, botClass = CLASS_ORDER[Math.floor(Math.random() * CLASS_ORDER.length)]): void {
+  session = new BotMatchSession(tuning, keybinds, input, renderer, playerClass, botClass, difficulty);
 }
 
 const pauseMenu = new PauseMenu(uiRoot, {
@@ -62,7 +63,7 @@ const pauseMenu = new PauseMenu(uiRoot, {
 const matchOverMenu = new MatchOverMenu(uiRoot, {
   onRematch: () => {
     matchOverMenu.hide();
-    if (session instanceof BotMatchSession) toBotMatch(session.playerClass, session.botClass);
+    if (session instanceof BotMatchSession) toBotMatch(session.playerClass, session.difficulty, session.botClass);
   },
   onLeave: () => {
     matchOverMenu.hide();
@@ -94,9 +95,9 @@ function frame(now: number): void {
   const tickTime = 1 / tuning.world.tickRate;
   if (!pauseMenu.isOpen) {
     const request = session.handleMenuKeys();
-    if (request === 'startBotMatch' && session instanceof TrainingSession) {
+    if (request && session instanceof TrainingSession) {
       trainingClass = session.classId;
-      toBotMatch(trainingClass);
+      toBotMatch(trainingClass, request === 'startBotMatchHard' ? 'hard' : 'normal');
     }
     accumulator += dt;
     while (accumulator >= tickTime) {
