@@ -143,8 +143,19 @@ export type GameEvent =
   | { type: 'bounce'; projectileId: number; x: number; y: number } // so trails can show the exact corner
   | { type: 'fx'; fx: 'ring' | 'burst'; x: number; y: number; color: string; radius: number; duration: number };
 
-/** Match modes. More arrive with the menus and online play. */
-export type GameMode = 'training';
+/** Match modes. Online play arrives in build step 5. */
+export type GameMode = 'training' | 'bot';
+
+/** Round flow of a real match (not used in training). */
+export interface MatchState {
+  phase: 'countdown' | 'fight' | 'roundOver' | 'tie' | 'matchOver';
+  phaseT: number; // seconds left of the countdown / result screen
+  roundTime: number; // seconds left on the round clock
+  round: number; // 1, 2, 3...
+  wins: [number, number]; // rounds won by side 0 (left) and side 1 (right)
+  roundWinner: -1 | 0 | 1; // side that won the last round (-1 = none yet / tie)
+  matchWinner: -1 | 0 | 1; // side that won the match (-1 = not over)
+}
 
 export interface World {
   mode: GameMode;
@@ -154,6 +165,7 @@ export interface World {
   projectiles: Projectile[];
   placeables: Placeable[];
   objects: PhysObject[];
+  match: MatchState | null; // null in training
   events: GameEvent[]; // cleared at the start of every tick
   nextId: number;
   options: {

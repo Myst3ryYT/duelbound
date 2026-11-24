@@ -47,6 +47,28 @@ export const TUNING = {
     dummyShotSize: 9, // radius of each dummy shot
   },
 
+  match: {
+    countdown: 3, // seconds of "3, 2, 1" before each round (nobody can move)
+    roundTime: 90, // seconds on the round clock (when it runs out, more HP wins)
+    roundsToWin: 2, // rounds needed to win the match (2 = best of 3)
+    resultTime: 2.5, // seconds the round result is shown before the next countdown
+    tieTime: 2.5, // seconds the tie screen is shown before the round is replayed
+  },
+
+  bot: {
+    aimJitter: 35, // random aim error, in world units (0 = perfect aim)
+    leadFactor: 0.8, // how well it predicts where you're moving (1 = perfectly, 0 = shoots where you are)
+    dodgeChance: 0.55, // chance it tries to dodge each shot coming at it (0..1)
+    defendChance: 0.5, // chance it uses a defensive ability (shield, roll, refract...) against a close shot
+    abilityRate: 0.7, // how often per second it considers using a cooldown ability
+    strafeMin: 0.8, // shortest time (s) before it changes strafing direction
+    strafeMax: 2.2, // longest time (s) before it changes strafing direction
+    rangeMage: 460, // distance it likes to keep as a Mage
+    rangeSheriff: 380, // distance it likes to keep as a Sheriff
+    rangeRefractor: 320, // distance it likes to keep as a Refractor
+    wallMargin: 140, // how close to a wall it gets before steering back to the middle
+  },
+
   // ---------------------------------------------------------------- MAGE ----
   mage: {
     staff: {

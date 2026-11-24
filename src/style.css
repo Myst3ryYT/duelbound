@@ -143,3 +143,11 @@ body {
 .dev-row.changed .name {
   color: #e0b030;
 }
+
+/* End-of-match screen: sits low so the winner text on the canvas stays visible. */
+.overlay-low {
+  align-items: flex-end;
+  padding-bottom: 14vh;
+  background: rgba(5, 6, 10, 0.3);
+  z-index: 9;
+}

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Dev panel (toggle with the ` key by default).
  *
  * - A slider + number box for every value in config/tuning.ts. Changes apply live.
@@ -10,7 +10,7 @@ import type { Tuning } from '../config/tuning.ts';
 import { flattenTuning, deepAssignNumbers, parseTuningSource, type TuningLine } from '../dev/tuningFile.ts';
 
 export interface DevPanelActions {
-  damageDummy: (amount: number) => void;
+  damageOpponent: (amount: number) => void;
   damageSelf: (amount: number) => void;
   healAll: () => void;
 }
@@ -66,7 +66,7 @@ export class DevPanel {
     this.button(fileButtons, 'Copy values', () => this.copy());
 
     const testButtons = this.buttonRow();
-    this.button(testButtons, 'Damage dummy 100', () => this.actions.damageDummy(100));
+    this.button(testButtons, 'Damage opponent 100', () => this.actions.damageOpponent(100));
     this.button(testButtons, 'Damage me 100', () => this.actions.damageSelf(100));
     this.button(testButtons, 'Heal all', () => this.actions.healAll());
 

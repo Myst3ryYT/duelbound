@@ -22,6 +22,8 @@ export interface HudAbility {
 export interface HudInfo {
   helpLines: string[]; // shown bottom-left, above the ability bar
   abilities: HudAbility[];
+  roundTimeTotal: number; // full round clock (for the "FIGHT!" flash)
+  roundsToWin: number; // number of round-win pips under each HP bar
 }
 
 const BAR_W = 780;
@@ -37,6 +39,7 @@ const ICONS_Y = SCREEN_H - ICON - 44;
 export function drawHud(ctx: CanvasRenderingContext2D, world: World, info: HudInfo, trailHpOf: (id: number) => number): void {
   for (const f of world.fighters) drawHpBar(ctx, f, trailHpOf(f.id));
   drawAbilityBar(ctx, info.abilities);
+  drawMatch(ctx, world, info);
 
   ctx.font = '18px monospace';
   ctx.textAlign = 'left';
@@ -45,6 +48,46 @@ export function drawHud(ctx: CanvasRenderingContext2D, world: World, info: HudIn
   info.helpLines.forEach((line, i) => {
     ctx.fillText(line, ICONS_X, ICONS_Y - 30 - (info.helpLines.length - 1 - i) * 26);
   });
+}
+
+/** Round clock, round-win pips, and the big countdown / result text. */
+function drawMatch(ctx: CanvasRenderingContext2D, world: World, info: HudInfo): void {
+  const m = world.match;
+  if (!m) return;
+
+  // Clock between the HP bars
+  const clockX = SCREEN_W / 2;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(clockX - 56, BAR_Y - 6, 112, BAR_H + 22);
+  const secs = Math.ceil(m.roundTime);
+  outlinedText(ctx, String(secs), clockX, BAR_Y + BAR_H / 2 + 5, 'bold 36px monospace', secs <= 10 && m.phase === 'fight' ? '#ff6a4a' : '#ffffff', 'center');
+
+  // Round-win pips under each bar
+  for (const side of [0, 1] as const) {
+    for (let i = 0; i < info.roundsToWin; i++) {
+      const size = 16;
+      const x = side === 0 ? BAR_MARGIN + i * (size + 8) : SCREEN_W - BAR_MARGIN - size - i * (size + 8);
+      const y = BAR_Y + BAR_H + 10;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(x - 2, y - 2, size + 4, size + 4);
+      ctx.fillStyle = i < m.wins[side] ? '#ffd34d' : '#2a2c36';
+      ctx.fillRect(x, y, size, size);
+    }
+  }
+
+  // Big centre text
+  const name = (side: number) => world.fighters.find((f) => f.side === side)?.name ?? '';
+  const big = (text: string, sub?: string, color = '#ffffff') => {
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(0, SCREEN_H / 2 - 110, SCREEN_W, sub ? 200 : 160);
+    outlinedText(ctx, text, SCREEN_W / 2, SCREEN_H / 2 - 30, 'bold 96px monospace', color, 'center');
+    if (sub) outlinedText(ctx, sub, SCREEN_W / 2, SCREEN_H / 2 + 50, 'bold 32px monospace', '#c9cddb', 'center');
+  };
+  if (m.phase === 'countdown') big(String(Math.ceil(m.phaseT)), `ROUND ${m.round}`);
+  else if (m.phase === 'fight' && info.roundTimeTotal - m.roundTime < 0.7) big('FIGHT!', undefined, '#ffd34d');
+  else if (m.phase === 'roundOver' && m.matchWinner < 0) big(`${name(m.roundWinner).toUpperCase()} WINS`, `round ${m.round}`, '#ffd34d');
+  else if (m.phase === 'tie') big('TIE!', `replaying round ${m.round}`, '#7fb0ff');
+  else if (m.phase === 'roundOver' || m.phase === 'matchOver') big(`${name(m.matchWinner).toUpperCase()} WINS THE MATCH`, undefined, '#ffd34d');
 }
 
 function drawAbilityBar(ctx: CanvasRenderingContext2D, abilities: HudAbility[]): void {

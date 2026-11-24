@@ -14,6 +14,7 @@ import { collideFightersWithPlaceables, updatePlaceables } from './placeables.ts
 import { checkPullStuck, tickStatusTimers, updatePull } from './status.ts';
 import { updateDummy } from './training.ts';
 import { getClass } from './classes/registry.ts';
+import { checkRoundEnd, newMatchState, spawnPoint, updateMatch } from './match.ts';
 
 export { applyDamage, resetHp } from './damage.ts';
 
@@ -60,6 +61,7 @@ export function createTrainingWorld(tuning: Tuning, classId: string): World {
     projectiles: [],
     placeables: [],
     objects: [],
+    match: null,
     events: [],
     nextId: 1,
     options: { cooldownsDisabled: false, dummyFires: false },
@@ -103,6 +105,20 @@ export function stepWorld(world: World, inputs: Map<number, PlayerInput>, tuning
   const dt = 1 / tuning.world.tickRate;
   world.events.length = 0;
 
+  // Match round flow: during the countdown and result screens everything is frozen
+  // (players can still turn to aim).
+  if (!updateMatch(world, tuning, dt)) {
+    for (const f of world.fighters) {
+      const input = inputs.get(f.id);
+      if (!input) continue;
+      updateAim(f, input);
+      for (const a of ACTIONS) f.prevButtons[a] = input.buttons[a];
+    }
+    world.tick++;
+    world.time += dt;
+    return;
+  }
+
   for (const f of world.fighters) {
     tickStatusTimers(f, dt);
     updatePull(world, f, dt);
@@ -134,9 +150,47 @@ export function stepWorld(world: World, inputs: Map<number, PlayerInput>, tuning
     clampToArena(f, tuning.world.arenaSize);
     checkPullStuck(f, dt);
   }
+  checkRoundEnd(world, tuning);
 
   world.tick++;
   world.time += dt;
+}
+
+/**
+ * Build a real match: two players, round flow on.
+ * classes and 
+ames are [left player, right player].
+ */
+export function createMatchWorld(tuning: Tuning, mode: 'bot', classes: [string, string], names: [string, string]): World {
+  const world: World = {
+    mode,
+    tick: 0,
+    time: 0,
+    fighters: [],
+    projectiles: [],
+    placeables: [],
+    objects: [],
+    match: newMatchState(tuning),
+    events: [],
+    nextId: 1,
+    options: { cooldownsDisabled: false, dummyFires: false },
+  };
+  for (const side of [0, 1] as const) {
+    const p = spawnPoint(tuning, side);
+    newFighter(world, {
+      kind: 'player',
+      side,
+      classId: classes[side],
+      name: names[side],
+      x: p.x,
+      y: p.y,
+      hp: tuning.player.maxHp,
+      maxHp: tuning.player.maxHp,
+      radius: tuning.player.bodyRadius,
+      aimAngle: side === 0 ? 0 : Math.PI,
+    });
+  }
+  return world;
 }
 
 export function findFighter(world: World, id: number): Fighter | undefined {

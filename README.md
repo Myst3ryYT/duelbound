@@ -3,7 +3,7 @@
 A top-down 1v1 arena fighting game for keyboard and mouse, playable in the browser.
 The full design spec is in [GAME_BRIEF.md](GAME_BRIEF.md).
 
-**Current build: step 2 of 6 done (Mage, Sheriff, Refractor).** Movement, arena, HP bars, training dummy and all three classes. Press Tab in training to switch class until character select arrives in step 4.
+**Current build: step 3 of 6 done.** All three classes, the training dummy, and best-of-3 matches against a bot (countdown, 90 s clock, tie screen, rematch). Until the menus arrive in step 4: press Tab in training to switch class, and B to fight the bot with your current class (the bot picks a random class).
 
 ## Running the game
 
@@ -31,6 +31,7 @@ Other commands:
 | R | put the dummy back and refill its HP |
 | F | make the dummy shoot at you (on / off) |
 | T | switch ability cooldowns on / off |
+| B | start a best-of-3 match against the bot |
 | ` (the key left of 1) | open the dev panel |
 | Esc | pause menu (volume, mute, leave match) |
 
@@ -60,7 +61,7 @@ Other commands:
 | --- | --- |
 | Left click | Mind Shotgun: 4 pellets. Pellets that bounce off your own mirror double (once), and that mirror breaks. |
 | Right click | Mind Ray: hold for a beam. Uses the purple bar by the crosshair. Double damage for each mirror it bounces off. |
-| C | Mirror: press C, then hold left click where it starts, drag, release where it ends. 3 stored uses. |
+| C | Mirror mode on / off. In mirror mode, hold left click where a mirror starts, drag, release where it ends; place as many as you have uses (3 stored). |
 | V | Refract: split into two halves for a moment; a shot can pass between them |
 | Space | Shatter: breaks every mirror; enemies near a mirror take damage for each one |
 
@@ -69,6 +70,7 @@ Other commands:
 | Mouse | aim (the crosshair) |
 | R | refill the dummy's HP |
 | T | switch ability cooldowns on / off |
+| B | start a best-of-3 match against the bot |
 | Left click | Mage staff: hold to charge, release to fire |
 | Right click | Mage reflective shield |
 | C | Mage watchtower: shows an outline, left click to place, right click or C to cancel |
@@ -99,6 +101,11 @@ has a slider and a box. Changes apply instantly. Values you changed turn yellow.
 - **Save to tuning.ts** writes the current values into the file for you (only works with `npm run dev`).
 - **Revert to file** throws away slider changes.
 - **Damage dummy / Damage me / Heal all** are test buttons.
+
+### Round rules and the bot
+
+Also in `src/config/tuning.ts`: the `match:` group (countdown, round clock, rounds to win) and the
+`bot:` group (aim error, how often it dodges, how far it likes to stay from you, and so on).
 
 ### Keys
 
