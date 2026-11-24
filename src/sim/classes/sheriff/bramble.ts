@@ -3,8 +3,8 @@
  * Summons a tumbleweed next to the Sheriff, thrown in the direction you're aiming.
  * Up to 3 are stored up, like mirrors (one comes back every chargeTime seconds).
  * Shooting it knocks it around; it bounces off walls and structures.
- * Touching it hurts anyone, the Sheriff too: they stop dead and are stunned,
- * and the tumbleweed is used up.
+ * Touching it hurts and stuns the enemy (the Sheriff's own tumbleweed leaves him alone):
+ * they stop dead and are stunned, and the tumbleweed is used up.
  * Numbers: tuning.sheriff.bramble
  */
 import type { AbilityDef, ObjectKindDef } from '../../abilities.ts';
@@ -49,6 +49,7 @@ export const brambleObject: ObjectKindDef = {
   friction: (t) => t.sheriff.bramble.friction,
   weight: (t) => t.sheriff.bramble.weight,
   onTouch(world, tuning, o, f) {
+    if (f.id === o.ownerId) return false; // your own tumbleweed rolls right past you
     const b = tuning.sheriff.bramble;
     applyDamage(world, f, b.damage, o.ownerId);
     f.stunT = Math.max(f.stunT, b.stun); // stopped dead and stunned

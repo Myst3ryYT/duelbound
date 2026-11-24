@@ -59,7 +59,8 @@ export function updatePull(world: World, f: Fighter, dt: number): void {
   if (!f.pullById) return;
   const puller = world.fighters.find((p) => p.id === f.pullById);
   f.pullT -= dt;
-  if (!puller || f.pullT <= 0) {
+  // The drag ends if time runs out, or either fighter gets stunned (a bramble, for example).
+  if (!puller || f.pullT <= 0 || f.stunT > 0 || puller.stunT > 0) {
     f.pullById = 0;
     return;
   }
@@ -76,6 +77,8 @@ export function updatePull(world: World, f: Fighter, dt: number): void {
   f.y += ((puller.y - f.y) / d) * step;
   f.vars.pullLastX = beforeX;
   f.vars.pullLastY = beforeY;
+  // Arrived: let go right away (no being walked around on the rope).
+  if (dist(f.x, f.y, puller.x, puller.y) <= stopAt + 2) f.pullById = 0;
 }
 
 /** After collisions: if a structure stopped the drag, let go. */

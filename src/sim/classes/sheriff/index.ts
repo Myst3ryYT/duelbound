@@ -24,6 +24,11 @@ export const SHERIFF: ClassDef = {
   objects: [brambleObject],
   projectileHooks: { lasso: lassoHit },
 
+  // Revolver bullets left.
+  ammo(f, t) {
+    return { current: f.vars.ammo ?? t.sheriff.gun.ammo, max: t.sheriff.gun.ammo, reloading: !!f.vars.reloading };
+  },
+
   // Time left on the horse, as a bar under the crosshair.
   crosshairBar: horseBar,
 };

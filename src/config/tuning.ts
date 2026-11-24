@@ -155,11 +155,13 @@ export const TUNING = {
   sheriff: {
     gun: {
       fireInterval: 0.1, // LC: shortest time between shots (one shot per click; this just stops auto-clickers)
+      ammo: 6, // LC: shots before the Sheriff has to reload
+      reloadTime: 1.5, // LC: seconds to reload (starts by itself when the gun is empty)
       speed: 1100, // LC: bullet speed
-      damageNear: 22, // LC: damage at point blank (a shot per click, so this adds up fast)
-      stunnedMultiplier: 2, // LC: damage is multiplied by this if the target is stunned (like the Piercing Bullet)
+      damageNear: 30, // LC: damage at point blank (six shots in a row at point blank = 180)
+      stunnedMultiplier: 1.5, // LC: damage is multiplied by this if the target is stunned (a bramble catch)
       physics: 1, // LC: how hard bullets shove physics objects like tumbleweeds and furniture (1 = normal)
-      damageFar: 10, // LC: damage at long range
+      damageFar: 14, // LC: damage at long range
       falloffRange: 700, // LC: distance travelled at which damage has dropped to damageFar
       size: 10.5, // LC: bullet radius
     },
@@ -181,19 +183,24 @@ export const TUNING = {
       shotImpulse: 700, // C: how much speed a projectile hit adds to it
       weight: 0.3, // C: how heavy it is when objects bump into each other (1 = like furniture; lower = gets knocked around more)
       friction: 0.6, // C: how quickly it slows down by itself (0 = rolls forever)
-      size: 50, // C: radius of the tumbleweed
+      size: 42, // C: radius of the tumbleweed
       charges: 3, // C: tumbleweeds stored up (like mirrors)
       chargeTime: 10, // C: seconds for one stored tumbleweed to come back
     },
     horse: {
-      duration: 4, // V: seconds you ride
+      duration: 3, // V: seconds the ride lasts
+      speed: 650, // V: how fast the horse runs (in the direction you were facing, bouncing off walls)
       hp: 250, // V: the horse's health (damage hits it first; leftover damage hurts you)
-      speedMult: 1.5, // V: walking speed while riding (1 = normal)
       size: 34, // V: body radius while riding (normal is player.bodyRadius)
+      structureCost: 40, // V: horse health lost for each structure it smashes through
       trampleDamage: 40, // V: damage to the enemy when you run into them
       trampleKnockback: 900, // V: how hard they're shoved away
       trampleDelay: 1, // V: seconds before you can trample again
-      cooldown: 14, // V: seconds before it can be called again
+      burstShots: 6, // LC while riding: bullets per click
+      burstInterval: 0.05, // LC while riding: seconds between those bullets
+      burstCooldown: 1, // LC while riding: seconds before the next burst can start
+      burstDamageMult: 0.6, // LC while riding: each bullet does this much of normal revolver damage
+      cooldown: 12, // V: seconds before it can be called again
     },
     roll: {
       duration: 0.35, // SPACE: seconds the roll lasts
@@ -208,7 +215,7 @@ export const TUNING = {
     shotgun: {
       pellets: 4, // LC: pellets per shot
       spread: 6, // LC: total spread of the pellets, in degrees
-      damage: 18, // LC: damage per pellet
+      damage: 12, // LC: damage per pellet (a full 32-pellet volley is a lot, so this stays low)
       physics: 0.4, // LC: how hard pellets shove physics objects (1 = normal)
       speed: 1000, // LC: pellet speed
       size: 5, // LC: pellet radius
@@ -221,7 +228,7 @@ export const TUNING = {
       drain: 40, // RC: pool used per second while firing
       refill: 12, // RC: pool regained per second when not firing
       refillDelay: 1, // RC: seconds of not firing before the pool starts refilling
-      dps: 110, // RC: damage per second (same after bouncing off mirrors)
+      dps: 90, // RC: damage per second (same after bouncing off mirrors)
       maxReflections: 3, // RC: how many mirrors the beam can bounce off
       tickInterval: 0.1, // RC: seconds between damage ticks
       range: 2500, // RC: total beam length, including bounces
@@ -254,7 +261,7 @@ export const TUNING = {
     nailgun: {
       fireInterval: 0.08, // LC: seconds between nails (hold to keep firing)
       speed: 700, // LC: nail speed
-      damage: 8, // LC: damage per nail
+      damage: 7, // LC: damage per nail
       physics: 0.03, // LC: how hard nails shove physics objects like tumbleweeds and furniture (1 = normal; low because he fires so fast)
       ammo: 30, // LC: nails before the Builder has to reload
       reloadTime: 2, // LC: seconds to reload (starts by itself when the gun is empty)
@@ -281,7 +288,7 @@ export const TUNING = {
       life: 15, // C: seconds a wall lasts before it crumbles by itself
       thickness: 18, // C: wall thickness
       bricks: 5, // C: bricks fired when you smash your wall with the hammer
-      brickDamage: 50, // C: damage per brick
+      brickDamage: 40, // C: damage per brick
       brickPhysics: 1, // C: how hard bricks shove physics objects (1 = normal)
       brickSpeed: 900, // C: brick speed
       brickSize: 9, // C: brick radius

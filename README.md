@@ -64,10 +64,10 @@ Good to know:
 
 | Key | Does |
 | --- | --- |
-| Left click | Revolver: one shot per click, no ammo or reload (click as fast as you can). Hits harder up close and harder on stunned targets. |
+| Left click | Revolver: one shot per click (click as fast as you can), 6 shots then it reloads by itself. Hits harder up close and harder on stunned targets. |
 | Right click | Lasso: catches the enemy and drags them to you (flies through tumbleweeds) |
-| C | Bramble: throws a tumbleweed that stops and stuns whoever touches it (you too), and is used up. Shoot it to knock it around. 3 stored uses. |
-| V | Horse: ride for 4 seconds. Faster, bigger, and the horse has its own 250 HP that takes hits first. Running into the enemy tramples them. |
+| C | Bramble: throws a tumbleweed that stops and stuns the enemy who touches it (not you), and is used up. Shoot it to knock it around. 3 stored uses. |
+| V | Horse: charges off in the direction you were facing for 3 seconds (can't steer), bounces off walls, smashes structures, tramples the enemy. The horse has its own 250 HP that takes hits first. While riding, left click fires a burst of 6 bullets. |
 | Space | Roll in the direction you're walking, briefly invincible |
 
 **Refractor**

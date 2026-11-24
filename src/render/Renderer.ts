@@ -293,7 +293,7 @@ export class Renderer {
     ctx.fill();
 
     // Sheriff horse (placeholder shapes until there's horse art): a body under the Sheriff with a head, tail and a health bar.
-    if (f.vars.mountT > 0) this.drawHorse(f, x, y, angle, tuning.sheriff.horse.hp);
+    if (f.vars.mountT > 0) this.drawHorse(f, x, y, Math.atan2(f.vars.mountDY, f.vars.mountDX), tuning.sheriff.horse.hp);
 
     // Refractor Mind Ray: the beam.
     if (f.vars.rayOn) {
