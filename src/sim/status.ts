@@ -9,6 +9,7 @@ export function tickStatusTimers(f: Fighter, dt: number): void {
   f.rootedT = Math.max(0, f.rootedT - dt);
   f.stunT = Math.max(0, f.stunT - dt);
   f.invulnT = Math.max(0, f.invulnT - dt);
+  f.kickCd = Math.max(0, f.kickCd - dt);
 }
 
 /** Shove a fighter: they slide away at `speed` (units/second), slowing down by themselves. */

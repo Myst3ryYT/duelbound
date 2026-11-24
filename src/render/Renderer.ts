@@ -15,7 +15,8 @@ import type { PlacementPreview } from '../sim/abilities.ts';
 import { getClass } from '../sim/classes/registry.ts';
 import { tracePath } from '../sim/trace.ts';
 import { traceRay } from '../sim/classes/refractor/ray.ts';
-import { findSprite, getSprite, type Sprite } from './sprites.ts';
+import { ART_PIXEL } from '../config/assets.ts';
+import { findSprite, getFacings, getSprite, type Facings, type Sprite } from './sprites.ts';
 import { SCREEN_H, SCREEN_W, View } from './view.ts';
 import { drawHud, type HudInfo } from './hud.ts';
 
@@ -368,7 +369,10 @@ export class Renderer {
     const white = stunned || (this.flash.get(f.id) ?? 0) > 0;
     const jx = stunned ? (Math.random() - 0.5) * 8 : 0;
     const jy = stunned ? (Math.random() - 0.5) * 8 : 0;
-    this.drawSprite(sprite, x + jx, y + jy, f.kind === 'dummy' ? 0 : angle + spin, alpha, sprite.size, false, white);
+    const dirs = f.kind === 'dummy' ? undefined : getFacings(spriteName);
+    if (dirs) {
+      this.drawFacingCharacter(dirs, x + jx, y + jy, angle, spin, alpha, white);
+    } else this.drawSprite(sprite, x + jx, y + jy, f.kind === 'dummy' ? 0 : angle + spin, alpha, sprite.size, false, white);
 
 
     // Builder hammer swing: a quick sweeping arc in front.
@@ -758,6 +762,44 @@ export class Renderer {
     if (angle) ctx.rotate(angle);
     ctx.drawImage(white ? this.whitened(s.image) : enemy ? this.tinted(s.image) : s.image, -w / 2, -h / 2, w, h);
     ctx.restore();
+  }
+
+  /**
+   * A sprite-sheet character: the body frame follows the aim direction (front / side / back, side flipped for left)
+   * and a gun is drawn on top, pointing exactly where you aim. The gun is a TEMPORARY stand-in until there's gun art.
+   */
+  private drawFacingCharacter(d: Facings, x: number, y: number, aim: number, spin: number, alpha: number, white: boolean): void {
+    const { ctx } = this;
+    const deg = (aim * 180) / Math.PI; // screen coordinates: +90 is down
+    const down = deg > 45 && deg < 135;
+    const up = deg < -45 && deg > -135;
+    const left = !down && !up && Math.abs(deg) > 90;
+    const frame = down ? d.front : up ? d.back : d.side;
+    // Snap the body to whole art pixels so its pixels line up with each other.
+    const px = Math.round(x / ART_PIXEL) * ART_PIXEL;
+    const py = Math.round(y / ART_PIXEL) * ART_PIXEL;
+
+    const drawGun = () => {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(px, py + 8);
+      ctx.rotate(aim);
+      ctx.fillStyle = white ? '#ffffff' : '#2b2b33';
+      ctx.fillRect(10, -4, 28, 8); // barrel
+      ctx.fillRect(6, -2, 8, 14); // grip
+      ctx.restore();
+    };
+    if (up) drawGun(); // aiming up: the gun is in front of the body's back, so it goes behind
+    ctx.save();
+    ctx.translate(px, py);
+    if (spin) ctx.rotate(spin);
+    if (left) ctx.scale(-1, 1);
+    ctx.globalAlpha = alpha;
+    const w = frame.size;
+    const h = frame.size * frame.aspect;
+    ctx.drawImage(white ? this.whitened(frame.image) : frame.image, -w / 2, -h / 2, w, h);
+    ctx.restore();
+    if (!up) drawGun();
   }
 
   /** Does this belong to the other side? */

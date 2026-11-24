@@ -26,13 +26,14 @@ export const KEYBINDS = {
   ability1: ['KeyC'], // C
   ability2: ['KeyV'], // V
   mobility: ['Space'], // SPACE
+  kick: ['KeyF'], // F: kick (same for every class)
 
   // ---- Menus and tools ----
   pause: ['Escape'], // open / close the pause menu
   devPanel: ['Backquote'], // open / close the dev tuning panel
   resetDummy: ['KeyR'], // training: refill the dummy's HP
   toggleCooldowns: ['KeyT'], // training: switch ability cooldowns on / off
-  toggleDummyFire: ['KeyF'], // training: make the dummy shoot at you (on / off)
+  toggleDummyFire: ['KeyG'], // training: make the dummy shoot at you (on / off)
   nextClass: ['Tab'], // training: switch to the next class
 };
 

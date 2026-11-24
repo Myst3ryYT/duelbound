@@ -13,7 +13,7 @@ export const REFRACTOR: ClassDef = {
   id: 'refractor',
   name: 'Refractor',
   sprite: 'class_refractor',
-  ratings: { difficulty: 4, mobility: 3, damage: 5 },
+  ratings: { difficulty: 4, mobility: 3, damage: 5, defense: 2 },
   abilities: {
     primary: shotgun, // LC
     secondary: ray, // RC

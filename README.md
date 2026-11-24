@@ -44,7 +44,8 @@ Good to know:
 | Mouse | aim (the crosshair) |
 | Tab | training: switch class |
 | R | training: put the dummy back and refill its HP |
-| F | training: make the dummy shoot at you (on / off) |
+| G | training: make the dummy shoot at you (on / off) |
+| F | kick: short shove + small damage, every class (cooldown in tuning.kick) |
 | T | training: switch ability cooldowns on / off |
 | ` (the key left of 1) | open the dev panel |
 | Esc | pause menu (volume, mute, leave match). Online games keep running while it's open. |

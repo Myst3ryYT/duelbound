@@ -20,6 +20,18 @@
  * ============================================================================
  */
 
+/**
+ * Character sprite sheets: one PNG with the frames side by side, left to right.
+ * The game picks the frame from where the player is aiming: front (aiming down), side (aiming right,
+ * flipped for left), back (aiming up). The gun is drawn separately on top, pointing exactly where you aim.
+ * Frames are 16 x 20 pixels, drawn at 4 world units per pixel (so 64 x 80 units).
+ * The first frame also becomes the character's menu picture.
+ */
+export const SHEETS = {
+  class_sheriff: { file: 'sheriff_sheet.png', frames: 3 },
+} as const;
+export const ART_PIXEL = 4; // world units per art pixel (arena art is 270 px wide for the 1080-unit arena)
+
 export const SPRITES = {
   // ---- Arena ----
   floor_tile: { file: 'floor_tile.png', size: 64 }, // repeated across the arena floor

@@ -256,7 +256,13 @@ export class CharacterSelect extends Screen {
       const sprite = findSprite(cls.sprite);
       const ctx = pic.getContext('2d')!;
       ctx.imageSmoothingEnabled = false;
-      if (sprite) ctx.drawImage(sprite.image, 8, 8, 80, 80);
+      if (sprite) {
+        // Fit inside 80 x 80 without stretching (tall sprites get narrower).
+        const k = Math.min(80 / sprite.aspect, 80);
+        const w = k;
+        const h = k * sprite.aspect;
+        ctx.drawImage(sprite.image, 48 - w / 2, 48 - h / 2, w, h);
+      }
       const name = document.createElement('div');
       name.className = 'card-name';
       name.textContent = cls.name;
@@ -266,6 +272,7 @@ export class CharacterSelect extends Screen {
         ['Difficulty', cls.ratings.difficulty],
         ['Mobility', cls.ratings.mobility],
         ['Damage', cls.ratings.damage],
+        ['Defense', cls.ratings.defense],
       ] as const) {
         const li = document.createElement('li');
         const n = Math.max(0, Math.min(5, Math.round(stars)));

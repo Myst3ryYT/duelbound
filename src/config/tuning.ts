@@ -42,9 +42,19 @@ export const TUNING = {
   // Hitstun: a short freeze (no moving, no abilities) for whoever takes a big hit. In frames (60 per second).
   hitstun: {
     hammer: 6, // Builder RC: sledge hammer hit
+    kick: 3, // F: kick hit
     furniture: 8, // Builder V: flung furniture hit
     pierce: 8, // Sheriff V: piercing bullet hit
     shatter: 5, // Refractor V: shatter hit
+  },
+
+  // The kick (F), the same for every class.
+  kick: {
+    damage: 25, // damage to an enemy player hit by the kick
+    knockback: 1400, // how hard they're shoved away (starting speed; see player.knockFriction for how far that goes)
+    range: 45, // reach of the kick, from the edge of your body
+    arcDegrees: 100, // how wide the kick is (degrees)
+    cooldown: 1.2, // seconds between kicks
   },
 
   training: {
@@ -253,7 +263,7 @@ export const TUNING = {
     },
     hammer: {
       damage: 60, // RC: damage to an enemy player hit by the swing
-      knockback: 1400, // RC: how hard an enemy player is shoved away (starting speed; see player.knockFriction for how far that goes)
+      knockback: 2200, // RC: how hard an enemy player is shoved away (starting speed; see player.knockFriction for how far that goes)
       structureDamage: 150, // RC: damage to enemy structures and furniture hit by the swing
       range: 70, // RC: reach of the swing, from the edge of the Builder's body
       arcDegrees: 120, // RC: how wide the swing is (degrees)

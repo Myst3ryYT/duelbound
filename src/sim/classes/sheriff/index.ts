@@ -13,7 +13,7 @@ export const SHERIFF: ClassDef = {
   id: 'sheriff',
   name: 'Sheriff',
   sprite: 'class_sheriff',
-  ratings: { difficulty: 3, mobility: 3, damage: 4 },
+  ratings: { difficulty: 3, mobility: 3, damage: 4, defense: 3 },
   abilities: {
     primary: gun, // LC
     secondary: lasso, // RC

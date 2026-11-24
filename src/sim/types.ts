@@ -11,6 +11,15 @@
 export type ActionName = 'primary' | 'secondary' | 'ability1' | 'ability2' | 'mobility';
 export const ACTIONS: readonly ActionName[] = ['primary', 'secondary', 'ability1', 'ability2', 'mobility'];
 
+/** Every button a player can hold: the five ability slots plus the kick (F), which every class shares. */
+export type ButtonName = ActionName | 'kick';
+export const BUTTONS: readonly ButtonName[] = [...ACTIONS, 'kick'];
+
+/** Makes { primary: v, ..., kick: v } */
+export function perButton<T>(v: T): Record<ButtonName, T> {
+  return { ...perAction(v), kick: v };
+}
+
 /** Makes { primary: v, secondary: v, ... } */
 export function perAction<T>(v: T): Record<ActionName, T> {
   return { primary: v, secondary: v, ability1: v, ability2: v, mobility: v };
@@ -27,11 +36,11 @@ export interface PlayerInput {
   moveY: number; // -1 (up) .. 1 (down)
   aimX: number; // world position the player is aiming at
   aimY: number;
-  buttons: Record<ActionName, boolean>; // true while the button is held
+  buttons: Record<ButtonName, boolean>; // true while the button is held
 }
 
 export function emptyInput(): PlayerInput {
-  return { seq: 0, moveX: 0, moveY: 0, aimX: 0, aimY: 0, buttons: perAction(false) };
+  return { seq: 0, moveX: 0, moveY: 0, aimX: 0, aimY: 0, buttons: perButton(false) };
 }
 
 /** A character in the arena: a player or the training dummy. */
@@ -52,7 +61,7 @@ export interface Fighter {
   maxHp: number;
   radius: number; // body radius for movement collisions
   /** Which buttons were held last tick, so we can tell "just pressed" from "held". */
-  prevButtons: Record<ActionName, boolean>;
+  prevButtons: Record<ButtonName, boolean>;
 
   // ---- Abilities and status effects ----
   cooldowns: Record<ActionName, number>; // seconds left before each ability is ready
@@ -62,6 +71,7 @@ export interface Fighter {
   placing: ActionName | null; // a "variable" ability waiting for a click, or null
   rootedT: number; // seconds left where the fighter can't walk
   stunT: number; // seconds left where the fighter can't walk or use abilities
+  kickCd: number; // seconds until the kick (F) can be used again
   kbVx: number; // knockback velocity (a shove from a hit; fades by itself, see tuning.player.knockFriction)
   kbVy: number;
   hitstunT: number; // seconds left of hitstun (a split-second freeze after a big hit: no moving or abilities)

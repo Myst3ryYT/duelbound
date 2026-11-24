@@ -3,6 +3,8 @@
  * scaled to fit the browser window (black bars fill any leftover space).
  * The arena sits in the middle of that screen.
  */
+import { ART_PIXEL } from '../config/assets.ts';
+
 export const SCREEN_W = 1920;
 export const SCREEN_H = 1080;
 
@@ -25,7 +27,11 @@ export class View {
       this.canvas.style.width = w + 'px';
       this.canvas.style.height = h + 'px';
     }
-    this.scale = Math.min(w / SCREEN_W, h / SCREEN_H);
+    // Zoom in whole steps, so one art pixel (4 world units) is always a whole number of screen pixels.
+    // The leftover window space becomes black bars.
+    const fit = Math.min(w / SCREEN_W, h / SCREEN_H);
+    const step = 1 / (ART_PIXEL * dpr);
+    this.scale = Math.max(step, Math.floor(fit / step) * step);
     this.offsetX = (w - SCREEN_W * this.scale) / 2;
     this.offsetY = (h - SCREEN_H * this.scale) / 2;
   }

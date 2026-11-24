@@ -2,7 +2,7 @@
  * Keyboard + mouse input, using the bindings in config/keybinds.ts.
  */
 import type { Keybinds, BindName } from '../config/keybinds.ts';
-import { ACTIONS, emptyInput, type PlayerInput } from '../sim/types.ts';
+import { BUTTONS, emptyInput, type PlayerInput } from '../sim/types.ts';
 import type { InputSource, MenuAction } from './InputSource.ts';
 
 const MENU_ACTIONS: MenuAction[] = ['pause', 'devPanel', 'resetDummy', 'toggleCooldowns', 'toggleDummyFire', 'nextClass'];
@@ -85,7 +85,7 @@ export class KeyboardMouseInput implements InputSource {
       input.aimX = fighterX + 100;
       input.aimY = fighterY;
     }
-    for (const a of ACTIONS) input.buttons[a] = this.down(a);
+    for (const a of BUTTONS) input.buttons[a] = this.down(a);
     this.tapped.clear();
     return input;
   }

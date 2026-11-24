@@ -5,13 +5,14 @@
  * (arenaSize, arenaSize) is the bottom-right corner.
  */
 import type { Tuning } from '../config/tuning.ts';
-import { ACTIONS, perAction, type Fighter, type PlayerInput, type World } from './types.ts';
+import { BUTTONS, perAction, perButton, type Fighter, type PlayerInput, type World } from './types.ts';
 import { clampToArena, moveFighter, separateFighters, updateAim } from './movement.ts';
 import { runAbilities } from './abilities.ts';
 import { updateProjectiles } from './projectiles.ts';
 import { updateObjects } from './objects.ts';
 import { collideFightersWithPlaceables, updatePlaceables } from './placeables.ts';
 import { checkPullStuck, tickHitstun, tickStatusTimers, updateKnockback, updatePull } from './status.ts';
+import { runKick } from './kick.ts';
 import { updateDummy } from './training.ts';
 import { getClass } from './classes/registry.ts';
 import { checkRoundEnd, newMatchState, spawnPoint, updateMatch } from './match.ts';
@@ -31,7 +32,7 @@ function newFighter(world: World, props: Partial<Fighter> & Pick<Fighter, 'kind'
     hp: 1000,
     maxHp: 1000,
     radius: 22,
-    prevButtons: perAction(false),
+    prevButtons: perButton(false),
     cooldowns: perAction(0),
     cooldownTotals: perAction(0),
     charges: perAction(0),
@@ -39,6 +40,7 @@ function newFighter(world: World, props: Partial<Fighter> & Pick<Fighter, 'kind'
     placing: null,
     rootedT: 0,
     stunT: 0,
+    kickCd: 0,
     kbVx: 0,
     kbVy: 0,
     hitstunT: 0,
@@ -113,7 +115,7 @@ export function stepWorld(world: World, inputs: Map<number, PlayerInput>, tuning
       const input = inputs.get(f.id);
       if (!input) continue;
       updateAim(f, input);
-      for (const a of ACTIONS) f.prevButtons[a] = input.buttons[a];
+      for (const a of BUTTONS) f.prevButtons[a] = input.buttons[a];
     }
     world.tick++;
     world.time += dt;
@@ -139,7 +141,8 @@ export function stepWorld(world: World, inputs: Map<number, PlayerInput>, tuning
 
     const cls = getClass(f.classId);
     if (cls) runAbilities(world, tuning, f, input, cls, dt);
-    for (const a of ACTIONS) f.prevButtons[a] = input.buttons[a];
+    runKick(world, tuning, f, input);
+    for (const a of BUTTONS) f.prevButtons[a] = input.buttons[a];
   }
 
   updateProjectiles(world, tuning, dt);

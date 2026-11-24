@@ -13,7 +13,7 @@ export const BUILDER: ClassDef = {
   id: 'builder',
   name: 'Builder',
   sprite: 'class_builder',
-  ratings: { difficulty: 3, mobility: 2, damage: 3 },
+  ratings: { difficulty: 3, mobility: 2, damage: 3, defense: 4 },
   abilities: {
     primary: nailgun, // LC
     secondary: hammer, // RC

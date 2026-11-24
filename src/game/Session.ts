@@ -117,7 +117,16 @@ export abstract class Session {
     const me = this.player;
     const cls = getClass(me.classId);
     if (!cls) return [];
-    return ACTIONS.map((slot) => ({
+    const kick: HudAbility = {
+      icon: 'icon_kick',
+      name: 'Kick',
+      key: keyLabel(this.keybinds.kick[0]),
+      cooldown: me.kickCd,
+      total: this.tuning.kick.cooldown,
+      active: false,
+      ready: me.kickCd <= 0,
+    };
+    return [...ACTIONS.map((slot) => ({
       icon: cls.abilities[slot].icon,
       name: cls.abilities[slot].name,
       key: keyLabel(this.keybinds[slot][0]),
@@ -129,7 +138,7 @@ export abstract class Session {
       chargeMax: me.chargeMax[slot] > 0 ? me.chargeMax[slot] : undefined,
       disabled: cls.abilities[slot].disabled,
       ready: isReady(me, slot) || (me.chargeMax[slot] === 0 && me.cooldownTotals[slot] < 0.75), // tiny cooldowns (fire rate) don't flash the icon
-    }));
+    })), kick];
   }
 
   // ---- Dev panel test buttons ----
