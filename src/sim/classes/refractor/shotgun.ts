@@ -31,6 +31,7 @@ export const shotgun: AbilityDef = {
       spawnProjectile(world, tuning, {
         ownerId: f.id,
         kind: 'refractor_pellet',
+        physics: s.physics,
         x: f.x + Math.cos(f.aimAngle) * (f.radius + s.size + 2),
         y: f.y + Math.sin(f.aimAngle) * (f.radius + s.size + 2),
         angle,

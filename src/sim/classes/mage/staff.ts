@@ -24,6 +24,7 @@ export const staff: AbilityDef = {
     spawnProjectile(world, tuning, {
       ownerId: f.id,
       kind: 'mage_bolt',
+      physics: tuning.mage.staff.physics,
       x: f.x + Math.cos(f.aimAngle) * (f.radius + s.size),
       y: f.y + Math.sin(f.aimAngle) * (f.radius + s.size),
       angle: f.aimAngle,

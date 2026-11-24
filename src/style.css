@@ -329,3 +329,24 @@ body {
   padding-left: 8px;
   border-left: 2px solid #2a2c36;
 }
+
+/* Character select: star ratings */
+.card li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+}
+.card li b {
+  min-width: 0;
+  color: #c9cddb;
+}
+.card .stars {
+  color: #ffd34d;
+  letter-spacing: 2px;
+  font-size: 18px;
+}
+.card .stars i {
+  font-style: normal;
+  color: #3a3d4a;
+}

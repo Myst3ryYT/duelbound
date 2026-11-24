@@ -12,7 +12,7 @@ import type { AbilityDef } from '../../abilities.ts';
 import type { Fighter, Placeable, World } from '../../types.ts';
 import { isReady, startCooldown } from '../../abilities.ts';
 import { applyDamage } from '../../damage.ts';
-import { applyHitstun } from '../../status.ts';
+import { applyHitstun, applyKnockback } from '../../status.ts';
 import { closestPoint, damagePlaceable, removePlaceable } from '../../placeables.ts';
 import { damageObject } from '../../objects.ts';
 import { spawnProjectile } from '../../projectiles.ts';
@@ -49,6 +49,7 @@ export const hammer: AbilityDef = {
       if (target.id === f.id || target.invulnT > 0 || !inSwing(target.x, target.y, target.radius)) continue;
       applyDamage(world, target, h.damage, f.id);
       applyHitstun(target, tuning.hitstun.hammer, tuning.world.tickRate);
+      applyKnockback(target, Math.atan2(target.y - f.y, target.x - f.x), h.knockback);
       hitSomething = true;
     }
     for (const p of [...world.placeables]) {
@@ -95,6 +96,7 @@ function breakWall(world: World, tuning: Tuning, f: Fighter, p: Placeable): void
       speed: w.brickSpeed,
       radius: w.brickSize,
       damage: w.brickDamage,
+      physics: w.brickPhysics,
       slowRange: w.brickRange,
     });
   }

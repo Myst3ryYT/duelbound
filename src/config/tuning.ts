@@ -25,6 +25,7 @@ export const TUNING = {
 
   player: {
     maxHp: 1000, // starting and maximum health of every character
+    knockFriction: 7, // how quickly a knockback shove slows down (higher = shorter shove; distance is about speed / this)
     moveSpeed: 300, // top walking speed
     accelFrames: 0, // simulation frames to go from standing still to full speed (stopping is always instant)
     bodyRadius: 22, // size of the body for bumping into walls and other players
@@ -104,6 +105,7 @@ export const TUNING = {
   mage: {
     staff: {
       damage: 45, // LC: damage per bolt
+      physics: 1, // LC: how hard bolts shove physics objects (1 = normal)
       speed: 650, // LC: bolt speed
       size: 10, // LC: bolt radius
       fireInterval: 0.45, // LC: seconds between bolts (hold to keep firing)
@@ -144,6 +146,7 @@ export const TUNING = {
       fireInterval: 0.6, // LC: seconds between shots (hold to keep firing)
       speed: 1100, // LC: bullet speed
       damageNear: 70, // LC: damage at point blank
+      physics: 1, // LC: how hard bullets shove physics objects like tumbleweeds and furniture (1 = normal)
       damageFar: 30, // LC: damage at long range
       falloffRange: 700, // LC: distance travelled at which damage has dropped to damageFar
       size: 10.5, // LC: bullet radius
@@ -175,6 +178,7 @@ export const TUNING = {
       delay: 0.4, // V: seconds of aiming before the shot goes off
       speed: 12339, // V: bullet speed
       damage: 60, // V: damage on hit
+      physics: 2, // V: how hard it shoves physics objects (1 = normal)
       stunnedMultiplier: 3, // V: damage is multiplied by this if the target is stunned
       trail: 1.6, // V: seconds the bullet trail stays visible (looks only)
       size: 5, // V: bullet radius
@@ -195,6 +199,7 @@ export const TUNING = {
       pellets: 4, // LC: pellets per shot
       spread: 6, // LC: total spread of the pellets, in degrees
       damage: 18, // LC: damage per pellet
+      physics: 0.4, // LC: how hard pellets shove physics objects (1 = normal)
       speed: 1000, // LC: pellet speed
       size: 5, // LC: pellet radius
       fireInterval: 0.5, // LC: seconds between shots
@@ -240,11 +245,15 @@ export const TUNING = {
       fireInterval: 0.08, // LC: seconds between nails (hold to keep firing)
       speed: 700, // LC: nail speed
       damage: 8, // LC: damage per nail
+      physics: 0.03, // LC: how hard nails shove physics objects like tumbleweeds and furniture (1 = normal; low because he fires so fast)
+      ammo: 30, // LC: nails before the Builder has to reload
+      reloadTime: 2, // LC: seconds to reload (starts by itself when the gun is empty)
       size: 8.08, // LC: nail radius
       spread: 0, // LC: random spread of the nails, in degrees
     },
     hammer: {
       damage: 60, // RC: damage to an enemy player hit by the swing
+      knockback: 1400, // RC: how hard an enemy player is shoved away (starting speed; see player.knockFriction for how far that goes)
       structureDamage: 150, // RC: damage to enemy structures and furniture hit by the swing
       range: 70, // RC: reach of the swing, from the edge of the Builder's body
       arcDegrees: 120, // RC: how wide the swing is (degrees)
@@ -263,6 +272,7 @@ export const TUNING = {
       thickness: 18, // C: wall thickness
       bricks: 5, // C: bricks fired when you smash your wall with the hammer
       brickDamage: 50, // C: damage per brick
+      brickPhysics: 1, // C: how hard bricks shove physics objects (1 = normal)
       brickSpeed: 900, // C: brick speed
       brickSize: 9, // C: brick radius
       brickSpread: 10, // C: random spread of the bricks, in degrees (they leave straight out of the wall)

@@ -44,6 +44,7 @@ export interface ProjectileSpawn {
   from?: { x: number; y: number };
   life?: number; // seconds before it vanishes [tuning.projectiles.maxLife]
   hitstun?: number; // hitstun frames put on a fighter it hits [0]
+  physics?: number; // how hard it shoves physics objects (tumbleweeds, furniture): 1 = normal, 0.1 = barely [1]
   slowRange?: number; // slows down steadily over this distance, then vanishes [0 = never slows]
 }
 
@@ -70,6 +71,7 @@ export function spawnProjectile(world: World, tuning: Tuning, s: ProjectileSpawn
     doublings: 0,
     life: s.life ?? tuning.projectiles.maxLife,
     hitstun: s.hitstun ?? 0,
+    physics: s.physics ?? 1,
     slowRange: s.slowRange ?? 0,
     startSpeed: s.speed,
     switchT: 0,
@@ -207,15 +209,15 @@ export function updateProjectiles(world: World, tuning: Tuning, dt: number): voi
         if (solid) {
           if (o.ownerId !== p.ownerId) damageObject(world, o, damageOf(p)); // your own shots don't hurt your furniture
           const sp = Math.hypot(p.vx, p.vy) || 1;
-          const push = damageOf(p) * (getObjectKind(o.kind)?.shotImpulse?.(tuning) ?? 0); // heavy things budge a little
+          const push = damageOf(p) * (getObjectKind(o.kind)?.shotImpulse?.(tuning) ?? 0) * p.physics; // heavy things budge a little
           o.vx += (p.vx / sp) * push;
           o.vy += (p.vy / sp) * push;
           alive = false;
           break;
         }
         const sp = Math.hypot(p.vx, p.vy) || 1;
-        o.vx += (p.vx / sp) * tuning.sheriff.bramble.shotImpulse;
-        o.vy += (p.vy / sp) * tuning.sheriff.bramble.shotImpulse;
+        o.vx += (p.vx / sp) * tuning.sheriff.bramble.shotImpulse * p.physics;
+        o.vy += (p.vy / sp) * tuning.sheriff.bramble.shotImpulse * p.physics;
         cancelSwitch(o);
         emitFx(world, 'burst', nx, ny, '#c8a060', 12, 0.2);
         alive = false;

@@ -41,6 +41,7 @@ export const pierce: AbilityDef = {
         stunnedMultiplier: p.stunnedMultiplier,
         trail: p.trail,
         hitstun: tuning.hitstun.pierce,
+        physics: p.physics,
         from: { x: f.x, y: f.y },
       });
       emitSound(world, 'pierce_fire', f.x, f.y);

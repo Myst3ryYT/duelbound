@@ -105,6 +105,9 @@ export interface ClassDef {
   id: string;
   name: string;
   sprite: string; // sprite id for the character (config/assets.ts)
+  hidden?: boolean; // left out of the menus (still in the game's code)
+  /** 1 to 5 stars shown on the character select screen. */
+  ratings: { difficulty: number; mobility: number; damage: number };
   abilities: Record<ActionName, AbilityDef>;
   placeables?: PlaceableKindDef[];
   objects?: ObjectKindDef[];

@@ -13,6 +13,8 @@ export const MAGE: ClassDef = {
   id: 'mage',
   name: 'Mage',
   sprite: 'class_mage',
+  hidden: true, // taken out of the menus for now (remove this line to bring the Mage back)
+  ratings: { difficulty: 3, mobility: 4, damage: 2 },
   abilities: {
     primary: staff, // LC
     secondary: shield, // RC

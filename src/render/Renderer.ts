@@ -630,7 +630,16 @@ export class Renderer {
 
     // Ammo pips (Sheriff revolver), just under the crosshair.
     const ammo = me && cls?.ammo?.(me, tuning);
-    if (ammo) {
+    if (ammo && ammo.max > 12) {
+      // Lots of ammo (Builder nails): a thin bar instead of pips.
+      const w = 56;
+      this.ctx.fillStyle = '#000';
+      this.ctx.fillRect(at.x - w / 2 - 1, at.y + 39, w + 2, 9);
+      this.ctx.fillStyle = '#2a2c36';
+      this.ctx.fillRect(at.x - w / 2, at.y + 40, w, 7);
+      this.ctx.fillStyle = ammo.reloading ? '#555a66' : '#e0b030';
+      this.ctx.fillRect(at.x - w / 2, at.y + 40, w * (ammo.reloading ? 1 : ammo.current / ammo.max), 7);
+    } else if (ammo) {
       const size = 7;
       const gap = 4;
       const total = ammo.max * size + (ammo.max - 1) * gap;

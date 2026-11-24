@@ -62,6 +62,8 @@ export interface Fighter {
   placing: ActionName | null; // a "variable" ability waiting for a click, or null
   rootedT: number; // seconds left where the fighter can't walk
   stunT: number; // seconds left where the fighter can't walk or use abilities
+  kbVx: number; // knockback velocity (a shove from a hit; fades by itself, see tuning.player.knockFriction)
+  kbVy: number;
   hitstunT: number; // seconds left of hitstun (a split-second freeze after a big hit: no moving or abilities)
   invulnT: number; // seconds left where projectiles and objects pass through
   pullById: number; // id of whoever is dragging this fighter (Sheriff lasso), 0 = nobody
@@ -100,6 +102,7 @@ export interface Projectile extends Switchable {
   splits: boolean; // doubles when it bounces off its owner's mirror (Refractor shotgun)
   doublings: number; // how many times it (or the pellet it split from) has doubled so far
   life: number; // seconds left before it vanishes on its own
+  physics: number; // how hard it shoves physics objects (tumbleweeds, furniture): 1 = normal, 0.1 = barely
   hitstun: number; // hitstun frames put on a fighter it hits (0 = none)
   slowRange: number; // distance over which it slows to a stop and vanishes (0 = flies at full speed)
   startSpeed: number; // speed it was fired at (used by slowRange)

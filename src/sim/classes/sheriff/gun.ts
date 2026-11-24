@@ -40,6 +40,7 @@ export const gun: AbilityDef = {
       damage: g.damageNear,
       damageFar: g.damageFar,
       falloffRange: g.falloffRange,
+      physics: g.physics,
       from: { x: f.x, y: f.y },
     });
     emitSound(world, 'gun_fire', f.x, f.y);

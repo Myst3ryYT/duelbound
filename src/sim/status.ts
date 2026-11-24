@@ -11,6 +11,23 @@ export function tickStatusTimers(f: Fighter, dt: number): void {
   f.invulnT = Math.max(0, f.invulnT - dt);
 }
 
+/** Shove a fighter: they slide away at `speed` (units/second), slowing down by themselves. */
+export function applyKnockback(f: Fighter, angle: number, speed: number): void {
+  f.kbVx += Math.cos(angle) * speed;
+  f.kbVy += Math.sin(angle) * speed;
+}
+
+/** Move a fighter by their knockback and slow it down. Walls and structures still stop them (they collide later in the tick). */
+export function updateKnockback(f: Fighter, knockFriction: number, dt: number): void {
+  if (f.kbVx === 0 && f.kbVy === 0) return;
+  f.x += f.kbVx * dt;
+  f.y += f.kbVy * dt;
+  const drag = Math.exp(-knockFriction * dt);
+  f.kbVx *= drag;
+  f.kbVy *= drag;
+  if (Math.hypot(f.kbVx, f.kbVy) < 10) f.kbVx = f.kbVy = 0;
+}
+
 /** Hitstun counts down at the END of each tick (after everyone has acted), so it always freezes whole ticks. */
 export function tickHitstun(f: Fighter, dt: number): void {
   f.hitstunT = Math.max(0, f.hitstunT - dt);

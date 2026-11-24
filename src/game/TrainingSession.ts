@@ -48,6 +48,7 @@ export class TrainingSession extends Session {
       d.x = d.vars.homeX;
       d.y = d.vars.homeY;
       d.stunT = 0;
+      d.kbVx = d.kbVy = 0;
       d.pullById = 0;
       resetHp(this.world, d);
       this.flushEvents();

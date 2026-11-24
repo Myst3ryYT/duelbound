@@ -16,7 +16,7 @@ export const CLASSES: Record<string, ClassDef> = {
 };
 
 /** Class ids in menu order. */
-export const CLASS_ORDER = Object.keys(CLASSES);
+export const CLASS_ORDER = Object.keys(CLASSES).filter((id) => !CLASSES[id].hidden);
 
 export function getClass(id: string): ClassDef | undefined {
   return CLASSES[id];

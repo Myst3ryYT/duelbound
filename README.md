@@ -49,7 +49,7 @@ Good to know:
 | ` (the key left of 1) | open the dev panel |
 | Esc | pause menu (volume, mute, leave match). Online games keep running while it's open. |
 
-**Mage**
+**Mage** (taken out of the menus for now; the code is still there, set `hidden: true` to false in `mage/index.ts` to bring it back)
 
 | Key | Does |
 | --- | --- |
@@ -83,8 +83,8 @@ Good to know:
 
 | Key | Does |
 | --- | --- |
-| Left click | Nail Gun: hold to spray fast, weak nails |
-| Right click | Sledge Hammer: a swing in front of you. Hurts the enemy, wrecks enemy structures, smashes your own brick walls into a volley of bricks (they fly straight out of the wall on the crosshair's side, slowing to a stop), and flings your own furniture. |
+| Left click | Nail Gun: hold to spray fast, weak nails. 30 nails, then it reloads by itself. Nails barely push tumbleweeds and furniture. |
+| Right click | Sledge Hammer: a swing in front of you. Hurts the enemy and knocks them back, wrecks enemy structures, smashes your own brick walls into a volley of bricks (they fly straight out of the wall on the crosshair's side, slowing to a stop), and flings your own furniture. |
 | C | Brick wall mode on / off. Placed like mirrors (drag with left click). Lots of health, blocks everyone's shots (yours too). 2 stored uses. |
 | V | Construction: builds a random piece of furniture in front of you (3 stored uses). It's heavy, movable cover: players can shove it, shots nudge it, it blocks everyone's shots until it's broken. Hit it with the hammer to fling it: 100 damage to the enemy it hits. |
 | Space | Dash in the direction you're walking |

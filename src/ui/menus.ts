@@ -10,9 +10,7 @@
  */
 import { playSound } from '../audio/sfx.ts';
 import { CLASS_ORDER, getClass } from '../sim/classes/registry.ts';
-import { ACTIONS } from '../sim/types.ts';
 import type { Keybinds } from '../config/keybinds.ts';
-import { keyLabel } from '../input/keyLabels.ts';
 import { findSprite } from '../render/sprites.ts';
 
 /** Base for a full-screen menu layer. */
@@ -190,9 +188,8 @@ export class CharacterSelect extends Screen {
     change: (classId: string, ready: boolean) => void;
     back: () => void;
   } = { confirm: () => {}, change: () => {}, back: () => {} };
-  private keybinds: Keybinds;
 
-  constructor(parent: HTMLElement, keybinds: Keybinds) {
+  constructor(parent: HTMLElement, _keybinds: Keybinds) {
     super(
       parent,
       `<div class="menu-box xwide">
@@ -211,7 +208,6 @@ export class CharacterSelect extends Screen {
         </div>
       </div>`,
     );
-    this.keybinds = keybinds;
     this.onClick('back', () => this.handlers.back());
     this.onClick('confirm', () => {
       if (this.mode === 'online') {
@@ -264,10 +260,16 @@ export class CharacterSelect extends Screen {
       const name = document.createElement('div');
       name.className = 'card-name';
       name.textContent = cls.name;
+      // 5-star ratings instead of the ability list.
       const list = document.createElement('ul');
-      for (const slot of ACTIONS) {
+      for (const [label, stars] of [
+        ['Difficulty', cls.ratings.difficulty],
+        ['Mobility', cls.ratings.mobility],
+        ['Damage', cls.ratings.damage],
+      ] as const) {
         const li = document.createElement('li');
-        li.innerHTML = `<b>${keyLabel(this.keybinds[slot][0])}</b> ${cls.abilities[slot].name}${cls.abilities[slot].disabled ? ' (off)' : ''}`;
+        const n = Math.max(0, Math.min(5, Math.round(stars)));
+        li.innerHTML = `<b>${label}</b><span class="stars">${'★'.repeat(n)}<i>${'★'.repeat(5 - n)}</i></span>`;
         list.appendChild(li);
       }
       card.append(pic, name, list);

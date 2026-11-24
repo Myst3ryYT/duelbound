@@ -13,6 +13,7 @@ export const BUILDER: ClassDef = {
   id: 'builder',
   name: 'Builder',
   sprite: 'class_builder',
+  ratings: { difficulty: 3, mobility: 2, damage: 3 },
   abilities: {
     primary: nailgun, // LC
     secondary: hammer, // RC
@@ -22,4 +23,9 @@ export const BUILDER: ClassDef = {
   },
   objects: furnitureObjects,
   crosshairCharges: 'ability1', // walls left, shown above the crosshair
+
+  // Nails left.
+  ammo(f, t) {
+    return { current: f.vars.ammo ?? t.builder.nailgun.ammo, max: t.builder.nailgun.ammo, reloading: !!f.vars.reloading };
+  },
 };

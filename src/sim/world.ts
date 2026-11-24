@@ -11,7 +11,7 @@ import { runAbilities } from './abilities.ts';
 import { updateProjectiles } from './projectiles.ts';
 import { updateObjects } from './objects.ts';
 import { collideFightersWithPlaceables, updatePlaceables } from './placeables.ts';
-import { checkPullStuck, tickHitstun, tickStatusTimers, updatePull } from './status.ts';
+import { checkPullStuck, tickHitstun, tickStatusTimers, updateKnockback, updatePull } from './status.ts';
 import { updateDummy } from './training.ts';
 import { getClass } from './classes/registry.ts';
 import { checkRoundEnd, newMatchState, spawnPoint, updateMatch } from './match.ts';
@@ -39,6 +39,8 @@ function newFighter(world: World, props: Partial<Fighter> & Pick<Fighter, 'kind'
     placing: null,
     rootedT: 0,
     stunT: 0,
+    kbVx: 0,
+    kbVy: 0,
     hitstunT: 0,
     invulnT: 0,
     pullById: 0,
@@ -121,6 +123,7 @@ export function stepWorld(world: World, inputs: Map<number, PlayerInput>, tuning
   for (const f of world.fighters) {
     tickStatusTimers(f, dt);
     updatePull(world, f, dt);
+    updateKnockback(f, tuning.player.knockFriction, dt);
     if (f.kind === 'dummy') {
       updateDummy(world, tuning, f, dt);
       continue;
