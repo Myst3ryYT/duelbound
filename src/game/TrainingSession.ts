@@ -1,4 +1,4 @@
-/**
+﻿/**
  * A training session: you vs the training dummy.
  * Connects input -> simulation -> effects (visuals + sound).
  */
@@ -9,6 +9,7 @@ import { keyLabel } from '../input/keyLabels.ts';
 import { ACTIONS, type Fighter, type PlayerInput, type World } from '../sim/types.ts';
 import { applyDamage, createTrainingWorld, resetHp, stepWorld } from '../sim/world.ts';
 import { CLASS_ORDER, getClass } from '../sim/classes/registry.ts';
+import { isReady } from '../sim/abilities.ts';
 import type { LocalView, Renderer } from '../render/Renderer.ts';
 import type { HudInfo } from '../render/hud.ts';
 import { playSound, playSoundByName } from '../audio/sfx.ts';
@@ -95,7 +96,10 @@ export class TrainingSession {
     const aim = cross ? this.renderer.view.screenToWorld(cross.x, cross.y) : null;
     const def = me.placing ? getClass(me.classId)?.abilities[me.placing] : undefined;
     const at = aim ?? { x: me.aimX, y: me.aimY };
-    return { playerId: me.id, aim, preview: def?.preview?.(this.world, this.tuning, me, at.x, at.y) ?? null };
+    const preview = def?.preview?.(this.world, this.tuning, me, at.x, at.y) ?? null;
+    // No uses left (e.g. all mirrors recharging): show it as blocked.
+    if (preview && me.placing && !isReady(me, me.placing) && !me.vars.placeDrag) preview.valid = false;
+    return { playerId: me.id, aim, preview };
   }
 
   hud(): HudInfo {

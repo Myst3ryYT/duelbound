@@ -1,8 +1,9 @@
 ﻿/**
  * REFRACTOR - C - Mirror (variable, dynamic placeable)
- * Press C, then press the left mouse button where the mirror should start,
- * drag, and release where it should end. Dragging past the maximum length
- * places it automatically. It can go anywhere in the arena.
+ * Press C to enter mirror mode. Hold the left mouse button where a mirror should
+ * start, drag, and release where it should end (dragging past the maximum length
+ * places it automatically). You stay in mirror mode to place more; press C again
+ * (or right click) to go back to fighting. Mirrors can go anywhere in the arena.
  * Up to 3 mirrors at once (a 4th removes your oldest), and 3 stored uses.
  * Mirrors bounce every projectile; they only take damage from enemy shots.
  * Numbers: tuning.refractor.mirror
@@ -20,6 +21,7 @@ export const mirror: AbilityDef = {
   icon: 'icon_refractor_mirror',
   cooldown: (t) => t.refractor.mirror.chargeTime,
   charges: (t) => t.refractor.mirror.charges,
+  stayPlacing: true,
 
   preview(world, tuning, f, x, y) {
     const m = tuning.refractor.mirror;

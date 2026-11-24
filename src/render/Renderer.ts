@@ -18,10 +18,13 @@ import { SCREEN_H, SCREEN_W, View } from './view.ts';
 import { drawHud, type HudInfo } from './hud.ts';
 
 interface FloatingNumber {
+  targetId: number;
+  amount: number;
   x: number;
   y: number;
-  text: string;
   age: number;
+  lastHit: number; // renderer clock time of the latest hit added to this number
+  pop: number; // 1 right after a hit is added, fades to 0 (makes it bump bigger)
   color: string;
 }
 
@@ -66,6 +69,7 @@ export class Renderer {
   private trails = new Map<number, Trail>();
   private fx = new Map<number, FighterFx>();
   private clock = 0; // seconds, for animations
+  private mergeWindow = 0.35; // copied from tuning.visuals.damageNumberMerge every frame
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -77,15 +81,20 @@ export class Renderer {
   /** React to simulation events with visual effects. */
   onEvent(e: GameEvent, world: World): void {
     if (e.type === 'damage') {
-      const jitter = (Math.random() - 0.5) * 30;
       const target = world.fighters.find((f) => f.id === e.targetId);
-      this.numbers.push({
-        x: e.x + jitter,
-        y: e.y - (target?.radius ?? 20) - 10,
-        text: String(Math.round(e.amount)),
-        age: 0,
-        color: '#ffffff',
-      });
+      const y = e.y - (target?.radius ?? 20) - 10;
+      // Rapid hits on the same target add up into one number instead of a pile of small ones.
+      const recent = this.numbers.find((n) => n.targetId === e.targetId && this.clock - n.lastHit <= this.mergeWindow);
+      if (recent) {
+        recent.amount += e.amount;
+        recent.age = 0;
+        recent.lastHit = this.clock;
+        recent.pop = 1;
+        recent.x = e.x;
+        recent.y = y;
+      } else {
+        this.numbers.push({ targetId: e.targetId, amount: e.amount, x: e.x + (Math.random() - 0.5) * 30, y, age: 0, lastHit: this.clock, pop: 1, color: '#ffffff' });
+      }
       const fx = this.fx.get(e.targetId);
       if (fx) fx.trailHold = 0;
     } else if (e.type === 'fx') {
@@ -120,6 +129,7 @@ export class Renderer {
   ): void {
     const { ctx, view } = this;
     this.clock += dt;
+    this.mergeWindow = tuning.visuals.damageNumberMerge;
     view.arenaSize = tuning.world.arenaSize;
     view.fit();
 
@@ -600,12 +610,15 @@ export class Renderer {
     ctx.strokeStyle = '#000';
     for (const n of this.numbers) {
       n.age += dt;
+      n.pop = Math.max(0, n.pop - dt * 6);
       const t = Math.min(1, n.age / life);
       const y = n.y - tuning.visuals.damageNumberRise * t;
+      const text = String(Math.round(n.amount));
+      ctx.font = `bold ${Math.round(28 * (1 + 0.35 * n.pop))}px monospace`;
       ctx.globalAlpha = 1 - t * t;
-      ctx.strokeText(n.text, n.x, y);
+      ctx.strokeText(text, n.x, y);
       ctx.fillStyle = n.color;
-      ctx.fillText(n.text, n.x, y);
+      ctx.fillText(text, n.x, y);
     }
     ctx.globalAlpha = 1;
     this.numbers = this.numbers.filter((n) => n.age < life);

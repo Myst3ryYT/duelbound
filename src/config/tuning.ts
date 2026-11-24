@@ -185,6 +185,7 @@ export const TUNING = {
   visuals: {
     damageNumberLife: 0.9, // seconds a floating damage number stays on screen
     damageNumberRise: 60, // how far a damage number floats upwards over its life
+    damageNumberMerge: 0.35, // hits on the same target this close together (seconds) add up into one number
     hpTrailDelay: 0.5, // seconds before the white "recent damage" chunk of an HP bar starts shrinking
     hpTrailSpeed: 600, // how fast (HP per second) the white damage chunk shrinks
   },

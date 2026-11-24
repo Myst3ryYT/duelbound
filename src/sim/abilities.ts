@@ -61,6 +61,8 @@ export interface AbilityDef {
    * Return 'placed' when done (starts the cooldown), or null to keep going.
    */
   placingUpdate?(ctx: AbilityContext): 'placed' | null;
+  /** Variable abilities: stay in placing mode after placing (press the key again to leave). */
+  stayPlacing?: boolean;
   /** Abilities with stored uses: how many can be stored. `cooldown` is then the time for one use to come back. */
   charges?(t: Tuning): number;
 }
@@ -198,16 +200,24 @@ export function runAbilities(world: World, tuning: Tuning, f: Fighter, input: Pl
       cancelledSlot = slot;
     } else if (def.placingUpdate) {
       // Drag-placed (mirror): the ability reads the left mouse button itself.
-      if (def.placingUpdate(ctx(slot, edges('primary'))) === 'placed') {
+      // With no uses left, a new drag can't start (but you stay in placing mode).
+      const lc = edges('primary');
+      const canStart = isReady(f, slot) || !!f.vars.placeDrag;
+      if (def.placingUpdate(ctx(slot, canStart ? lc : { ...lc, pressed: false })) === 'placed') {
         startCooldown(world, f, slot, def.cooldown(tuning));
-        f.placing = null;
+        if (!def.stayPlacing) f.placing = null;
       }
     } else if (edges('primary').pressed && def.confirm?.(ctx(slot, edges(slot)))) {
       startCooldown(world, f, slot, def.cooldown(tuning));
-      f.placing = null;
+      if (!def.stayPlacing) f.placing = null;
     }
-    if (!f.placing) f.vars.placeDrag = 0; // forget any half-finished drag
+    if (!f.placing) {
+      f.vars.placeDrag = 0; // forget any half-finished drag
+      // Still holding left click from placing? Don't fire until it's let go and pressed again.
+      if (input.buttons.primary) f.vars.blockPrimary = 1;
+    }
   }
+  if (f.vars.blockPrimary && !input.buttons.primary) f.vars.blockPrimary = 0;
 
   // ---- Every ability's own logic ----
   for (const slot of ACTIONS) {
@@ -215,6 +225,7 @@ export function runAbilities(world: World, tuning: Tuning, f: Fighter, input: Pl
     let e = edges(slot);
     if (clicksUsed && (slot === 'primary' || slot === 'secondary')) e = { pressed: false, held: false, released: e.released };
     if (slot === cancelledSlot) e = { ...e, pressed: false };
+    if (slot === 'primary' && f.vars.blockPrimary) e = { pressed: false, held: false, released: false };
 
     if (def.activation === 'variable' && e.pressed && !f.placing && isReady(f, slot)) {
       f.placing = slot;
