@@ -108,6 +108,7 @@ export function updateObjects(world: World, tuning: Tuning, dt: number): void {
 
       // Fighters: the object's own behaviour decides what touching does
       for (const f of world.fighters) {
+        if (f.vars.airT > 0) continue; // airborne (Frog hop): sails over objects
         if (!hitPoints(f).some((h) => dist(o.x, o.y, h.x, h.y) <= o.radius + f.radius)) continue;
         if (f.invulnT <= 0 && kind?.onTouch(world, tuning, o, f)) {
           alive = false;

@@ -190,6 +190,7 @@ export class GuestSession extends Session {
       world.projectiles = mergeOwn(world.projectiles, this.pred.projectiles, id).map((e) => (e.ownerId === id ? place(e) : e));
       world.objects = mergeOwn(world.objects, this.pred.objects, id).map((e) => (e.ownerId === id ? place(e) : e));
       world.placeables = mergeOwn(world.placeables, this.pred.placeables, id);
+      world.zones = mergeOwn(world.zones, this.pred.zones, id);
 
       // Our own character: predicted position and state, but HP from the host.
       const fresh = this.latest.fighters.find((f) => f.id === id);

@@ -20,8 +20,9 @@ export function moveFighter(f: Fighter, input: PlayerInput, tuning: Tuning, dt: 
   }
   const dirX = input.moveX / len;
   const dirY = input.moveY / len;
-  const maxSpeed = tuning.player.moveSpeed * Math.min(1, len); // len < 1 only with analog sticks
-  const step = tuning.player.moveSpeed / Math.max(1, tuning.player.accelFrames);
+  const topSpeed = tuning.player.moveSpeed * (f.vars.speedMult || 1); // zones (like Frog slime) can speed you up or slow you down
+  const maxSpeed = topSpeed * Math.min(1, len); // len < 1 only with analog sticks
+  const step = topSpeed / Math.max(1, tuning.player.accelFrames);
   const speed = Math.min(maxSpeed, length(f.vx, f.vy) + step);
   f.vx = dirX * speed;
   f.vy = dirY * speed;

@@ -46,6 +46,8 @@ export const TUNING = {
     gun: 2, // Sheriff LC: revolver hit (tiny, shots come fast)
     furniture: 8, // Builder V: flung furniture hit
     trample: 6, // Sheriff V: horse trample hit
+    tongue: 4, // Frog LC: tongue lash
+    glob: 6, // Frog V: spat glob
     shatter: 5, // Refractor V: shatter hit
   },
 
@@ -109,6 +111,7 @@ export const TUNING = {
     rangeSheriff: 380, // both difficulties: distance it likes to keep as a Sheriff
     rangeRefractor: 320, // both difficulties: distance it likes to keep as a Refractor
     rangeBuilder: 260, // both difficulties: distance it likes to keep as a Builder
+    rangeFrog: 130, // both difficulties: distance it likes to keep as a Frog
     wallMargin: 140, // both difficulties: how close to a wall it gets before steering back to the middle
   },
 
@@ -315,6 +318,71 @@ export const TUNING = {
       distance: 220, // SPACE: how far the dash goes
       duration: 0.15, // SPACE: seconds the dash takes
       cooldown: 4, // SPACE: seconds before dashing again
+    },
+  },
+
+  // ---------------------------------------------------------------- FROG ----
+  frog: {
+    slime: {
+      pool: 100, // the slime pool (the green bar by the crosshair): Belch, Acid Goop and goop-hops use it
+      refill: 14, // slime regained per second when not using any
+      refillDelay: 0.8, // seconds of not using slime before it starts refilling
+      ownSpeedMult: 1.3, // the Frog's walking speed while standing in his own slime (1 = normal)
+      enemySlowMult: 0.6, // an enemy's walking speed while standing in the Frog's slime
+      acidDps: 25, // damage per second to an enemy standing in the Frog's slime
+      acidTick: 0.25, // seconds between acid damage ticks
+    },
+    tongue: {
+      damage: 30, // LC: damage to an enemy hit by the tongue
+      knockback: 1100, // LC: how hard it shoves them away (see player.knockFriction)
+      range: 190, // LC: how far the tongue reaches, from the edge of the Frog's body
+      width: 16, // LC: how thick the tongue's hit area is
+      time: 0.18, // LC: how long the tongue stays out (looks only)
+      objectFling: 700, // LC: speed it knocks tumbleweeds away at
+      cooldown: 0.55, // LC: seconds between lashes
+    },
+    belch: {
+      minCost: 10, // RC: slime used by a quick tap
+      drain: 35, // RC: slime used per second while you keep charging
+      maxCharge: 1.2, // RC: seconds of holding for a full-power belch
+      minDamage: 20, // RC: damage of a quick tap
+      maxDamage: 85, // RC: damage when fully charged
+      minSpeed: 450, // RC: speed of a quick tap
+      maxSpeed: 1000, // RC: speed when fully charged
+      minSize: 10, // RC: radius of a quick tap
+      maxSize: 22, // RC: radius when fully charged
+      cooldown: 0.4, // RC: seconds after a belch before charging the next
+    },
+    goop: {
+      drain: 12, // C: slime used per second while gliding
+      speed: 480, // C: top gliding speed (the Frog's own slime makes it faster, like walking)
+      accel: 900, // C: how quickly you speed up / turn (lower = more slippery)
+      friction: 1.2, // C: how quickly you slow down when not pressing a direction (lower = more slippery)
+      trailSpacing: 40, // C: distance between slime puddles left behind
+      trailRadius: 32, // C: size of each trail puddle
+      trailLife: 5, // C: seconds a trail puddle lasts
+      maxPuddles: 80, // C: most trail puddles at once (oldest disappear first)
+      cooldown: 1, // C: seconds after leaving goop mode before you can enter it again
+    },
+    swallow: {
+      window: 0.8, // V: seconds the mouth stays open
+      range: 130, // V: how far in front of the Frog it swallows shots
+      coneDegrees: 110, // V: how wide the swallowing cone is (degrees)
+      damageMult: 1.5, // V: the spat glob does the swallowed damage times this
+      maxStored: 160, // V: most damage that can be stored (so a huge volley can't one-shot)
+      spitSpeed: 500, // V: speed of the spat glob
+      spitMinSize: 12, // V: radius of a small glob
+      spitMaxSize: 30, // V: radius of a glob at maxStored
+      cooldown: 8, // V: seconds before the mouth can open again (starts after spitting, or after swallowing nothing)
+    },
+    hop: {
+      distance: 220, // SPACE: how far the hop goes (towards the crosshair)
+      duration: 0.35, // SPACE: seconds in the air (sails over structures, objects and slime)
+      height: 30, // SPACE: how high the Frog is drawn at the top of the hop (looks only)
+      landCost: 35, // SPACE: slime used to splash a big puddle when landing out of goop mode
+      landRadius: 110, // SPACE: size of that puddle
+      landLife: 6, // SPACE: seconds it lasts
+      cooldown: 1.8, // SPACE: seconds before hopping again
     },
   },
 

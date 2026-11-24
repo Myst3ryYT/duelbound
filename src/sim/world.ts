@@ -13,6 +13,7 @@ import { updateObjects } from './objects.ts';
 import { collideFightersWithPlaceables, updatePlaceables } from './placeables.ts';
 import { checkPullStuck, tickHitstun, tickStatusTimers, updateKnockback, updatePull } from './status.ts';
 import { runKick } from './kick.ts';
+import { updateZones } from './zones.ts';
 import { updateDummy } from './training.ts';
 import { getClass } from './classes/registry.ts';
 import { checkRoundEnd, newMatchState, spawnPoint, updateMatch } from './match.ts';
@@ -64,6 +65,7 @@ export function createTrainingWorld(tuning: Tuning, classId: string): World {
     projectiles: [],
     placeables: [],
     objects: [],
+    zones: [],
     match: null,
     events: [],
     nextId: 1,
@@ -122,6 +124,7 @@ export function stepWorld(world: World, inputs: Map<number, PlayerInput>, tuning
     return;
   }
 
+  updateZones(world, tuning, dt); // slime puddles etc. (sets each fighter's speed multiplier)
   for (const f of world.fighters) {
     tickStatusTimers(f, dt);
     updatePull(world, f, dt);
@@ -176,6 +179,7 @@ export function createMatchWorld(tuning: Tuning, mode: 'bot' | 'online', classes
     projectiles: [],
     placeables: [],
     objects: [],
+    zones: [],
     match: newMatchState(tuning),
     events: [],
     nextId: 1,

@@ -163,6 +163,18 @@ export interface PhysObject extends Switchable {
   armed: number; // 1 while it's been flung and hurts on contact (Builder furniture)
 }
 
+/** A flat patch on the floor (Frog slime): doesn't block anything, affects fighters standing in it (see sim/zones.ts). */
+export interface Zone {
+  id: number;
+  ownerId: number;
+  kind: string; // which behaviour (see ClassDef.zones)
+  x: number;
+  y: number;
+  radius: number;
+  life: number; // seconds left
+  maxLife: number; // seconds it lasted in total (for fading out)
+}
+
 /** Things that happened during a tick. The game layer turns these into sounds and effects. */
 export type GameEvent =
   | { type: 'damage'; targetId: number; sourceId: number; amount: number; x: number; y: number }
@@ -193,6 +205,7 @@ export interface World {
   projectiles: Projectile[];
   placeables: Placeable[];
   objects: PhysObject[];
+  zones: Zone[];
   match: MatchState | null; // null in training
   events: GameEvent[]; // cleared at the start of every tick
   nextId: number;

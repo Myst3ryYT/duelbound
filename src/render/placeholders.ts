@@ -508,6 +508,76 @@ function iconBuilderDash(): HTMLCanvasElement {
 }
 
 /** One placeholder per sprite id. Adding a sprite? Add its painter here too. */
+// ---- Frog ----
+const FROG_GREEN = '#5aa84a';
+const FROG_DARK = '#2f6a2a';
+const FROG_BELLY = '#c8e07a';
+function frog(): HTMLCanvasElement {
+  const p = new Pixels(20, 20);
+  p.disc(10, 10, 8, OUTLINE);
+  p.disc(10, 10, 7, FROG_GREEN); // body, seen from above
+  p.disc(11, 10, 4, FROG_BELLY);
+  p.disc(14, 6, 2.5, OUTLINE); // eyes (facing right)
+  p.disc(14, 14, 2.5, OUTLINE);
+  p.disc(14, 6, 1.8, '#f0f0d0');
+  p.disc(14, 14, 1.8, '#f0f0d0');
+  p.px(14, 6, '#111');
+  p.px(14, 14, '#111');
+  p.rect(3, 9, 2, 2, FROG_DARK); // spots
+  p.rect(7, 4, 2, 2, FROG_DARK);
+  return p.canvas;
+}
+function frogBelch(): HTMLCanvasElement {
+  const p = new Pixels(12, 12);
+  p.disc(6, 6, 6, 'rgba(160,200,80,0.45)');
+  p.disc(6, 6, 4.5, 'rgba(190,220,90,0.8)');
+  p.disc(5, 5, 2, 'rgba(240,250,180,0.9)');
+  return p.canvas;
+}
+function frogGlob(): HTMLCanvasElement {
+  const p = new Pixels(12, 12);
+  p.disc(6, 6, 6, FROG_DARK);
+  p.disc(6, 6, 5, '#7ad05a');
+  p.disc(4.5, 4.5, 1.5, '#e0ffc0');
+  return p.canvas;
+}
+function iconTongue(): HTMLCanvasElement {
+  const p = iconBase(FROG_DARK);
+  p.disc(4, 8, 3, FROG_GREEN);
+  p.line(6, 8, 13, 5, '#e07a9a');
+  p.disc(13, 5, 1.5, '#e07a9a');
+  return p.canvas;
+}
+function iconBelch(): HTMLCanvasElement {
+  const p = iconBase(FROG_DARK);
+  p.disc(9, 8, 4.5, 'rgba(190,220,90,0.9)');
+  p.px(3, 4, '#111');
+  p.px(13, 3, '#111');
+  p.px(4, 12, '#111');
+  return p.canvas;
+}
+function iconGoop(): HTMLCanvasElement {
+  const p = iconBase(FROG_DARK);
+  p.disc(4, 11, 2.5, '#7ad05a');
+  p.disc(8, 9, 2.5, '#7ad05a');
+  p.disc(12, 6, 2.5, '#7ad05a');
+  return p.canvas;
+}
+function iconSwallow(): HTMLCanvasElement {
+  const p = iconBase(FROG_DARK);
+  p.disc(8, 8, 5, FROG_GREEN);
+  p.rect(8, 6, 6, 4, OUTLINE); // open mouth
+  p.px(13, 8, '#ffd34d'); // a shot going in
+  return p.canvas;
+}
+function iconHop(): HTMLCanvasElement {
+  const p = iconBase(FROG_DARK);
+  p.line(2, 13, 6, 5, '#c9cddb');
+  p.line(6, 5, 10, 13, '#c9cddb');
+  p.disc(11, 11, 2.5, FROG_GREEN);
+  return p.canvas;
+}
+
 export const PLACEHOLDERS: Record<SpriteId, () => HTMLCanvasElement> = {
   fighter_default: fighterDefault,
   dummy,
@@ -554,4 +624,12 @@ export const PLACEHOLDERS: Record<SpriteId, () => HTMLCanvasElement> = {
   icon_builder_wall: iconWall,
   icon_builder_construction: iconConstruction,
   icon_builder_dash: iconBuilderDash,
+  class_frog: frog,
+  frog_belch: frogBelch,
+  frog_glob: frogGlob,
+  icon_frog_tongue: iconTongue,
+  icon_frog_belch: iconBelch,
+  icon_frog_goop: iconGoop,
+  icon_frog_swallow: iconSwallow,
+  icon_frog_hop: iconHop,
 };

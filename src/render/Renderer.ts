@@ -10,7 +10,7 @@
  * is tinted red, so you can always tell at a glance what can hurt you.
  */
 import type { Tuning } from '../config/tuning.ts';
-import type { Fighter, GameEvent, PhysObject, Placeable, Projectile, World } from '../sim/types.ts';
+import type { Fighter, GameEvent, PhysObject, Placeable, Projectile, World, Zone } from '../sim/types.ts';
 import type { PlacementPreview } from '../sim/abilities.ts';
 import { getClass } from '../sim/classes/registry.ts';
 import { traceRay } from '../sim/classes/refractor/ray.ts';
@@ -224,6 +224,7 @@ export class Renderer {
       else this.flash.set(id, t - dt);
     }
     this.drawArena(tuning.world.arenaSize);
+    for (const z of world.zones) this.drawZone(z);
     for (const p of world.placeables) this.drawPlaceable(p, tuning);
     for (const o of world.objects) {
       const op = pos(o.id, o.x, o.y);
@@ -292,6 +293,12 @@ export class Renderer {
     ctx.ellipse(x, y + f.radius * 0.7, f.radius * 0.9, f.radius * 0.4, 0, 0, Math.PI * 2);
     ctx.fill();
 
+    // Frog hop: drawn higher up during the hop (an arc), so it reads as a jump.
+    if (f.vars.airT > 0) {
+      const k = 1 - f.vars.airT / Math.max(0.001, tuning.frog.hop.duration);
+      y -= Math.sin(Math.PI * k) * tuning.frog.hop.height;
+    }
+
     // Sheriff horse (placeholder shapes until there's horse art): a body under the Sheriff with a head, tail and a health bar.
     if (f.vars.mountT > 0) this.drawHorse(f, x, y, Math.atan2(f.vars.mountDY, f.vars.mountDX), tuning.sheriff.horse.hp);
 
@@ -352,6 +359,8 @@ export class Renderer {
     } else this.drawSprite(sprite, x + jx, y + jy, f.kind === 'dummy' ? 0 : angle + spin, alpha, sprite.size, false, white);
 
 
+    if (f.classId === 'frog') this.drawFrogExtras(f, x, y, angle, tuning);
+
     // Builder hammer swing: a quick sweeping arc in front.
     if (f.vars.swingT > 0) {
       const h = tuning.builder.hammer;
@@ -411,6 +420,15 @@ export class Renderer {
       this.ctx.beginPath();
       this.ctx.arc(x, y, p.radius, 0, Math.PI * 2);
       this.ctx.fill();
+    }
+    // Frog belch: a few flies buzzing around it.
+    if (p.kind === 'frog_belch') {
+      this.ctx.fillStyle = '#111';
+      for (let i = 0; i < 3; i++) {
+        const a = this.clock * 9 + i * 2.1 + p.id;
+        const r = p.radius + 6 + Math.sin(this.clock * 13 + i) * 3;
+        this.ctx.fillRect(x + Math.cos(a) * r - 2, y + Math.sin(a) * r - 2, 4, 4);
+      }
     }
     // Projectiles that are being Switched get a gold outline so players can react.
     if (p.switchT > 0) {
@@ -804,6 +822,76 @@ export class Renderer {
     ctx.fillRect(x - w / 2 - 1, y - f.radius - 22, w + 2, 8);
     ctx.fillStyle = '#c8a060';
     ctx.fillRect(x - w / 2, y - f.radius - 21, w * k, 6);
+  }
+
+  /** A ground zone (Frog slime): a flat puddle that fades out at the end. Enemy puddles get a red rim. */
+  private drawZone(z: Zone): void {
+    const { ctx } = this;
+    const fade = Math.min(1, z.life / 0.6); // fade out over the last 0.6 s
+    ctx.globalAlpha = 0.45 * fade;
+    ctx.fillStyle = '#6ac04a';
+    ctx.beginPath();
+    ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2);
+    ctx.fill();
+    if (this.isEnemy(z.ownerId)) {
+      ctx.strokeStyle = '#ff5050';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /** Frog: the tongue lash, the open mouth (swallow cone), a stored glob, and a belch building up. */
+  private drawFrogExtras(f: Fighter, x: number, y: number, angle: number, tuning: Tuning): void {
+    const { ctx } = this;
+    const fr = tuning.frog;
+    const enemy = this.isEnemy(f.id);
+
+    // Tongue: shoots out and snaps back over its short time.
+    if (f.vars.tongueT > 0) {
+      const k = 1 - f.vars.tongueT / Math.max(0.001, fr.tongue.time); // 0 -> 1
+      const out = k < 0.35 ? k / 0.35 : 1 - (k - 0.35) / 0.65; // fast out, slower back
+      const reach = (f.radius + fr.tongue.range) * out;
+      const a = f.vars.tongueAngle;
+      ctx.strokeStyle = enemy ? '#ff6a6a' : '#e07a9a';
+      ctx.lineWidth = fr.tongue.width * 0.8;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + Math.cos(a) * reach, y + Math.sin(a) * reach);
+      ctx.stroke();
+      ctx.lineCap = 'butt';
+    }
+
+    // Mouth open: the swallowing cone.
+    if (f.vars.mouthT > 0) {
+      const half = (fr.swallow.coneDegrees * Math.PI) / 360;
+      ctx.fillStyle = enemy ? 'rgba(255,80,80,0.18)' : 'rgba(122,208,90,0.22)';
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.arc(x, y, f.radius + fr.swallow.range, angle - half, angle + half);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Something swallowed: a glob bulging in the cheek, bigger with more stored.
+    if (f.vars.stored > 0) {
+      const k = f.vars.stored / Math.max(1, fr.swallow.maxStored);
+      ctx.fillStyle = '#7ad05a';
+      ctx.beginPath();
+      ctx.arc(x + Math.cos(angle) * f.radius, y + Math.sin(angle) * f.radius, 5 + 9 * k, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Charging a belch: a gas bubble growing at the mouth.
+    if (f.vars.belchOn) {
+      const k = f.vars.belchT / Math.max(0.001, fr.belch.maxCharge);
+      const r = fr.belch.minSize + (fr.belch.maxSize - fr.belch.minSize) * k;
+      ctx.fillStyle = 'rgba(190,220,90,0.6)';
+      ctx.beginPath();
+      ctx.arc(x + Math.cos(angle) * (f.radius + r), y + Math.sin(angle) * (f.radius + r), r, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   /** Does this belong to the other side? */

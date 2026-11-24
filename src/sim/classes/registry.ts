@@ -2,17 +2,19 @@
  * The list of playable classes. To add a class: make a folder like ./mage/,
  * then add it to CLASSES below.
  */
-import type { ClassDef, ObjectKindDef, PlaceableKindDef, ProjectileHook } from '../abilities.ts';
+import type { ClassDef, ObjectKindDef, PlaceableKindDef, ProjectileHook, ZoneKindDef } from '../abilities.ts';
 import { MAGE } from './mage/index.ts';
 import { SHERIFF } from './sheriff/index.ts';
 import { REFRACTOR } from './refractor/index.ts';
 import { BUILDER } from './builder/index.ts';
+import { FROG } from './frog/index.ts';
 
 export const CLASSES: Record<string, ClassDef> = {
   mage: MAGE,
   sheriff: SHERIFF,
   refractor: REFRACTOR,
   builder: BUILDER,
+  frog: FROG,
 };
 
 /** Class ids in menu order. */
@@ -33,6 +35,14 @@ export function getPlaceableKind(kind: string): PlaceableKindDef | undefined {
 export function getObjectKind(kind: string): ObjectKindDef | undefined {
   for (const c of Object.values(CLASSES)) {
     const k = c.objects?.find((o) => o.kind === kind);
+    if (k) return k;
+  }
+  return undefined;
+}
+
+export function getZoneKind(kind: string): ZoneKindDef | undefined {
+  for (const c of Object.values(CLASSES)) {
+    const k = c.zones?.find((z) => z.kind === kind);
     if (k) return k;
   }
   return undefined;

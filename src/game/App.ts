@@ -158,11 +158,10 @@ export class App {
       this.online.rematch();
       return;
     }
+    // Back to character select (with the last picks already selected), like online.
     if (this.session instanceof BotMatchSession) {
-      const s = this.session;
-      this.showOnly();
-      // Same classes again (a "Random" bot picks again).
-      this.startBotMatch(s.playerClass, this.lastBot.botClass === 'random' ? 'random' : s.botClass, s.difficulty);
+      this.setSession(null);
+      this.chooseForBot();
     }
   }
 

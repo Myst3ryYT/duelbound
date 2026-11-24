@@ -5,7 +5,7 @@
  * (inputs) and draws what the host sends back (snapshots).
  * No browser code here: a future dedicated server can use the same messages.
  */
-import type { GameEvent, MatchState, PhysObject, Placeable, PlayerInput, Projectile, Fighter, World } from '../sim/types.ts';
+import type { GameEvent, MatchState, PhysObject, Placeable, PlayerInput, Projectile, Fighter, World, Zone } from '../sim/types.ts';
 
 /** Everything the guest needs to draw one moment of the match. */
 export interface Snapshot {
@@ -17,6 +17,7 @@ export interface Snapshot {
   projectiles: Projectile[];
   placeables: Placeable[];
   objects: PhysObject[];
+  zones: Zone[];
   match: MatchState | null;
 }
 
@@ -59,6 +60,7 @@ export function makeSnapshot(world: World, ack: number): Snapshot {
     projectiles: world.projectiles,
     placeables: world.placeables,
     objects: world.objects,
+    zones: world.zones,
     match: world.match,
   };
 }
@@ -73,6 +75,7 @@ export function worldFromSnapshot(s: Snapshot): World {
     projectiles: s.projectiles,
     placeables: s.placeables,
     objects: s.objects,
+    zones: s.zones,
     match: s.match,
     events: [],
     nextId: s.nextId,

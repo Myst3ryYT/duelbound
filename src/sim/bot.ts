@@ -53,6 +53,7 @@ export class BotBrain {
   private noiseY = 0;
   private noiseT = 0;
   private rayT = 0; // Refractor: seconds left of the current beam burst
+  private belchT = 0; // Frog: seconds left of holding the belch
   private script: ScriptStep[] = [];
   private dodgeDecisions = new Map<number, boolean>(); // projectile id -> decided to dodge it?
   private defendDecisions = new Map<number, boolean>();
@@ -135,6 +136,7 @@ export class BotBrain {
     else if (me.classId === 'sheriff') this.playSheriff(tuning, input, me, d, urgent ? threat : null, tryAbility);
     else if (me.classId === 'refractor') this.playRefractor(world, tuning, input, me, enemy, d, urgent ? threat : null, tryAbility, dt);
     else if (me.classId === 'builder') this.playBuilder(world, tuning, input, me, enemy, d, urgent ? threat : null, tryAbility);
+    else if (me.classId === 'frog') this.playFrog(tuning, input, me, enemy, d, urgent ? threat : null, tryAbility, dt);
     return input;
   }
 
@@ -250,6 +252,37 @@ export class BotBrain {
     }
   }
 
+  private playFrog(tuning: Tuning, input: PlayerInput, me: Fighter, enemy: Fighter, d: number, threat: Threat | null, tryAbility: () => boolean, dt: number): void {
+    const fr = tuning.frog;
+    const slime = me.vars.slime ?? fr.slime.pool;
+    // Tongue when they're in reach.
+    if (d < me.radius + fr.tongue.range + enemy.radius && isReady(me, 'primary')) input.buttons.primary = true; // (one lash per click: let go while it cools down)
+    // Belch: hold for a random time when they're out of tongue reach.
+    this.belchT -= dt;
+    if (this.belchT > 0) input.buttons.secondary = true;
+    else if (isReady(me, 'secondary') && d > me.radius + fr.tongue.range + enemy.radius && d < 750 && slime > 25 && this.rng() < 2 * dt) this.belchT = 0.2 + this.rng() * 0.8;
+    // Swallow incoming shots; spit the glob back when there is something stored.
+    if (me.vars.stored > 0 && !(me.vars.mouthT > 0) && d < 700) input.buttons.ability2 = !me.prevButtons.ability2; // tap (a fresh press) to spit
+    else if (threat && isReady(me, 'ability2') && !(me.vars.mouthT > 0)) input.buttons.ability2 = true;
+    else if (threat && isReady(me, 'mobility')) {
+      // Hop sideways out of the shot's path.
+      input.aimX = me.x + threat.sideX * 200;
+      input.aimY = me.y + threat.sideY * 200;
+      input.buttons.mobility = true;
+    }
+    // Close the gap: hop at them when just out of tongue reach.
+    const reach = me.radius + fr.tongue.range + enemy.radius;
+    if (!threat && d > reach && d < reach + fr.hop.distance && isReady(me, 'mobility') && tryAbility()) input.buttons.mobility = true;
+    // Acid Goop: glide in when far away with slime to spare (full speed: it's the Frog's way in); stop once in reach.
+    if (!me.vars.goopOn && slime > 50 && d > 320 && isReady(me, 'ability1')) input.buttons.ability1 = true;
+    else if (me.vars.goopOn && (slime < 20 || d < reach)) input.buttons.ability1 = true;
+    if (me.vars.goopOn) {
+      const len = Math.hypot(input.moveX, input.moveY) || 1;
+      input.moveX /= len; // glide at full tilt
+      input.moveY /= len;
+    }
+  }
+
   // ------------------------------------------------------------- helpers ----
 
   /** Make a yes/no decision once per projectile, then stick to it. */
@@ -306,6 +339,7 @@ function preferredRange(classId: string, t: Tuning): number {
   if (classId === 'mage') return t.bot.rangeMage;
   if (classId === 'sheriff') return t.bot.rangeSheriff;
   if (classId === 'builder') return t.bot.rangeBuilder;
+  if (classId === 'frog') return t.bot.rangeFrog;
   return t.bot.rangeRefractor;
 }
 
@@ -314,5 +348,6 @@ function weaponSpeed(classId: string, t: Tuning): number {
   if (classId === 'mage') return t.mage.staff.speed;
   if (classId === 'sheriff') return t.sheriff.gun.speed;
   if (classId === 'builder') return t.builder.nailgun.speed;
+  if (classId === 'frog') return (t.frog.belch.minSpeed + t.frog.belch.maxSpeed) / 2;
   return t.refractor.shotgun.speed;
 }

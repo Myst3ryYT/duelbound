@@ -90,6 +90,16 @@ Good to know:
 | V | Construction: builds a random piece of furniture in front of you (3 stored uses). It's heavy, movable cover: players can shove it, shots nudge it, it blocks everyone's shots until it's broken. Hit it with the hammer to fling it: 100 damage to the enemy it hits. |
 | Space | Dash in the direction you're walking |
 
+**Frog** (the green bar by the crosshair is his slime pool; it refills after a short rest)
+
+| Key | Does |
+| --- | --- |
+| Left click | Tongue: a whip towards the crosshair. Damage and a hard shove. |
+| Right click | Belch: hold to charge, let go to fire. Longer = faster and harder, but uses more slime. |
+| C | Acid Goop on / off: fast, slippery gliding that leaves a slime trail. Uses slime while on. In your own slime you walk faster; enemies in it are slowed and take acid damage. |
+| V | Swallow: opens your mouth for 0.8 s and eats enemy shots in front of you. Press V again to spit them back as one glob (1.5x the damage, capped). |
+| Space | Hop towards the crosshair, over structures, objects and slime. Out of goop mode, landing splashes a big puddle (costs slime). |
+
 Anything that belongs to your **opponent** (shots, walls, mirrors, furniture, beams) is tinted **red**.
 In any placing mode (watchtower, mirrors, walls) the crosshair turns into green corner brackets.
 
@@ -163,8 +173,11 @@ To add a class (checklist):
    Characters with a sprite sheet are listed in `SHEETS` (see the comment there).
 6. Optional: teach the bot (`src/sim/bot.ts`) to use it. Run the headless tests in your scratch folder or `npm run build` (typechecks everything).
 
-Things every class gets for free: the kick (F), hitstun, knockback (`src/sim/status.ts`), and an
-absorb pool / speed multiplier through fighter variables (`vars.absorbHp`, `vars.speedMult`).
+Things every class gets for free: the kick (F), hitstun, knockback (`src/sim/status.ts`), and some shared fighter variables:
+`vars.absorbHp` (a health pool that takes damage first, like the Sheriff's horse), `vars.airT` (airborne: passes over
+structures, objects and ground zones, like the Frog's hop) and `vars.speedMult` (walking speed, set each tick by ground zones).
+A class can also have ground zones (`ClassDef.zones`, see `src/sim/zones.ts`) and a per-tick hook (`ClassDef.tick`) for
+its own resource, like the Frog's slime.
 
 ### Menus
 

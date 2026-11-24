@@ -184,7 +184,7 @@ export function removePlaceable(world: World, p: Placeable): void {
 /** Push fighters out of structures so they can't walk through them. */
 export function collideFightersWithPlaceables(world: World): void {
   for (const f of world.fighters) {
-    if (f.kind === 'dummy') continue;
+    if (f.kind === 'dummy' || f.vars.airT > 0) continue; // airborne (Frog hop): sails over structures
     for (const p of world.placeables) {
       if (passes(p, f.id)) continue;
       const overlap = f.radius + p.radius - distanceTo(p, f.x, f.y);

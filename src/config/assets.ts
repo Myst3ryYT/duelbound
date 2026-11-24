@@ -69,6 +69,11 @@ export const SPRITES = {
   builder_furniture_table: { file: 'builder_table.png', size: 0 },
   builder_furniture_couch: { file: 'builder_couch.png', size: 0 },
 
+  // ---- Frog ----
+  class_frog: { file: 'frog.png', size: 64 }, // the Frog
+  frog_belch: { file: 'frog_belch.png', size: 0 }, // belch (drawn at its hitbox size; flies are drawn around it)
+  frog_glob: { file: 'frog_glob.png', size: 0 }, // spat glob of swallowed shots
+
   // ---- Training ----
   dummy_shot: { file: 'dummy_shot.png', size: 0 }, // what the dummy shoots
 
@@ -93,6 +98,11 @@ export const SPRITES = {
   icon_builder_wall: { file: 'icon_builder_wall.png', size: 64 },
   icon_builder_construction: { file: 'icon_builder_construction.png', size: 64 },
   icon_builder_dash: { file: 'icon_builder_dash.png', size: 64 },
+  icon_frog_tongue: { file: 'icon_frog_tongue.png', size: 64 },
+  icon_frog_belch: { file: 'icon_frog_belch.png', size: 64 },
+  icon_frog_goop: { file: 'icon_frog_goop.png', size: 64 },
+  icon_frog_swallow: { file: 'icon_frog_swallow.png', size: 64 },
+  icon_frog_hop: { file: 'icon_frog_hop.png', size: 64 },
 };
 
 export const SOUNDS = {
@@ -116,6 +126,15 @@ export const SOUNDS = {
   bramble_hit: { file: 'bramble_hit.wav' }, // tumbleweed touched someone
   horse_call: { file: 'horse_call.wav' }, // Sheriff V: the horse appears
   horse_leave: { file: 'horse_leave.wav' }, // Sheriff V: the Sheriff hops off
+  frog_tongue: { file: 'frog_tongue.wav' }, // Frog LC, missed
+  frog_tongue_hit: { file: 'frog_tongue_hit.wav' }, // Frog LC, hit
+  frog_belch: { file: 'frog_belch.wav' }, // Frog RC
+  frog_goop: { file: 'frog_goop.wav' }, // Frog C on / off
+  frog_mouth: { file: 'frog_mouth.wav' }, // Frog V: mouth opens
+  frog_swallow: { file: 'frog_swallow.wav' }, // Frog V: gulped a shot
+  frog_spit: { file: 'frog_spit.wav' }, // Frog V: spat the glob
+  frog_hop: { file: 'frog_hop.wav' }, // Frog SPACE
+  frog_splash: { file: 'frog_splash.wav' }, // Frog SPACE: big puddle on landing
   roll: { file: 'roll.wav' }, // Sheriff SPACE
   dummy_fire: { file: 'dummy_fire.wav' }, // training dummy shoots
   reload_start: { file: 'reload_start.wav' }, // Sheriff revolver empty, reloading

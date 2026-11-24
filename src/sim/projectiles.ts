@@ -102,7 +102,8 @@ function startAtFirstObstacle(world: World, tuning: Tuning, p: Projectile, fromX
 }
 
 /** Damage after falloff (e.g. Sheriff's gun hits harder up close). */
-function damageOf(p: Projectile): number {
+/** How much damage this projectile would do right now (after falloff). */
+export function damageOf(p: Projectile): number {
   if (p.falloffRange <= 0) return p.damage;
   return lerp(p.damage, p.damageFar, clamp(p.traveled / p.falloffRange, 0, 1));
 }

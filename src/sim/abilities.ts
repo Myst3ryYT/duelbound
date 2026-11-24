@@ -11,7 +11,7 @@
  *              left click confirms (`confirm`), right click or the same key cancels.
  */
 import type { Tuning } from '../config/tuning.ts';
-import { ACTIONS, type ActionName, type Fighter, type PhysObject, type Placeable, type PlayerInput, type Projectile, type World } from './types.ts';
+import { ACTIONS, type ActionName, type Fighter, type PhysObject, type Placeable, type PlayerInput, type Projectile, type World, type Zone } from './types.ts';
 
 export type AbilityType = 'projectile' | 'placeable' | 'object' | 'misc';
 
@@ -92,6 +92,13 @@ export interface ObjectKindDef {
   onTouch(world: World, tuning: Tuning, o: PhysObject, f: Fighter): boolean;
 }
 
+/** Behaviour of a ground zone (sim/zones.ts), registered by the class that owns it. */
+export interface ZoneKindDef {
+  kind: string;
+  /** A fighter is standing in a zone of this kind this tick (called once per kind and owner). */
+  onFighter(world: World, tuning: Tuning, z: Zone, f: Fighter, dt: number): void;
+}
+
 /** Extra effect when a projectile with this `behavior` hits a fighter (after damage). */
 export type ProjectileHook = (world: World, tuning: Tuning, p: Projectile, target: Fighter) => void;
 
@@ -112,6 +119,9 @@ export interface ClassDef {
   abilities: Record<ActionName, AbilityDef>;
   placeables?: PlaceableKindDef[];
   objects?: ObjectKindDef[];
+  zones?: ZoneKindDef[];
+  /** Optional: runs once per tick before the abilities (e.g. refilling a class resource like the Frog's slime). */
+  tick?(world: World, tuning: Tuning, f: Fighter, dt: number): void;
   projectileHooks?: Record<string, ProjectileHook>;
   /** Optional bar next to the crosshair, e.g. the Mage's staff charge. */
   crosshairBar?(f: Fighter, t: Tuning): CrosshairBar | null;
@@ -174,6 +184,7 @@ export function refundCooldown(f: Fighter, slot: ActionName): void {
 
 /** Run all five abilities of one fighter for one tick. */
 export function runAbilities(world: World, tuning: Tuning, f: Fighter, input: PlayerInput, cls: ClassDef, dt: number): void {
+  cls.tick?.(world, tuning, f, dt);
   for (const a of ACTIONS) {
     f.cooldowns[a] = Math.max(0, f.cooldowns[a] - dt);
     updateCharges(world, tuning, f, a, cls.abilities[a]);

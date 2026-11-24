@@ -64,6 +64,7 @@ function resetRound(world: World, tuning: Tuning): void {
   world.projectiles = [];
   world.placeables = [];
   world.objects = [];
+  world.zones = [];
   for (const f of world.fighters) resetFighter(f, tuning);
 }
 
