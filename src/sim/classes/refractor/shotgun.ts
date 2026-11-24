@@ -1,9 +1,9 @@
 ﻿/**
  * REFRACTOR - LC - Mind Shotgun (instant, projectile)
  * Fires a tight spread of pellets. Hold to keep firing.
- * A pellet that bounces off one of YOUR mirrors becomes two, and that mirror breaks
- * right after. Each pellet can double off up to 3 mirrors (copies inherit their
- * parent's count), so through 3 mirrors a volley goes 4 -> 8 -> 16 -> 32.
+ * A pellet that bounces off one of YOUR mirrors becomes two. Each pellet can double
+ * off up to 3 mirrors (copies inherit their parent's count), so through 3 mirrors a
+ * volley goes 4 -> 8 -> 16 -> 32.
  * The doubling itself happens in sim/projectiles.ts (splitPellet).
  * Numbers: tuning.refractor.shotgun
  */
@@ -38,6 +38,7 @@ export const shotgun: AbilityDef = {
         radius: s.size,
         damage: s.damage,
         splits: true,
+        from: { x: f.x, y: f.y },
       });
     }
     startCooldown(world, f, slot, s.fireInterval);

@@ -1,7 +1,7 @@
-/**
- * REFRACTOR - V - Refract (instant, misc)
+﻿/**
+ * REFRACTOR - SPACE - Refract (instant, misc)
  * Splits into a "red" and a "blue" half for a moment, side by side across
- * your aim. Good for letting a shot pass between the halves. Both halves can
+ * your aim (they turn as you move the mouse). Good for letting a shot pass between the halves. Both halves can
  * be hit and either one hurts you. The hit check lives in sim/hitbox.ts.
  * Numbers: tuning.refractor.refract
  */
@@ -18,7 +18,10 @@ export const refract: AbilityDef = {
   cooldown: (t) => t.refractor.refract.cooldown,
 
   update({ world, tuning, fighter: f, slot, pressed, dt }) {
-    if (f.vars.refractT > 0) f.vars.refractT = Math.max(0, f.vars.refractT - dt);
+    if (f.vars.refractT > 0) {
+      f.vars.refractT = Math.max(0, f.vars.refractT - dt);
+      f.vars.refractAngle = f.aimAngle + Math.PI / 2; // follow the mouse while split
+    }
     if (!pressed || !isReady(f, slot)) return;
     const r = tuning.refractor.refract;
     f.vars.refractT = r.duration;

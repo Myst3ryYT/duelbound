@@ -92,6 +92,7 @@ export interface Projectile extends Switchable {
   radius: number; // visual radius; the hitbox is bigger (tuning.projectiles.hitboxScale)
   damage: number; // damage at point blank
   damageFar: number; // damage after travelling falloffRange (same as damage = no falloff)
+  stunnedMultiplier: number; // damage is multiplied by this against a stunned target (1 = normal)
   falloffRange: number; // 0 = no falloff
   traveled: number; // distance flown so far
   bounces: number; // walls / structures it can still bounce off (0 = dies on contact)

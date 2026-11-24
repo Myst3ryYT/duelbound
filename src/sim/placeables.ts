@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Placeables: structures on the map. They block movement, can be shot down,
  * and can't be placed on top of players or each other.
  *
@@ -110,7 +110,7 @@ export function canStandAt(world: World, tuning: Tuning, self: Fighter, x: numbe
 // --------------------------------------------------------- create/update ----
 
 type NewPlaceable = Omit<Placeable, 'id' | 'age' | 'timer' | 'shape' | 'x1' | 'y1' | 'x2' | 'y2' | 'reflective' | 'breakT'> &
-  Partial<Pick<Placeable, 'shape' | 'x1' | 'y1' | 'x2' | 'y2' | 'reflective'>>;
+  Partial<Pick<Placeable, 'shape' | 'x1' | 'y1' | 'x2' | 'y2' | 'reflective' | 'breakT'>>;
 
 export function spawnPlaceable(world: World, props: NewPlaceable): Placeable {
   const p: Placeable = { id: world.nextId++, age: 0, timer: 0, shape: 'circle', x1: 0, y1: 0, x2: 0, y2: 0, reflective: false, breakT: -1, ...props };

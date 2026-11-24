@@ -6,7 +6,7 @@
  * the whole path of every step, so even very fast shots can't skip through things.
  */
 import type { Tuning } from '../config/tuning.ts';
-import type { Placeable, Projectile, World } from './types.ts';
+import type { Projectile, World } from './types.ts';
 import { clamp, lerp, segmentCircle } from './math.ts';
 import { applyDamage } from './damage.ts';
 import { bounceNormal, closestPoint, damagePlaceable, pathHits } from './placeables.ts';
@@ -34,6 +34,12 @@ export interface ProjectileSpawn {
   reflectable?: boolean; // can shields reflect it [true]
   trail?: number; // seconds of visual trail [0]
   splits?: boolean; // doubles off its owner's mirrors, up to maxDoublings times [false]
+  stunnedMultiplier?: number; // damage multiplier against a stunned target [1]
+  /**
+   * Where the shooter stands. If given, the short path from there to the spawn point is
+   * checked first, so standing right against a mirror or structure can't shoot past it.
+   */
+  from?: { x: number; y: number };
   life?: number; // seconds before it vanishes [tuning.projectiles.maxLife]
 }
 
@@ -50,6 +56,7 @@ export function spawnProjectile(world: World, tuning: Tuning, s: ProjectileSpawn
     radius: s.radius,
     damage: s.damage,
     damageFar: s.damageFar ?? s.damage,
+    stunnedMultiplier: s.stunnedMultiplier ?? 1,
     falloffRange: s.falloffRange ?? 0,
     traveled: 0,
     bounces: s.bounces ?? 0,
@@ -63,8 +70,26 @@ export function spawnProjectile(world: World, tuning: Tuning, s: ProjectileSpawn
     switchVx: 0,
     switchVy: 0,
   };
+  if (s.from) startAtFirstObstacle(world, tuning, p, s.from.x, s.from.y);
   world.projectiles.push(p);
   return p;
+}
+
+/**
+ * If a structure sits between the shooter and where the shot appears, start the shot
+ * just in front of that structure instead, so it bounces off / hits it normally.
+ */
+function startAtFirstObstacle(world: World, tuning: Tuning, p: Projectile, fromX: number, fromY: number): void {
+  const hitR = p.radius * tuning.projectiles.hitboxScale;
+  let best = -1;
+  for (const pl of world.placeables) {
+    if (pl.ownerId === p.ownerId && !pl.reflective) continue; // shots pass through your own structures
+    const t = pathHits(pl, fromX, fromY, p.x, p.y, hitR);
+    if (t >= 0 && (best < 0 || t < best)) best = t;
+  }
+  if (best < 0) return;
+  p.x = fromX + (p.x - fromX) * best;
+  p.y = fromY + (p.y - fromY) * best;
 }
 
 /** Damage after falloff (e.g. Sheriff's gun hits harder up close). */
@@ -76,10 +101,9 @@ function damageOf(p: Projectile): number {
 /**
  * Refractor shotgun: a pellet bouncing off its owner's mirror becomes two.
  * Each pellet can double up to maxDoublings times (a copy inherits its parent's
- * count), and the mirror breaks shortly afterwards, so mirrors facing each other
- * can't multiply shots forever.
+ * count), so mirrors facing each other can't multiply shots forever.
  */
-function splitPellet(world: World, p: Projectile, mirror: Placeable, tuning: Tuning, x: number, y: number): void {
+function splitPellet(world: World, p: Projectile, tuning: Tuning, x: number, y: number): void {
   const half = ((tuning.refractor.shotgun.splitAngle * Math.PI) / 180) / 2;
   const speed = Math.hypot(p.vx, p.vy);
   const angle = Math.atan2(p.vy, p.vx);
@@ -88,7 +112,6 @@ function splitPellet(world: World, p: Projectile, mirror: Placeable, tuning: Tun
   p.vy = Math.sin(angle - half) * speed;
   const copy: Projectile = { ...p, id: world.nextId++, x, y, vx: Math.cos(angle + half) * speed, vy: Math.sin(angle + half) * speed };
   world.projectiles.push(copy);
-  if (mirror.breakT < 0) mirror.breakT = tuning.refractor.shotgun.mirrorBreakDelay;
   emitSound(world, 'mirror_split', x, y);
 }
 
@@ -170,7 +193,7 @@ export function updateProjectiles(world: World, tuning: Tuning, dt: number): voi
         const c = closestPoint(pl, hx, hy);
         nx = c.x + n.x * (pl.radius + hitR + 1);
         ny = c.y + n.y * (pl.radius + hitR + 1);
-        if (pl.reflective && own && p.splits && p.doublings < tuning.refractor.shotgun.maxDoublings) splitPellet(world, p, pl, tuning, nx, ny);
+        if (pl.reflective && own && p.splits && p.doublings < tuning.refractor.shotgun.maxDoublings) splitPellet(world, p, tuning, nx, ny);
         emitSound(world, pl.reflective ? 'mirror_bounce' : 'bounce', hx, hy);
         world.events.push({ type: 'bounce', projectileId: p.id, x: hx, y: hy });
         break;
@@ -179,6 +202,7 @@ export function updateProjectiles(world: World, tuning: Tuning, dt: number): voi
 
       // ---- Physics objects: knock them away ----
       for (const o of world.objects) {
+        if (p.behavior === 'lasso') continue; // the lasso flies straight through tumbleweeds
         if (segmentCircle(ox, oy, nx, ny, o.x, o.y, o.radius + hitR) < 0) continue;
         const sp = Math.hypot(p.vx, p.vy) || 1;
         o.vx += (p.vx / sp) * tuning.sheriff.bramble.shotImpulse;
@@ -195,7 +219,7 @@ export function updateProjectiles(world: World, tuning: Tuning, dt: number): voi
         if (f.id === p.ownerId || f.invulnT > 0) continue;
         const bodyR = hitRadius(f, tuning);
         if (!hitPoints(f).some((h) => segmentCircle(ox, oy, nx, ny, h.x, h.y, bodyR + hitR) >= 0)) continue;
-        applyDamage(world, f, damageOf(p), p.ownerId);
+        applyDamage(world, f, damageOf(p) * (f.stunT > 0 ? p.stunnedMultiplier : 1), p.ownerId);
         getProjectileHook(p.behavior)?.(world, tuning, p, f);
         emitFx(world, 'burst', nx, ny, '#ffffff', 14, 0.2);
         alive = false;

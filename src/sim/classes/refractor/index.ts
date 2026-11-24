@@ -1,4 +1,4 @@
-/**
+﻿/**
  * REFRACTOR: multiplies and ricochets shots with mirrors. Glassy, refractive look.
  * Each ability lives in its own file in this folder.
  */
@@ -17,8 +17,8 @@ export const REFRACTOR: ClassDef = {
     primary: shotgun, // LC
     secondary: ray, // RC
     ability1: mirror, // C
-    ability2: refract, // V
-    mobility: shatter, // SPACE
+    ability2: shatter, // V
+    mobility: refract, // SPACE
   },
 
   // Mind Ray resource pool, shown next to the crosshair whenever it isn't full.

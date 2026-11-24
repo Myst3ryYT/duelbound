@@ -1,4 +1,4 @@
-/**
+﻿/**
  * MAGE - LC - Staff (instant, projectile)
  * Hold to charge, release to fire. Longer charge = faster, bigger, more damage.
  * Reaching a full charge fires automatically. Keep holding to start charging the next shot.
@@ -47,6 +47,7 @@ export const staff: AbilityDef = {
       speed: lerp(s.speedMin, s.speedMax, k),
       radius,
       damage: lerp(s.damageMin, s.damageMax, k),
+      from: { x: f.x, y: f.y },
     });
     f.vars.staffCharging = 0;
     f.vars.staffCharge = 0;

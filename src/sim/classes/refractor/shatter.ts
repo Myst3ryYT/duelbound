@@ -1,5 +1,5 @@
-/**
- * REFRACTOR - SPACE - Shatter (instant, misc)
+﻿/**
+ * REFRACTOR - V - Shatter (instant, misc)
  * Shatters every mirror in the arena at once. Each enemy takes damage for
  * every mirror they are close to (near two mirrors = hit twice).
  * Does nothing (and uses no cooldown) if there are no mirrors.

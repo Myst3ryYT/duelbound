@@ -200,10 +200,10 @@ export class BotBrain {
     else if (d < 560) input.buttons.primary = true;
     if (this.rayT <= 0 && d < 700 && (me.vars.rayPool ?? tuning.refractor.ray.pool) > 50 && this.rng() < 0.6 * dt) this.rayT = 0.6 + this.rng() * 0.6;
 
-    if (threat && isReady(me, 'ability2')) input.buttons.ability2 = true; // refract
+    if (threat && isReady(me, 'mobility')) input.buttons.mobility = true; // refract
     // Shatter when the enemy stands near a mirror.
     const mirrors = world.placeables.filter((p) => p.reflective && p.ownerId === me.id);
-    if (isReady(me, 'mobility') && mirrors.some((m) => distanceTo(m, enemy.x, enemy.y) < tuning.refractor.shatter.radius * 0.8)) input.buttons.mobility = true;
+    if (isReady(me, 'ability2') && mirrors.some((m) => distanceTo(m, enemy.x, enemy.y) < tuning.refractor.shatter.radius * 0.8)) input.buttons.ability2 = true;
 
     // Mirror: enter mirror mode, drag one out across the line between us, leave.
     if (isReady(me, 'ability1') && mirrors.length < 2 && tryAbility()) {

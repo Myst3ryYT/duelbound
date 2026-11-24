@@ -236,8 +236,8 @@ export class Renderer {
         ownerId: f.id,
         length: pc.previewLength,
         radius: pc.size * tuning.projectiles.hitboxScale,
-        bounces: pc.bounces,
-        wallsBounce: true,
+        bounces: 0,
+        wallsBounce: false,
         maxMirrors: 20,
       });
       const pulse = 0.5 + 0.5 * Math.sin(this.clock * 40);
@@ -297,7 +297,8 @@ export class Renderer {
     const sprite = findSprite(spriteName) ?? getSprite('fighter_default');
     if (f.vars.refractT > 0) {
       // Refract: a red half and a blue half, side by side (both can be hit).
-      const halves = hitPoints({ ...f, x, y });
+      // (the split follows the mouse every frame for the local player)
+      const halves = hitPoints({ ...f, x, y, vars: { ...f.vars, refractAngle: angle + Math.PI / 2 } });
       halves.forEach((h, i) => {
         this.drawSprite(sprite, h.x, h.y, angle, 0.8 * alpha);
         ctx.fillStyle = i === 0 ? 'rgba(255,60,80,0.35)' : 'rgba(60,140,255,0.35)';
@@ -449,8 +450,8 @@ export class Renderer {
     const { ctx } = this;
     const sprite = findSprite(p.kind);
     if (p.shape === 'segment') {
-      // Mirrors: flash white just before breaking.
-      const flash = p.breakT >= 0 ? 0.5 + 0.5 * Math.sin(this.clock * 60) : 0;
+      // Mirrors: flash white in their last moments.
+      const flash = p.breakT >= 0 && p.breakT < 0.6 ? 0.5 + 0.5 * Math.sin(this.clock * 40) : 0;
       if (sprite) this.drawStretched(sprite, p.x1, p.y1, p.x2, p.y2, p.radius * 2 * 1.4);
       if (flash) {
         ctx.strokeStyle = `rgba(255,255,255,${flash})`;

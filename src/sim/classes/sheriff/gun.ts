@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SHERIFF - LC - Gun (instant, projectile)
  * Fast revolver shots. Hold to keep firing. Hits harder the closer the target is.
  * Six shots, then it reloads by itself (no button needed).
@@ -40,6 +40,7 @@ export const gun: AbilityDef = {
       damage: g.damageNear,
       damageFar: g.damageFar,
       falloffRange: g.falloffRange,
+      from: { x: f.x, y: f.y },
     });
     emitSound(world, 'gun_fire', f.x, f.y);
 

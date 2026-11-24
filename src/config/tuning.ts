@@ -150,7 +150,7 @@ export const TUNING = {
     },
     bramble: {
       spawnDistance: 80, // C: how far from the Sheriff the tumbleweed appears (towards the crosshair)
-      tossSpeed: 150, // C: speed it starts rolling at, towards the crosshair
+      tossSpeed: 380, // C: speed it starts rolling at, in the direction you're aiming
       life: 8, // C: seconds before it crumbles on its own
       damage: 30, // C: damage to whoever it touches (the Sheriff too)
       stun: 1.3, // C: seconds the touched player can't move or use abilities
@@ -161,16 +161,17 @@ export const TUNING = {
       carry: 0.75, // C: a stunned player is dragged along at this share of the tumbleweed's speed (1 = same speed)
       carryDrag: 1.5, // C: extra slowdown on the tumbleweed while it drags someone
       rehitDelay: 1.5, // C: seconds before the same tumbleweed can stun the same player again
-      cooldown: 10, // C: seconds before another can be summoned
+      charges: 3, // C: tumbleweeds stored up (like mirrors)
+      chargeTime: 10, // C: seconds for one stored tumbleweed to come back
     },
     pierce: {
       delay: 0.4, // V: seconds of aiming before the shot goes off
       speed: 12339, // V: bullet speed
-      bounces: 3, // V: how many walls / structures it bounces off
-      damage: 140, // V: damage on hit
+      damage: 60, // V: damage on hit
+      stunnedMultiplier: 3, // V: damage is multiplied by this if the target is stunned
       trail: 1.6, // V: seconds the bullet trail stays visible (looks only)
       size: 5, // V: bullet radius
-      previewLength: 2500, // V: how far the predicted path is drawn while aiming
+      previewLength: 2500, // V: how far the aiming line is drawn
       cooldown: 10, // V: seconds before it can be used again
     },
     roll: {
@@ -192,7 +193,6 @@ export const TUNING = {
       fireInterval: 0.5, // LC: seconds between shots
       splitAngle: 5, // LC: degrees between the two halves when a pellet doubles off your mirror
       maxDoublings: 3, // LC: how many of your mirrors a pellet can double off (3: 4 pellets -> 8 -> 16 -> 32)
-      mirrorBreakDelay: 0.15, // LC: seconds after doubling a volley before that mirror breaks
     },
     ray: {
       pool: 100, // RC: size of the resource pool (bar next to the crosshair)
@@ -212,17 +212,18 @@ export const TUNING = {
       maxLength: 220, // C: longest mirror (dragging further places it automatically)
       minLength: 40, // C: shortest mirror (shorter drags are ignored)
       hp: 150, // C: mirror health
+      life: 8, // C: seconds a mirror lasts before it breaks by itself
       thickness: 10, // C: mirror thickness (for collisions)
     },
     refract: {
-      duration: 0.6, // V: seconds you stay split
-      separation: 90, // V: distance between the two halves
-      cooldown: 8, // V: seconds before it can be used again
+      duration: 0.6, // SPACE: seconds you stay split
+      separation: 160, // SPACE: distance between the two halves
+      cooldown: 8, // SPACE: seconds before it can be used again
     },
     shatter: {
-      radius: 250, // SPACE: distance from a mirror that gets hurt
-      damage: 40, // SPACE: damage per mirror (near 2 mirrors = hit twice)
-      cooldown: 20, // SPACE: seconds before it can be used again
+      radius: 250, // V: distance from a mirror that gets hurt
+      damage: 40, // V: damage per mirror (near 2 mirrors = hit twice)
+      cooldown: 20, // V: seconds before it can be used again
     },
   },
 

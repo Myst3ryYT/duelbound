@@ -1,7 +1,8 @@
-/**
+﻿/**
  * SHERIFF - RC - Lasso (instant, projectile/misc)
  * Throws a lasso. If it catches the enemy, it deals a little damage and drags
- * them to the Sheriff. Structures block it. A reflective shield snaps it.
+ * them to the Sheriff. Structures block it; it flies straight through tumbleweeds.
+ * A reflective shield snaps it.
  * Numbers: tuning.sheriff.lasso
  */
 import type { AbilityDef, ProjectileHook } from '../../abilities.ts';
@@ -33,6 +34,7 @@ export const lasso: AbilityDef = {
       damage: l.damage,
       reflectable: false,
       life: l.range / Math.max(1, l.speed), // vanishes at max range
+      from: { x: f.x, y: f.y },
     });
     startCooldown(world, f, slot, l.cooldown);
     emitSound(world, 'lasso_throw', f.x, f.y);

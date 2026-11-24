@@ -63,20 +63,20 @@ Good to know:
 | Key | Does |
 | --- | --- |
 | Left click | Revolver: hold to keep firing. Hits harder up close. 6 shots, then it reloads by itself. |
-| Right click | Lasso: catches the enemy and drags them to you |
-| C | Bramble: a tumbleweed that stuns whoever touches it (you too) and drags them along. Shoot it to knock it around. |
-| V | Piercing bullet: aim for a moment (the red line shows the path, bounces included), then a very fast shot that bounces 3 times |
+| Right click | Lasso: catches the enemy and drags them to you (flies through tumbleweeds) |
+| C | Bramble: throws a tumbleweed that stuns whoever touches it (you too) and drags them along. Shoot it to knock it around. 3 stored uses. |
+| V | Piercing bullet: aim for a moment (red line), then a very fast shot. Triple damage against a stunned enemy. |
 | Space | Roll in the direction you're walking, briefly invincible |
 
 **Refractor**
 
 | Key | Does |
 | --- | --- |
-| Left click | Mind Shotgun: 4 pellets. Pellets that bounce off your own mirror double (up to 3 mirrors: 4 → 8 → 16 → 32), and that mirror breaks. |
+| Left click | Mind Shotgun: 4 pellets. Pellets that bounce off your own mirror double (up to 3 mirrors: 4 → 8 → 16 → 32). |
 | Right click | Mind Ray: hold for a beam. Uses the purple bar by the crosshair. Double damage for each mirror it bounces off. |
-| C | Mirror mode on / off. In mirror mode, hold left click where a mirror starts, drag, release where it ends; place as many as you have uses (3 stored). |
-| V | Refract: split into two halves for a moment; a shot can pass between them |
-| Space | Shatter: breaks every mirror; enemies near a mirror take damage for each one |
+| C | Mirror mode on / off. In mirror mode, hold left click where a mirror starts, drag, release where it ends; place as many as you have uses (3 stored). Mirrors break after 8 seconds. |
+| V | Shatter: breaks every mirror; enemies near a mirror take damage for each one |
+| Space | Refract: split into two halves for a moment (they turn with your mouse); a shot can pass between them |
 
 --- | --- |
 | W A S D | move |

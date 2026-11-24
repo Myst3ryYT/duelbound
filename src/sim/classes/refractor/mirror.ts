@@ -6,6 +6,7 @@
  * (or right click) to go back to fighting. Mirrors can go anywhere in the arena.
  * Up to 3 mirrors at once (a 4th removes your oldest), and 3 stored uses.
  * Mirrors bounce every projectile; they only take damage from enemy shots.
+ * Each mirror breaks by itself after life seconds (it flashes just before).
  * Numbers: tuning.refractor.mirror
  */
 import type { AbilityDef } from '../../abilities.ts';
@@ -91,6 +92,7 @@ export const mirror: AbilityDef = {
       hp: m.hp,
       maxHp: m.hp,
       reflective: true,
+      breakT: m.life,
     });
     emitSound(world, 'mirror_place', (sx + ex) / 2, (sy + ey) / 2);
     return 'placed';

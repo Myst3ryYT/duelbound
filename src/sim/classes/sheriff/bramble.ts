@@ -1,6 +1,7 @@
-/**
+﻿/**
  * SHERIFF - C - Bramble (instant, object)
- * Summons a tumbleweed next to the Sheriff, rolling towards the crosshair.
+ * Summons a tumbleweed next to the Sheriff, thrown in the direction you're aiming.
+ * Up to 3 are stored up, like mirrors (one comes back every chargeTime seconds).
  * Shooting it knocks it around; it bounces off walls and structures.
  * Touching it hurts and stuns anyone, the Sheriff too. While stunned, the
  * player gets dragged along with the tumbleweed (a bit slower than it).
@@ -19,7 +20,8 @@ export const bramble: AbilityDef = {
   type: 'object',
   activation: 'instant',
   icon: 'icon_sheriff_bramble',
-  cooldown: (t) => t.sheriff.bramble.cooldown,
+  cooldown: (t) => t.sheriff.bramble.chargeTime,
+  charges: (t) => t.sheriff.bramble.charges,
 
   update({ world, tuning, fighter: f, slot, pressed }) {
     if (!pressed || !isReady(f, slot)) return;
@@ -36,7 +38,7 @@ export const bramble: AbilityDef = {
       radius: b.size,
       life: b.life,
     });
-    startCooldown(world, f, slot, b.cooldown);
+    startCooldown(world, f, slot, b.chargeTime);
     emitSound(world, 'bramble_spawn', f.x, f.y);
   },
 };

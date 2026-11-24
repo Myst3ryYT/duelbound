@@ -1,8 +1,8 @@
-/**
+﻿/**
  * SHERIFF - V - Piercing Bullet (instant, projectile)
  * After a short aiming delay (a red line shows where it will go), fires an
- * extremely fast bullet that bounces off up to 3 walls / structures.
- * It leaves a trail for a moment (looks only; damage comes from the bullet).
+ * extremely fast bullet. It does triple damage to a stunned target (e.g. one
+ * caught by a tumbleweed). It leaves a trail for a moment (looks only).
  * It fires wherever you are aiming when the delay ends.
  * Numbers: tuning.sheriff.pierce
  */
@@ -38,8 +38,9 @@ export const pierce: AbilityDef = {
         speed: p.speed,
         radius: p.size,
         damage: p.damage,
-        bounces: p.bounces,
+        stunnedMultiplier: p.stunnedMultiplier,
         trail: p.trail,
+        from: { x: f.x, y: f.y },
       });
       emitSound(world, 'pierce_fire', f.x, f.y);
       return;
