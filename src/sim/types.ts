@@ -97,7 +97,8 @@ export interface Projectile extends Switchable {
   bounces: number; // walls / structures it can still bounce off (0 = dies on contact)
   reflectable: boolean; // can shields reflect it? (if not, a shield just destroys it)
   trail: number; // seconds a visual trail lingers behind it (0 = no trail)
-  splits: boolean; // doubles once when it bounces off its owner's mirror (Refractor shotgun)
+  splits: boolean; // doubles when it bounces off its owner's mirror (Refractor shotgun)
+  doublings: number; // how many times it (or the pellet it split from) has doubled so far
   life: number; // seconds left before it vanishes on its own
 }
 

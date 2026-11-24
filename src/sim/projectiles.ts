@@ -33,7 +33,7 @@ export interface ProjectileSpawn {
   behavior?: string; // special on-hit behaviour ['']
   reflectable?: boolean; // can shields reflect it [true]
   trail?: number; // seconds of visual trail [0]
-  splits?: boolean; // doubles once off its owner's mirror [false]
+  splits?: boolean; // doubles off its owner's mirrors, up to maxDoublings times [false]
   life?: number; // seconds before it vanishes [tuning.projectiles.maxLife]
 }
 
@@ -56,6 +56,7 @@ export function spawnProjectile(world: World, tuning: Tuning, s: ProjectileSpawn
     reflectable: s.reflectable ?? true,
     trail: s.trail ?? 0,
     splits: s.splits ?? false,
+    doublings: 0,
     life: s.life ?? tuning.projectiles.maxLife,
     switchT: 0,
     switchTotal: 0,
@@ -74,14 +75,15 @@ function damageOf(p: Projectile): number {
 
 /**
  * Refractor shotgun: a pellet bouncing off its owner's mirror becomes two.
- * Each pellet only doubles once, and the mirror breaks shortly afterwards,
- * so mirrors facing each other can't multiply shots forever.
+ * Each pellet can double up to maxDoublings times (a copy inherits its parent's
+ * count), and the mirror breaks shortly afterwards, so mirrors facing each other
+ * can't multiply shots forever.
  */
 function splitPellet(world: World, p: Projectile, mirror: Placeable, tuning: Tuning, x: number, y: number): void {
   const half = ((tuning.refractor.shotgun.splitAngle * Math.PI) / 180) / 2;
   const speed = Math.hypot(p.vx, p.vy);
   const angle = Math.atan2(p.vy, p.vx);
-  p.splits = false;
+  p.doublings++; // the copy below inherits this count
   p.vx = Math.cos(angle - half) * speed;
   p.vy = Math.sin(angle - half) * speed;
   const copy: Projectile = { ...p, id: world.nextId++, x, y, vx: Math.cos(angle + half) * speed, vy: Math.sin(angle + half) * speed };
@@ -168,7 +170,7 @@ export function updateProjectiles(world: World, tuning: Tuning, dt: number): voi
         const c = closestPoint(pl, hx, hy);
         nx = c.x + n.x * (pl.radius + hitR + 1);
         ny = c.y + n.y * (pl.radius + hitR + 1);
-        if (pl.reflective && own && p.splits) splitPellet(world, p, pl, tuning, nx, ny);
+        if (pl.reflective && own && p.splits && p.doublings < tuning.refractor.shotgun.maxDoublings) splitPellet(world, p, pl, tuning, nx, ny);
         emitSound(world, pl.reflective ? 'mirror_bounce' : 'bounce', hx, hy);
         world.events.push({ type: 'bounce', projectileId: p.id, x: hx, y: hy });
         break;

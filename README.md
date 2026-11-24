@@ -60,7 +60,7 @@ Other commands:
 
 | Key | Does |
 | --- | --- |
-| Left click | Mind Shotgun: 4 pellets. Pellets that bounce off your own mirror double (once), and that mirror breaks. |
+| Left click | Mind Shotgun: 4 pellets. Pellets that bounce off your own mirror double (up to 3 mirrors: 4 → 8 → 16 → 32), and that mirror breaks. |
 | Right click | Mind Ray: hold for a beam. Uses the purple bar by the crosshair. Double damage for each mirror it bounces off. |
 | C | Mirror mode on / off. In mirror mode, hold left click where a mirror starts, drag, release where it ends; place as many as you have uses (3 stored). |
 | V | Refract: split into two halves for a moment; a shot can pass between them |

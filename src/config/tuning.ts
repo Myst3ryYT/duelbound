@@ -185,6 +185,7 @@ export const TUNING = {
       size: 5, // LC: pellet radius
       fireInterval: 0.5, // LC: seconds between shots
       splitAngle: 5, // LC: degrees between the two halves when a pellet doubles off your mirror
+      maxDoublings: 3, // LC: how many of your mirrors a pellet can double off (3: 4 pellets -> 8 -> 16 -> 32)
       mirrorBreakDelay: 0.15, // LC: seconds after doubling a volley before that mirror breaks
     },
     ray: {
