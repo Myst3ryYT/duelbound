@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Traces a straight line through the arena, bouncing like a projectile would.
  * Used for:
  *  - the Sheriff's Piercing Bullet path preview (drawn while aiming)
@@ -7,7 +7,7 @@
 import type { Tuning } from '../config/tuning.ts';
 import type { World } from './types.ts';
 import { segmentCircle } from './math.ts';
-import { closestPoint, pathHits, surfaceNormal } from './placeables.ts';
+import { bounceNormal, closestPoint, pathHits } from './placeables.ts';
 import { hitPoints, hitRadius } from './hitbox.ts';
 
 export interface TraceOptions {
@@ -119,7 +119,7 @@ export function tracePath(world: World, tuning: Tuning, x: number, y: number, an
       }
       bounces--;
     }
-    const n = surfaceNormal(p, x, y);
+    const n = bounceNormal(p, x, y, hx, hy);
     const dot = dx * n.x + dy * n.y;
     dx -= 2 * dot * n.x;
     dy -= 2 * dot * n.y;

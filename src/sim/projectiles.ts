@@ -9,7 +9,7 @@ import type { Tuning } from '../config/tuning.ts';
 import type { Placeable, Projectile, World } from './types.ts';
 import { clamp, lerp, segmentCircle } from './math.ts';
 import { applyDamage } from './damage.ts';
-import { closestPoint, damagePlaceable, pathHits, surfaceNormal } from './placeables.ts';
+import { bounceNormal, closestPoint, damagePlaceable, pathHits } from './placeables.ts';
 import { hitPoints, hitRadius } from './hitbox.ts';
 import { emitFx, emitSound } from './events.ts';
 import { cancelSwitch, updateSwitch } from './switching.ts';
@@ -154,7 +154,7 @@ export function updateProjectiles(world: World, tuning: Tuning, dt: number): voi
         if (t < 0) continue;
         const hx = ox + (nx - ox) * t;
         const hy = oy + (ny - oy) * t;
-        const n = surfaceNormal(pl, ox, oy);
+        const n = bounceNormal(pl, ox, oy, hx, hy);
         if (p.vx * n.x + p.vy * n.y >= 0) continue; // already moving away from it
         if (!own) damagePlaceable(world, pl, damageOf(p));
         if (!pl.reflective && p.bounces <= 0) {

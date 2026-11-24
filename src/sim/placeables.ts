@@ -46,6 +46,26 @@ export function surfaceNormal(p: Placeable, x: number, y: number): { x: number; 
   return len > 0.0001 ? { x: nx / len, y: ny / len } : { x: 1, y: 0 };
 }
 
+/**
+ * The direction something bounces away from when it hits this structure.
+ * Mirrors (segments) always bounce off their flat face, even near the tips,
+ * on the side the shot came from. Round structures bounce away from their centre.
+ * @param fromX/fromY  where the shot was coming from (before the hit)
+ * @param hitX/hitY    where it touched
+ */
+export function bounceNormal(p: Placeable, fromX: number, fromY: number, hitX: number, hitY: number): { x: number; y: number } {
+  if (p.shape !== 'segment') return surfaceNormal(p, hitX, hitY);
+  const len = Math.hypot(p.x2 - p.x1, p.y2 - p.y1) || 1;
+  let nx = -(p.y2 - p.y1) / len;
+  let ny = (p.x2 - p.x1) / len;
+  // Point the normal towards the side the shot came from.
+  if ((fromX - p.x1) * nx + (fromY - p.y1) * ny < 0) {
+    nx = -nx;
+    ny = -ny;
+  }
+  return { x: nx, y: ny };
+}
+
 // ------------------------------------------------------------ placement ----
 
 /**

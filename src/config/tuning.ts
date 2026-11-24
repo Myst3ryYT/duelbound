@@ -167,7 +167,6 @@ export const TUNING = {
       chargeTime: 6, // C: seconds for one use to come back
       maxLength: 220, // C: longest mirror (dragging further places it automatically)
       minLength: 40, // C: shortest mirror (shorter drags are ignored)
-      placeRange: 350, // C: how far from you the first point can be
       hp: 150, // C: mirror health
       thickness: 10, // C: mirror thickness (for collisions)
     },

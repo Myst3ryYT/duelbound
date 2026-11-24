@@ -1,8 +1,8 @@
-/**
+﻿/**
  * REFRACTOR - C - Mirror (variable, dynamic placeable)
  * Press C, then press the left mouse button where the mirror should start,
  * drag, and release where it should end. Dragging past the maximum length
- * places it automatically. The start point must be fairly close to you.
+ * places it automatically. It can go anywhere in the arena.
  * Up to 3 mirrors at once (a 4th removes your oldest), and 3 stored uses.
  * Mirrors bounce every projectile; they only take damage from enemy shots.
  * Numbers: tuning.refractor.mirror
@@ -24,8 +24,9 @@ export const mirror: AbilityDef = {
   preview(world, tuning, f, x, y) {
     const m = tuning.refractor.mirror;
     if (!f.vars.placeDrag) {
-      // Not dragging yet: a dot showing whether the start point is in range.
-      return { sprite: '', x, y, angle: 0, radius: 6, valid: dist(f.x, f.y, x, y) <= m.placeRange };
+      // Not dragging yet: a dot showing whether the start point is inside the arena.
+      const size = tuning.world.arenaSize;
+      return { sprite: '', x, y, angle: 0, radius: 6, valid: x >= 0 && y >= 0 && x <= size && y <= size };
     }
     const sx = f.vars.mirrorX;
     const sy = f.vars.mirrorY;
@@ -46,7 +47,7 @@ export const mirror: AbilityDef = {
     if (!f.vars.placeDrag) {
       if (!pressed) return null;
       const size = tuning.world.arenaSize;
-      if (dist(f.x, f.y, ax, ay) > m.placeRange || ax < 0 || ay < 0 || ax > size || ay > size) return null;
+      if (ax < 0 || ay < 0 || ax > size || ay > size) return null;
       f.vars.placeDrag = 1;
       f.vars.mirrorX = ax;
       f.vars.mirrorY = ay;
