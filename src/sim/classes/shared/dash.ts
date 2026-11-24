@@ -37,7 +37,7 @@ export function makeDash(id: string, icon: string, numbers: (t: Tuning) => DashN
         return;
       }
 
-      if (!pressed || !isReady(f, slot) || f.stunT > 0 || f.pullById) return;
+      if (!pressed || !isReady(f, slot) || f.stunT > 0 || f.hitstunT > 0 || f.pullById) return;
       let dx = input.moveX;
       let dy = input.moveY;
       if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) {

@@ -84,8 +84,6 @@ export interface ObjectKindDef {
    * Non-solid ones (tumbleweed) get knocked around by every shot.
    */
   solid?: boolean;
-  carry?(t: Tuning): number; // share of its speed a carried (stunned) fighter moves at
-  carryDrag?(t: Tuning): number; // extra slowdown while carrying someone
   /** It touched a fighter. Return true to remove the object. */
   onTouch(world: World, tuning: Tuning, o: PhysObject, f: Fighter): boolean;
 }
@@ -173,7 +171,7 @@ export function runAbilities(world: World, tuning: Tuning, f: Fighter, input: Pl
     f.cooldowns[a] = Math.max(0, f.cooldowns[a] - dt);
     updateCharges(world, tuning, f, a, cls.abilities[a]);
   }
-  const stunned = f.stunT > 0;
+  const stunned = f.stunT > 0 || f.hitstunT > 0;
   if (stunned) f.placing = null;
 
   // While stunned every button counts as "not held", without firing a "released".

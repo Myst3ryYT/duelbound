@@ -47,6 +47,7 @@ export function resetFighter(f: Fighter, tuning: Tuning): void {
     placing: null,
     rootedT: 0,
     stunT: 0,
+    hitstunT: 0,
     invulnT: 0,
     pullById: 0,
     pullT: 0,

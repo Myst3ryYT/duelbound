@@ -3,9 +3,6 @@
  * bounce off walls and structures, and react to projectiles (see projectiles.ts).
  * Solid ones also block players, and can be shot to pieces.
  * Only the simulation moves them, so online both players see the same thing.
- *
- * An object can "carry" a fighter (fighter.vars.carriedBy = object id): the
- * fighter is dragged along with it while stunned, a bit slower than the object.
  */
 import type { Tuning } from '../config/tuning.ts';
 import type { PhysObject, World } from './types.ts';
@@ -33,11 +30,10 @@ export function updateObjects(world: World, tuning: Tuning, dt: number): void {
   for (const o of world.objects) {
     const kind = getObjectKind(o.kind);
     const restitution = kind?.restitution(tuning) ?? 0.8;
-    const carried = world.fighters.filter((f) => f.vars.carriedBy === o.id && f.stunT > 0);
 
     updateSwitch(o, dt);
     if (o.switchT <= 0) {
-      const friction = (kind?.friction(tuning, o) ?? 0) + (carried.length ? (kind?.carryDrag?.(tuning) ?? 0) : 0);
+      const friction = kind?.friction(tuning, o) ?? 0;
       const drag = Math.exp(-friction * dt);
       o.vx *= drag;
       o.vy *= drag;
@@ -102,13 +98,6 @@ export function updateObjects(world: World, tuning: Tuning, dt: number): void {
       }
     }
 
-    // Drag carried (stunned) fighters along, a bit slower than the object.
-    const carry = kind?.carry?.(tuning) ?? 0;
-    for (const f of carried) {
-      f.x += o.vx * carry * dt;
-      f.y += o.vy * carry * dt;
-    }
-
     o.spin += (Math.hypot(o.vx, o.vy) / Math.max(1, o.radius)) * dt;
     o.life -= dt;
     if (o.life <= 0 && alive) {
@@ -124,12 +113,6 @@ export function updateObjects(world: World, tuning: Tuning, dt: number): void {
     if (alive) survivors.push(o);
   }
   world.objects = survivors;
-
-  // Let go of anyone whose stun ended or whose object is gone.
-  for (const f of world.fighters) {
-    if (!f.vars.carriedBy) continue;
-    if (f.stunT <= 0 || !world.objects.some((o) => o.id === f.vars.carriedBy)) f.vars.carriedBy = 0;
-  }
 }
 
 /** Damage a breakable object (does nothing to unbreakable ones). */

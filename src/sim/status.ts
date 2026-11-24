@@ -11,6 +11,19 @@ export function tickStatusTimers(f: Fighter, dt: number): void {
   f.invulnT = Math.max(0, f.invulnT - dt);
 }
 
+/** Hitstun counts down at the END of each tick (after everyone has acted), so it always freezes whole ticks. */
+export function tickHitstun(f: Fighter, dt: number): void {
+  f.hitstunT = Math.max(0, f.hitstunT - dt);
+}
+
+/**
+ * Hitstun: freeze a fighter for a couple of ticks after a big hit (no moving, no abilities).
+ * `frames` is in ticks (1 frame = 1/60 s). Frame counts live in tuning.hitstun.
+ */
+export function applyHitstun(f: Fighter, frames: number, tickRate: number): void {
+  if (frames > 0) f.hitstunT = Math.max(f.hitstunT, frames / tickRate);
+}
+
 /** Start dragging `target` towards `puller`. */
 export function startPull(target: Fighter, puller: Fighter, speed: number, maxTime: number): void {
   target.pullById = puller.id;

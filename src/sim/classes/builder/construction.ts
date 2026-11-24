@@ -10,6 +10,7 @@ import type { AbilityDef, ObjectKindDef } from '../../abilities.ts';
 import { isReady, startCooldown } from '../../abilities.ts';
 import { spawnObject } from '../../objects.ts';
 import { applyDamage } from '../../damage.ts';
+import { applyHitstun } from '../../status.ts';
 import { distanceTo } from '../../placeables.ts';
 import { emitFx, emitSound } from '../../events.ts';
 import { dist } from '../../math.ts';
@@ -68,6 +69,7 @@ export const furnitureObjects: ObjectKindDef[] = FURNITURE.map((kind) => ({
     }
     if (f.id === o.ownerId) return false;
     applyDamage(world, f, tuning.builder.furniture.flingDamage, o.ownerId);
+    applyHitstun(f, tuning.hitstun.furniture, tuning.world.tickRate);
     emitSound(world, 'furniture_hit', o.x, o.y);
     emitFx(world, 'burst', o.x, o.y, '#c8a060', o.radius * 2.5, 0.4);
     return true; // smashed to pieces on impact

@@ -40,6 +40,7 @@ export const pierce: AbilityDef = {
         damage: p.damage,
         stunnedMultiplier: p.stunnedMultiplier,
         trail: p.trail,
+        hitstun: tuning.hitstun.pierce,
         from: { x: f.x, y: f.y },
       });
       emitSound(world, 'pierce_fire', f.x, f.y);

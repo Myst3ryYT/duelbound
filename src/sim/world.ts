@@ -11,7 +11,7 @@ import { runAbilities } from './abilities.ts';
 import { updateProjectiles } from './projectiles.ts';
 import { updateObjects } from './objects.ts';
 import { collideFightersWithPlaceables, updatePlaceables } from './placeables.ts';
-import { checkPullStuck, tickStatusTimers, updatePull } from './status.ts';
+import { checkPullStuck, tickHitstun, tickStatusTimers, updatePull } from './status.ts';
 import { updateDummy } from './training.ts';
 import { getClass } from './classes/registry.ts';
 import { checkRoundEnd, newMatchState, spawnPoint, updateMatch } from './match.ts';
@@ -39,6 +39,7 @@ function newFighter(world: World, props: Partial<Fighter> & Pick<Fighter, 'kind'
     placing: null,
     rootedT: 0,
     stunT: 0,
+    hitstunT: 0,
     invulnT: 0,
     pullById: 0,
     pullT: 0,
@@ -128,7 +129,7 @@ export function stepWorld(world: World, inputs: Map<number, PlayerInput>, tuning
     if (!input) continue;
 
     updateAim(f, input);
-    if (f.rootedT > 0 || f.stunT > 0 || f.pullById) {
+    if (f.rootedT > 0 || f.stunT > 0 || f.hitstunT > 0 || f.pullById) {
       f.vx = 0;
       f.vy = 0;
     } else moveFighter(f, input, tuning, dt);
@@ -147,6 +148,7 @@ export function stepWorld(world: World, inputs: Map<number, PlayerInput>, tuning
   for (const f of world.fighters) {
     clampToArena(f, tuning.world.arenaSize);
     checkPullStuck(f, dt);
+    tickHitstun(f, dt);
   }
   checkRoundEnd(world, tuning);
 

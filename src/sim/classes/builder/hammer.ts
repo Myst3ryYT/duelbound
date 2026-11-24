@@ -2,7 +2,7 @@
  * BUILDER - RC - Sledge Hammer (instant, melee)
  * A big swing in front of the Builder. Everything in the swing:
  *  - enemy players take damage
- *  - your own brick walls break instantly and fire their bricks towards your crosshair
+ *  - your own brick walls break instantly and fire their bricks straight out of the wall (on the crosshair's side)
  *  - your own furniture gets flung the way you're facing (it hurts the enemy it hits)
  *  - enemy structures and furniture take heavy damage
  * Numbers: tuning.builder.hammer (bricks: tuning.builder.wall)
@@ -12,6 +12,7 @@ import type { AbilityDef } from '../../abilities.ts';
 import type { Fighter, Placeable, World } from '../../types.ts';
 import { isReady, startCooldown } from '../../abilities.ts';
 import { applyDamage } from '../../damage.ts';
+import { applyHitstun } from '../../status.ts';
 import { closestPoint, damagePlaceable, removePlaceable } from '../../placeables.ts';
 import { damageObject } from '../../objects.ts';
 import { spawnProjectile } from '../../projectiles.ts';
@@ -47,6 +48,7 @@ export const hammer: AbilityDef = {
     for (const target of world.fighters) {
       if (target.id === f.id || target.invulnT > 0 || !inSwing(target.x, target.y, target.radius)) continue;
       applyDamage(world, target, h.damage, f.id);
+      applyHitstun(target, tuning.hitstun.hammer, tuning.world.tickRate);
       hitSomething = true;
     }
     for (const p of [...world.placeables]) {
@@ -76,22 +78,24 @@ export const hammer: AbilityDef = {
 function breakWall(world: World, tuning: Tuning, f: Fighter, p: Placeable): void {
   const w = tuning.builder.wall;
   const count = Math.max(1, Math.round(w.bricks));
+  // Bricks leave straight out of the wall, on whichever side the crosshair is.
+  const wallAngle = Math.atan2(p.y2 - p.y1, p.x2 - p.x1);
+  let out = wallAngle + Math.PI / 2;
+  if (Math.cos(out) * (f.aimX - p.x) + Math.sin(out) * (f.aimY - p.y) < 0) out += Math.PI;
   for (let i = 0; i < count; i++) {
     const k = count === 1 ? 0.5 : i / (count - 1); // spread the bricks along the wall
-    const spread = (k - 0.5) * ((w.brickSpread * Math.PI) / 180);
-    const x = p.x1 + (p.x2 - p.x1) * k;
-    const y = p.y1 + (p.y2 - p.y1) * k;
-    // Every brick flies towards the crosshair (so they bunch up on what you're aiming at).
-    const aim = Math.hypot(f.aimX - x, f.aimY - y) > 60 ? Math.atan2(f.aimY - y, f.aimX - x) : f.aimAngle;
+    // Random-looking spread, worked out from the tick so it's the same on every computer.
+    const wobble = (((world.tick * 37 + i * 53) % 11) / 10 - 0.5) * ((w.brickSpread * Math.PI) / 180);
     spawnProjectile(world, tuning, {
       ownerId: f.id,
       kind: 'builder_brick',
-      x,
-      y,
-      angle: aim + spread,
+      x: p.x1 + (p.x2 - p.x1) * k,
+      y: p.y1 + (p.y2 - p.y1) * k,
+      angle: out + wobble,
       speed: w.brickSpeed,
       radius: w.brickSize,
       damage: w.brickDamage,
+      slowRange: w.brickRange,
     });
   }
   removePlaceable(world, p);

@@ -65,7 +65,7 @@ Good to know:
 | --- | --- |
 | Left click | Revolver: hold to keep firing. Hits harder up close. 6 shots, then it reloads by itself. |
 | Right click | Lasso: catches the enemy and drags them to you (flies through tumbleweeds) |
-| C | Bramble: throws a tumbleweed that stuns whoever touches it (you too) and drags them along. Shoot it to knock it around. 3 stored uses. |
+| C | Bramble: throws a tumbleweed that stops and stuns whoever touches it (you too), and is used up. Shoot it to knock it around. 3 stored uses. |
 | V | Piercing bullet: aim for a moment (red line), then a very fast shot. Triple damage against a stunned enemy. |
 | Space | Roll in the direction you're walking, briefly invincible |
 
@@ -84,7 +84,7 @@ Good to know:
 | Key | Does |
 | --- | --- |
 | Left click | Nail Gun: hold to spray fast, weak nails |
-| Right click | Sledge Hammer: a swing in front of you. Hurts the enemy, wrecks enemy structures, smashes your own brick walls into a volley of bricks (they fly at your crosshair), and flings your own furniture. |
+| Right click | Sledge Hammer: a swing in front of you. Hurts the enemy, wrecks enemy structures, smashes your own brick walls into a volley of bricks (they fly straight out of the wall on the crosshair's side, slowing to a stop), and flings your own furniture. |
 | C | Brick wall mode on / off. Placed like mirrors (drag with left click). Lots of health, blocks enemy shots; your shots go through. 2 stored uses. |
 | V | Construction: builds a random piece of furniture in front of you. It's cover until the enemy breaks it. Hit it with the hammer to fling it: 100 damage to the enemy it hits. |
 | Space | Dash in the direction you're walking |

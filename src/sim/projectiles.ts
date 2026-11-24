@@ -15,6 +15,7 @@ import { emitFx, emitSound } from './events.ts';
 import { cancelSwitch, updateSwitch } from './switching.ts';
 import { getObjectKind, getProjectileHook } from './classes/registry.ts';
 import { damageObject } from './objects.ts';
+import { applyHitstun } from './status.ts';
 
 const STEP = 24; // world units per collision sub-step
 
@@ -42,6 +43,8 @@ export interface ProjectileSpawn {
    */
   from?: { x: number; y: number };
   life?: number; // seconds before it vanishes [tuning.projectiles.maxLife]
+  hitstun?: number; // hitstun frames put on a fighter it hits [0]
+  slowRange?: number; // slows down steadily over this distance, then vanishes [0 = never slows]
 }
 
 export function spawnProjectile(world: World, tuning: Tuning, s: ProjectileSpawn): Projectile {
@@ -66,6 +69,9 @@ export function spawnProjectile(world: World, tuning: Tuning, s: ProjectileSpawn
     splits: s.splits ?? false,
     doublings: 0,
     life: s.life ?? tuning.projectiles.maxLife,
+    hitstun: s.hitstun ?? 0,
+    slowRange: s.slowRange ?? 0,
+    startSpeed: s.speed,
     switchT: 0,
     switchTotal: 0,
     switchVx: 0,
@@ -131,6 +137,14 @@ export function updateProjectiles(world: World, tuning: Tuning, dt: number): voi
 
   for (const p of world.projectiles) {
     updateSwitch(p, dt);
+    // Slowing shots (Builder bricks): speed falls steadily to zero over slowRange, then they vanish.
+    if (p.slowRange > 0 && p.switchT <= 0) {
+      const speed = p.startSpeed * (1 - p.traveled / p.slowRange);
+      if (speed < p.startSpeed * 0.08) continue;
+      const cur = Math.hypot(p.vx, p.vy) || 1;
+      p.vx *= speed / cur;
+      p.vy *= speed / cur;
+    }
     const hitR = p.radius * tuning.projectiles.hitboxScale;
     const travel = Math.hypot(p.vx, p.vy) * dt;
     const steps = Math.max(1, Math.ceil(travel / STEP));
@@ -212,6 +226,7 @@ export function updateProjectiles(world: World, tuning: Tuning, dt: number): voi
         const bodyR = hitRadius(f, tuning);
         if (!hitPoints(f).some((h) => segmentCircle(ox, oy, nx, ny, h.x, h.y, bodyR + hitR) >= 0)) continue;
         applyDamage(world, f, damageOf(p) * (f.stunT > 0 ? p.stunnedMultiplier : 1), p.ownerId);
+        applyHitstun(f, p.hitstun, tuning.world.tickRate);
         getProjectileHook(p.behavior)?.(world, tuning, p, f);
         emitFx(world, 'burst', nx, ny, '#ffffff', 14, 0.2);
         alive = false;

@@ -38,6 +38,14 @@ export const TUNING = {
     maxLife: 6, // seconds before any projectile disappears on its own
   },
 
+  // Hitstun: a short freeze (no moving, no abilities) for whoever takes a big hit. In frames (60 per second).
+  hitstun: {
+    hammer: 2, // Builder RC: sledge hammer hit
+    furniture: 2, // Builder V: flung furniture hit
+    pierce: 2, // Sheriff V: piercing bullet hit
+    shatter: 1, // Refractor V: shatter hit
+  },
+
   training: {
     dummyHp: 1000, // health of the training dummy
     dummyRadius: 26, // body size of the training dummy
@@ -159,9 +167,6 @@ export const TUNING = {
       shotImpulse: 350, // C: how much speed a projectile hit adds to it
       friction: 0.6, // C: how quickly it slows down by itself (0 = rolls forever)
       size: 33, // C: radius of the tumbleweed
-      carry: 0.75, // C: a stunned player is dragged along at this share of the tumbleweed's speed (1 = same speed)
-      carryDrag: 1.5, // C: extra slowdown on the tumbleweed while it drags someone
-      rehitDelay: 1.5, // C: seconds before the same tumbleweed can stun the same player again
       charges: 3, // C: tumbleweeds stored up (like mirrors)
       chargeTime: 10, // C: seconds for one stored tumbleweed to come back
     },
@@ -231,11 +236,11 @@ export const TUNING = {
   // ------------------------------------------------------------- BUILDER ----
   builder: {
     nailgun: {
-      fireInterval: 0.1, // LC: seconds between nails (hold to keep firing)
-      speed: 1100, // LC: nail speed
-      damage: 9, // LC: damage per nail
-      size: 4, // LC: nail radius
-      spread: 5, // LC: random spread of the nails, in degrees
+      fireInterval: 0.08, // LC: seconds between nails (hold to keep firing)
+      speed: 700, // LC: nail speed
+      damage: 8, // LC: damage per nail
+      size: 8.08, // LC: nail radius
+      spread: 0, // LC: random spread of the nails, in degrees
     },
     hammer: {
       damage: 60, // RC: damage to an enemy player hit by the swing
@@ -259,12 +264,13 @@ export const TUNING = {
       brickDamage: 50, // C: damage per brick
       brickSpeed: 900, // C: brick speed
       brickSize: 9, // C: brick radius
-      brickSpread: 8, // C: total spread of the bricks, in degrees (they all fly towards the crosshair)
+      brickSpread: 10, // C: random spread of the bricks, in degrees (they leave straight out of the wall)
+      brickRange: 450, // C: distance over which a brick slows to a stop (then it vanishes)
     },
     furniture: {
-      cooldown: 7, // V: seconds before building another piece of furniture
+      cooldown: 4, // V: seconds before building another piece of furniture
       hp: 150, // V: damage it takes from the enemy before it breaks
-      size: 30, // V: radius of the furniture
+      size: 40, // V: radius of the furniture
       spawnDistance: 75, // V: how far in front of the Builder it appears
       life: 30, // V: seconds before it falls apart by itself
       flingDamage: 100, // V: damage when flung furniture hits the enemy
@@ -276,7 +282,7 @@ export const TUNING = {
     dash: {
       distance: 220, // SPACE: how far the dash goes
       duration: 0.15, // SPACE: seconds the dash takes
-      cooldown: 5, // SPACE: seconds before dashing again
+      cooldown: 4, // SPACE: seconds before dashing again
     },
   },
 

@@ -9,6 +9,7 @@ import type { AbilityDef } from '../../abilities.ts';
 import { isReady, startCooldown } from '../../abilities.ts';
 import { distanceTo } from '../../placeables.ts';
 import { applyDamage } from '../../damage.ts';
+import { applyHitstun } from '../../status.ts';
 import { emitFx, emitSound } from '../../events.ts';
 
 export const shatter: AbilityDef = {
@@ -28,7 +29,10 @@ export const shatter: AbilityDef = {
     for (const target of world.fighters) {
       if (target.id === f.id || target.invulnT > 0) continue; // only enemies get hurt
       const near = mirrors.filter((m) => distanceTo(m, target.x, target.y) <= s.radius).length;
-      if (near > 0) applyDamage(world, target, s.damage * near, f.id);
+      if (near > 0) {
+        applyDamage(world, target, s.damage * near, f.id);
+        applyHitstun(target, tuning.hitstun.shatter, tuning.world.tickRate);
+      }
     }
     for (const m of mirrors) {
       emitFx(world, 'ring', m.x, m.y, '#bfe8ff', s.radius, 0.4);
