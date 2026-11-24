@@ -54,7 +54,6 @@ export const SPRITES = {
   sheriff_bullet: { file: 'sheriff_bullet.png', size: 0 }, // revolver shot
   sheriff_lasso: { file: 'sheriff_lasso.png', size: 0 }, // lasso loop (the rope is drawn as a line)
   sheriff_bramble: { file: 'sheriff_bramble.png', size: 0 }, // tumbleweed (drawn at its hitbox size)
-  sheriff_pierce: { file: 'sheriff_pierce.png', size: 0 }, // piercing bullet
 
   // ---- Refractor ----
   class_refractor: { file: 'refractor.png', size: 64 }, // the Refractor
@@ -82,7 +81,7 @@ export const SPRITES = {
   icon_sheriff_gun: { file: 'icon_sheriff_gun.png', size: 64 },
   icon_sheriff_lasso: { file: 'icon_sheriff_lasso.png', size: 64 },
   icon_sheriff_bramble: { file: 'icon_sheriff_bramble.png', size: 64 },
-  icon_sheriff_pierce: { file: 'icon_sheriff_pierce.png', size: 64 },
+  icon_sheriff_horse: { file: 'icon_sheriff_horse.png', size: 64 },
   icon_sheriff_roll: { file: 'icon_sheriff_roll.png', size: 64 },
   icon_refractor_shotgun: { file: 'icon_refractor_shotgun.png', size: 64 },
   icon_refractor_ray: { file: 'icon_refractor_ray.png', size: 64 },
@@ -115,8 +114,8 @@ export const SOUNDS = {
   lasso_hit: { file: 'lasso_hit.wav' }, // Sheriff RC caught someone
   bramble_spawn: { file: 'bramble_spawn.wav' }, // Sheriff C
   bramble_hit: { file: 'bramble_hit.wav' }, // tumbleweed touched someone
-  pierce_charge: { file: 'pierce_charge.wav' }, // Sheriff V aiming
-  pierce_fire: { file: 'pierce_fire.wav' }, // Sheriff V fired
+  horse_call: { file: 'horse_call.wav' }, // Sheriff V: the horse appears
+  horse_leave: { file: 'horse_leave.wav' }, // Sheriff V: the Sheriff hops off
   roll: { file: 'roll.wav' }, // Sheriff SPACE
   dummy_fire: { file: 'dummy_fire.wav' }, // training dummy shoots
   reload_start: { file: 'reload_start.wav' }, // Sheriff revolver empty, reloading

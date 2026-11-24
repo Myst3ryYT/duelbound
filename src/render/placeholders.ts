@@ -279,14 +279,6 @@ function sheriffBramble(): HTMLCanvasElement {
   return p.canvas;
 }
 
-function sheriffPierce(): HTMLCanvasElement {
-  const p = new Pixels(14, 6);
-  p.rect(0, 2, 6, 2, 'rgba(255,80,60,0.6)');
-  p.rect(5, 1, 7, 4, '#ff6a4a');
-  p.rect(11, 2, 3, 2, '#ffffff');
-  return p.canvas;
-}
-
 function dummyShot(): HTMLCanvasElement {
   const p = new Pixels(10, 10);
   p.disc(5, 5, 5, 'rgba(184,50,47,0.5)');
@@ -317,11 +309,13 @@ function iconBramble(): HTMLCanvasElement {
   }
   return p.canvas;
 }
-function iconPierce(): HTMLCanvasElement {
+function iconHorse(): HTMLCanvasElement {
   const p = iconBase(BROWN_DARK);
-  p.line(2, 12, 7, 3, '#ff6a4a'); // bouncing path
-  p.line(7, 3, 13, 12, '#ff6a4a');
-  p.rect(12, 11, 2, 2, '#fff');
+  p.rect(3, 7, 9, 4, '#a0643a'); // body
+  p.rect(11, 4, 3, 5, '#a0643a'); // neck and head
+  p.rect(3, 11, 1, 3, '#7a4a2a'); // legs
+  p.rect(10, 11, 1, 3, '#7a4a2a');
+  p.rect(2, 7, 1, 3, '#5e3820'); // tail
   return p.canvas;
 }
 function iconRoll(): HTMLCanvasElement {
@@ -534,12 +528,11 @@ export const PLACEHOLDERS: Record<SpriteId, () => HTMLCanvasElement> = {
   sheriff_bullet: sheriffBullet,
   sheriff_lasso: sheriffLasso,
   sheriff_bramble: sheriffBramble,
-  sheriff_pierce: sheriffPierce,
   dummy_shot: dummyShot,
   icon_sheriff_gun: iconGun,
   icon_sheriff_lasso: iconLasso,
   icon_sheriff_bramble: iconBramble,
-  icon_sheriff_pierce: iconPierce,
+  icon_sheriff_horse: iconHorse,
   icon_sheriff_roll: iconRoll,
   class_refractor: refractor,
   refractor_pellet: refractorPellet,

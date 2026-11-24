@@ -67,7 +67,7 @@ Good to know:
 | Left click | Revolver: one shot per click, no ammo or reload (click as fast as you can). Hits harder up close and harder on stunned targets. |
 | Right click | Lasso: catches the enemy and drags them to you (flies through tumbleweeds) |
 | C | Bramble: throws a tumbleweed that stops and stuns whoever touches it (you too), and is used up. Shoot it to knock it around. 3 stored uses. |
-| V | Piercing bullet: aim for a moment (red line), then a very fast shot. Triple damage against a stunned enemy. |
+| V | Horse: ride for 4 seconds. Faster, bigger, and the horse has its own 250 HP that takes hits first. Running into the enemy tramples them. |
 | Space | Roll in the direction you're walking, briefly invincible |
 
 **Refractor**
@@ -152,8 +152,19 @@ How an ability *behaves* is in `src/sim/classes/<class>/`, one file per ability,
 `src/sim/classes/mage/staff.ts`. Each file starts with a short description. The class's
 `index.ts` says which ability goes on which key slot.
 
-To add a class later: copy the `mage` folder, rename it, edit the abilities, then add it to
-`src/sim/classes/registry.ts`. Its art goes in `src/config/assets.ts` like everything else.
+To add a class (checklist):
+
+1. Copy a class folder in `src/sim/classes/` (the `sheriff` one is the simplest), rename it, and write one file per ability.
+   Shared building blocks are in `src/sim/classes/shared/` (dash, drag-placed walls).
+2. In the class's `index.ts` set `id`, `name`, `sprite`, `ratings` (the 1-5 stars on the character select), and which ability goes on which key.
+3. Add the class to `CLASSES` in `src/sim/classes/registry.ts` (use `hidden: true` to keep it out of the menus).
+4. Add its numbers as a new group in `src/config/tuning.ts` (comment every line; the dev panel builds itself from this file).
+5. Add its art and sounds to `src/config/assets.ts` (a missing file falls back to a placeholder drawn in `src/render/placeholders.ts`).
+   Characters with a sprite sheet are listed in `SHEETS` (see the comment there).
+6. Optional: teach the bot (`src/sim/bot.ts`) to use it. Run the headless tests in your scratch folder or `npm run build` (typechecks everything).
+
+Things every class gets for free: the kick (F), hitstun, knockback (`src/sim/status.ts`), and an
+absorb pool / speed multiplier through fighter variables (`vars.absorbHp`, `vars.speedMult`).
 
 ### Menus
 

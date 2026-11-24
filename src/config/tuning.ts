@@ -24,7 +24,7 @@ export const TUNING = {
   },
 
   player: {
-    maxHp: 1000, // starting and maximum health of every character
+    maxHp: 500, // starting and maximum health of every character
     knockFriction: 7, // how quickly a knockback shove slows down (higher = shorter shove; distance is about speed / this)
     moveSpeed: 300, // top walking speed
     accelFrames: 0, // simulation frames to go from standing still to full speed (stopping is always instant)
@@ -45,7 +45,7 @@ export const TUNING = {
     kick: 3, // F: kick hit
     gun: 2, // Sheriff LC: revolver hit (tiny, shots come fast)
     furniture: 8, // Builder V: flung furniture hit
-    pierce: 8, // Sheriff V: piercing bullet hit
+    trample: 6, // Sheriff V: horse trample hit
     shatter: 5, // Refractor V: shatter hit
   },
 
@@ -59,7 +59,7 @@ export const TUNING = {
   },
 
   training: {
-    dummyHp: 1000, // health of the training dummy
+    dummyHp: 500, // health of the training dummy
     dummyRadius: 26, // body size of the training dummy
     dummyFireInterval: 1, // seconds between dummy shots (when dummy shooting is switched on)
     dummyShotDamage: 30, // damage of each dummy shot
@@ -185,16 +185,15 @@ export const TUNING = {
       charges: 3, // C: tumbleweeds stored up (like mirrors)
       chargeTime: 10, // C: seconds for one stored tumbleweed to come back
     },
-    pierce: {
-      delay: 0.4, // V: seconds of aiming before the shot goes off
-      speed: 12339, // V: bullet speed
-      damage: 60, // V: damage on hit
-      physics: 2, // V: how hard it shoves physics objects (1 = normal)
-      stunnedMultiplier: 3, // V: damage is multiplied by this if the target is stunned
-      trail: 1.6, // V: seconds the bullet trail stays visible (looks only)
-      size: 5, // V: bullet radius
-      previewLength: 2500, // V: how far the aiming line is drawn
-      cooldown: 10, // V: seconds before it can be used again
+    horse: {
+      duration: 4, // V: seconds you ride
+      hp: 250, // V: the horse's health (damage hits it first; leftover damage hurts you)
+      speedMult: 1.5, // V: walking speed while riding (1 = normal)
+      size: 34, // V: body radius while riding (normal is player.bodyRadius)
+      trampleDamage: 40, // V: damage to the enemy when you run into them
+      trampleKnockback: 900, // V: how hard they're shoved away
+      trampleDelay: 1, // V: seconds before you can trample again
+      cooldown: 14, // V: seconds before it can be called again
     },
     roll: {
       duration: 0.35, // SPACE: seconds the roll lasts

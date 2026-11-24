@@ -13,7 +13,6 @@ import type { Tuning } from '../config/tuning.ts';
 import type { Fighter, GameEvent, PhysObject, Placeable, Projectile, World } from '../sim/types.ts';
 import type { PlacementPreview } from '../sim/abilities.ts';
 import { getClass } from '../sim/classes/registry.ts';
-import { tracePath } from '../sim/trace.ts';
 import { traceRay } from '../sim/classes/refractor/ray.ts';
 import { ART_PIXEL } from '../config/assets.ts';
 import { findSprite, getFacings, getSprite, type Facings, type Sprite } from './sprites.ts';
@@ -75,7 +74,8 @@ export interface LocalView {
   preview: PlacementPreview | null; // ghost of a structure being placed
 }
 
-const TRAIL_COLORS: Record<string, string> = { sheriff_pierce: '#ffd27a' };
+// Colour of a projectile's trail, by projectile kind (a projectile asks for a trail with `trail: seconds`).
+const TRAIL_COLORS: Record<string, string> = {};
 const ENEMY_TINT = 'rgba(255,40,40,0.55)'; // red wash over enemy sprites
 const ENEMY_TRAIL = '#ff4a4a';
 
@@ -292,31 +292,8 @@ export class Renderer {
     ctx.ellipse(x, y + f.radius * 0.7, f.radius * 0.9, f.radius * 0.4, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Sheriff piercing bullet: show the predicted path, bounces included, during the delay.
-    if (f.vars.pierceT > 0) {
-      const pc = tuning.sheriff.pierce;
-      const start = f.radius + pc.size + 4;
-      const path = tracePath(world, tuning, x + Math.cos(angle) * start, y + Math.sin(angle) * start, angle, {
-        ownerId: f.id,
-        length: pc.previewLength,
-        radius: pc.size * tuning.projectiles.hitboxScale,
-        bounces: 0,
-        wallsBounce: false,
-        maxMirrors: 20,
-      });
-      const pulse = 0.5 + 0.5 * Math.sin(this.clock * 40);
-      ctx.strokeStyle = `rgba(255,80,60,${0.35 + 0.4 * pulse})`;
-      ctx.lineWidth = 3;
-      ctx.setLineDash([14, 10]);
-      ctx.beginPath();
-      path.points.forEach((pt, i) => (i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)));
-      ctx.stroke();
-      ctx.setLineDash([]);
-      for (const pt of path.points.slice(1, -1)) {
-        ctx.fillStyle = 'rgba(255,120,90,0.9)';
-        ctx.fillRect(pt.x - 4, pt.y - 4, 8, 8); // bounce points
-      }
-    }
+    // Sheriff horse (placeholder shapes until there's horse art): a body under the Sheriff with a head, tail and a health bar.
+    if (f.vars.mountT > 0) this.drawHorse(f, x, y, angle, tuning.sheriff.horse.hp);
 
     // Refractor Mind Ray: the beam.
     if (f.vars.rayOn) {
@@ -802,6 +779,31 @@ export class Renderer {
     ctx.drawImage(white ? this.whitened(frame.image) : frame.image, -w / 2, -h / 2, w, h);
     ctx.restore();
     if (!up) drawGun();
+  }
+
+  /** A placeholder horse (a brown body, head and tail, facing the aim direction) with a health bar over it. */
+  private drawHorse(f: Fighter, x: number, y: number, angle: number, maxHp: number): void {
+    const { ctx } = this;
+    const len = f.radius * 1.5;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.fillStyle = '#7a4a2a';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, len, f.radius * 0.75, 0, 0, Math.PI * 2); // body
+    ctx.fill();
+    ctx.fillStyle = '#5e3820';
+    ctx.beginPath();
+    ctx.ellipse(len * 0.95, 0, f.radius * 0.5, f.radius * 0.32, 0, 0, Math.PI * 2); // head
+    ctx.fill();
+    ctx.fillRect(-len - 10, -3, 12, 6); // tail
+    ctx.restore();
+    const w = 60;
+    const k = Math.max(0, Math.min(1, (f.vars.absorbHp ?? 0) / maxHp));
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(x - w / 2 - 1, y - f.radius - 22, w + 2, 8);
+    ctx.fillStyle = '#c8a060';
+    ctx.fillRect(x - w / 2, y - f.radius - 21, w * k, 6);
   }
 
   /** Does this belong to the other side? */

@@ -11,5 +11,6 @@ export function hitPoints(f: Fighter): { x: number; y: number }[] {
 
 /** Radius of each hit circle for projectiles. */
 export function hitRadius(f: Fighter, tuning: Tuning): number {
-  return f.kind === 'dummy' ? f.radius : tuning.player.projectileHitRadius;
+  // Players are hit a little bigger than their body; a bigger body (the horse) is a bigger target.
+  return f.kind === 'dummy' ? f.radius : f.radius + tuning.player.projectileHitRadius - tuning.player.bodyRadius;
 }

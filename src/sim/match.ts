@@ -40,6 +40,7 @@ export function resetFighter(f: Fighter, tuning: Tuning): void {
     vy: 0,
     aimAngle: f.side === 0 ? 0 : Math.PI,
     hp: f.maxHp,
+    radius: tuning.player.bodyRadius, // (a rider's bigger body goes back to normal)
     cooldowns: perAction(0),
     cooldownTotals: perAction(0),
     charges: perAction(0),
