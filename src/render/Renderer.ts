@@ -371,7 +371,7 @@ export class Renderer {
     const jy = stunned ? (Math.random() - 0.5) * 8 : 0;
     const dirs = f.kind === 'dummy' ? undefined : getFacings(spriteName);
     if (dirs) {
-      this.drawFacingCharacter(dirs, x + jx, y + jy, angle, spin, alpha, white);
+      this.drawFacingCharacter(dirs, x + jx, y + jy, angle, spin, alpha, white, Math.hypot(f.vx, f.vy) > 20);
     } else this.drawSprite(sprite, x + jx, y + jy, f.kind === 'dummy' ? 0 : angle + spin, alpha, sprite.size, false, white);
 
 
@@ -768,13 +768,15 @@ export class Renderer {
    * A sprite-sheet character: the body frame follows the aim direction (front / side / back, side flipped for left)
    * and a gun is drawn on top, pointing exactly where you aim. The gun is a TEMPORARY stand-in until there's gun art.
    */
-  private drawFacingCharacter(d: Facings, x: number, y: number, aim: number, spin: number, alpha: number, white: boolean): void {
+  private drawFacingCharacter(d: Facings, x: number, y: number, aim: number, spin: number, alpha: number, white: boolean, walking: boolean): void {
     const { ctx } = this;
     const deg = (aim * 180) / Math.PI; // screen coordinates: +90 is down
     const down = deg > 45 && deg < 135;
     const up = deg < -45 && deg > -135;
     const left = !down && !up && Math.abs(deg) > 90;
-    const frame = down ? d.front : up ? d.back : d.side;
+    const set = down ? d.front : up ? d.back : d.side;
+    // Standing still: idle frame. Walking: swap between the two walk frames (about 6 times a second).
+    const frame = walking ? set[1 + (Math.floor(this.clock * 6) % 2)] : set[0];
     // Snap the body to whole art pixels so its pixels line up with each other.
     const px = Math.round(x / ART_PIXEL) * ART_PIXEL;
     const py = Math.round(y / ART_PIXEL) * ART_PIXEL;

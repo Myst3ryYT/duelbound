@@ -15,9 +15,9 @@ const sprites = new Map<SpriteId, Sprite>();
 
 /** The three facings of a sprite-sheet character. */
 export interface Facings {
-  front: Sprite; // aiming down
-  side: Sprite; // aiming right (flip it for left)
-  back: Sprite; // aiming up
+  front: Sprite[]; // aiming down: [idle, walk 1, walk 2]
+  side: Sprite[]; // aiming right (flip it for left)
+  back: Sprite[]; // aiming up
 }
 const facings = new Map<string, Facings>();
 
@@ -37,7 +37,7 @@ function loadSheets(): void {
         // Drawn size: whole art pixels, so every art pixel is the same size on screen.
         frames.push({ image: c, size: fw * ART_PIXEL, aspect: img.naturalHeight / fw });
       }
-      facings.set(id, { front: frames[0], side: frames[1], back: frames[2] });
+      facings.set(id, { front: frames.slice(0, 3), side: frames.slice(3, 6), back: frames.slice(6, 9) });
       sprites.set(id, frames[0]); // menus show the front view
     };
     img.onerror = () => {}; // no sheet: keep the placeholder
