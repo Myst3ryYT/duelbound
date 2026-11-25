@@ -17,6 +17,7 @@ import { damageOf } from '../../projectiles.ts';
 export const FROG: ClassDef = {
   id: 'frog',
   name: 'Frog',
+  hidden: true, // parked: out of the menus for now (remove this line to bring the Frog back)
   sprite: 'class_frog',
   ratings: { difficulty: 4, mobility: 4, damage: 3, defense: 3 },
   abilities: {
