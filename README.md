@@ -3,7 +3,7 @@
 A top-down 1v1 arena fighting game for keyboard and mouse, playable in the browser.
 The full design spec is in [GAME_BRIEF.md](GAME_BRIEF.md).
 
-**Current build: steps 4 and 5 of 6 done.** Main menu, character select, training, best-of-3 vs a bot (Normal / Hard), and online 1v1 by room code or link. Next: a debug menu with fake lag, then putting it online on Cloudflare Pages.
+**Current build: steps 4 and 5 of 6 done.** Main menu, character select, training, best-of-3 vs a bot (Easy / Normal / Hard / Expert / Insane), and online 1v1 by room code or link. Next: a debug menu with fake lag, then putting it online on Cloudflare Pages.
 
 ## Running the game
 
@@ -129,7 +129,12 @@ has a slider and a box, tucked into folders (click a folder to open it, e.g. bui
 ### Round rules and the bot
 
 Also in `src/config/tuning.ts`: the `match:` group (countdown, round clock, rounds to win) and the
-`bot:` group, with separate `normal:` and `hard:` settings (reaction time, aim error, how often it dodges, how fast it moves, and so on).
+`bot:` group, with one block per difficulty: `easy:`, `normal:`, `hard:`, `expert:`, `insane:` (reaction time, aim error,
+how often it dodges, how fast it moves, click speed, and its "smarts": `tactics` = how often it plays smart (backs off to
+reload, rushes you when you're stunned or reloading, does combos like bramble + lasso, build + hammer fling, mirror bank
+shots and shatter traps), `lineOfSight` (walks around walls for a clear shot instead of shooting them), `avoidHazards`
+(steers around tumbleweeds, slime, charging horses and the Mind Ray) and `kickChance`).
+Every difficulty beats the one below it about 75-100% of the time in bot-vs-bot tests.
 
 ### Keys
 

@@ -30,7 +30,7 @@ export class App {
   private session: Session | null = null;
   private online: OnlineGame | null = null;
   private lastClass = 'mage';
-  private lastBot: CharSelection = { classId: 'mage', botClass: 'random', difficulty: 'normal' };
+  private lastBot: CharSelection = { classId: CLASS_ORDER[0], botClass: 'random', difficulty: 'normal' };
 
   readonly devPanel: DevPanel;
   private netOverlay: NetOverlay;

@@ -12,6 +12,7 @@ import { playSound } from '../audio/sfx.ts';
 import { CLASS_ORDER, getClass } from '../sim/classes/registry.ts';
 import type { Keybinds } from '../config/keybinds.ts';
 import { findSprite } from '../render/sprites.ts';
+import { BOT_DIFFICULTIES, type BotDifficulty } from '../sim/bot.ts';
 
 /** Base for a full-screen menu layer. */
 class Screen {
@@ -176,12 +177,12 @@ export type CharSelectMode = 'training' | 'bot' | 'online';
 export interface CharSelection {
   classId: string;
   botClass: string; // 'random' or a class id
-  difficulty: 'normal' | 'hard';
+  difficulty: BotDifficulty;
 }
 
 export class CharacterSelect extends Screen {
   private mode: CharSelectMode = 'training';
-  private sel: CharSelection = { classId: 'mage', botClass: 'random', difficulty: 'normal' };
+  private sel: CharSelection = { classId: CLASS_ORDER[0], botClass: 'random', difficulty: 'normal' };
   private ready = false;
   private handlers: {
     confirm: (sel: CharSelection) => void;
@@ -308,14 +309,14 @@ export class CharacterSelect extends Screen {
     }
     const diffRow = this.el('difficulty');
     diffRow.innerHTML = '';
-    for (const d of ['normal', 'hard'] as const) {
+    for (const d of BOT_DIFFICULTIES) {
       const b = document.createElement('button');
       b.className = 'chip';
-      b.dataset.diff = d;
-      b.textContent = d === 'normal' ? 'Normal' : 'Hard';
+      b.dataset.diff = d.id;
+      b.textContent = d.name;
       b.addEventListener('click', () => {
         playSound('ui_click');
-        this.sel.difficulty = d;
+        this.sel.difficulty = d.id;
         this.refresh();
       });
       diffRow.appendChild(b);

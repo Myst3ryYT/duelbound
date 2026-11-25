@@ -85,34 +85,92 @@ export const TUNING = {
   },
 
   bot: {
-    normal: {
+    easy: { // for learning the game
+      reactionTime: 0.5, // seconds after a shot is fired before the bot notices it
+      aimJitter: 110, // random aim error, in world units (0 = perfect aim)
+      leadFactor: 0.2, // how well it predicts where you're moving (1 = perfectly, 0 = shoots where you are)
+      dodgeChance: 0.1, // chance it tries to dodge each shot it notices (0..1)
+      defendChance: 0.1, // chance it uses a defensive ability (roll, dash...) against a close shot
+      abilityRate: 0.25, // how often per second it considers using a cooldown ability
+      moveSpeed: 0.5, // share of full walking speed it uses (dodging always uses full speed)
+      pauseChance: 0.5, // chance it stands still instead of strafing, each time it changes direction
+      clickRate: 3, // clicks per second on click-to-fire weapons (the Sheriff's revolver)
+      tactics: 0, // 0..1: how often it plays smart: backs off to reload, pushes when you're stunned or reloading, uses combos
+      lineOfSight: 0, // 1 = doesn't shoot into walls and walks around them to get a clear shot (0 = off)
+      avoidHazards: 0, // 1 = steers around enemy tumbleweeds, slime and charging horses (0 = off)
+      kickChance: 0, // chance it kicks (F) when you get right up close
+    },
+    normal: { // a fair fight for new players
       reactionTime: 0.35, // seconds after a shot is fired before the bot notices it
       aimJitter: 70, // random aim error, in world units (0 = perfect aim)
       leadFactor: 0.5, // how well it predicts where you're moving (1 = perfectly, 0 = shoots where you are)
       dodgeChance: 0.25, // chance it tries to dodge each shot it notices (0..1)
-      defendChance: 0.2, // chance it uses a defensive ability (shield, roll, dash...) against a close shot
+      defendChance: 0.2, // chance it uses a defensive ability (roll, dash...) against a close shot
       abilityRate: 0.4, // how often per second it considers using a cooldown ability
       moveSpeed: 0.6, // share of full walking speed it uses (dodging always uses full speed)
       pauseChance: 0.35, // chance it stands still instead of strafing, each time it changes direction
+      clickRate: 5, // clicks per second on click-to-fire weapons (the Sheriff's revolver)
+      tactics: 0.3, // 0..1: how often it plays smart: backs off to reload, pushes when you're stunned or reloading, uses combos
+      lineOfSight: 0, // 1 = doesn't shoot into walls and walks around them to get a clear shot (0 = off)
+      avoidHazards: 0, // 1 = steers around enemy tumbleweeds, slime and charging horses (0 = off)
+      kickChance: 0.3, // chance it kicks (F) when you get right up close
     },
-    hard: {
-      reactionTime: 0.1, // seconds after a shot is fired before the bot notices it
-      aimJitter: 35, // random aim error, in world units (0 = perfect aim)
+    hard: { // knows the game
+      reactionTime: 0.15, // seconds after a shot is fired before the bot notices it
+      aimJitter: 40, // random aim error, in world units (0 = perfect aim)
       leadFactor: 0.8, // how well it predicts where you're moving (1 = perfectly, 0 = shoots where you are)
-      dodgeChance: 0.55, // chance it tries to dodge each shot it notices (0..1)
-      defendChance: 0.5, // chance it uses a defensive ability (shield, roll, dash...) against a close shot
+      dodgeChance: 0.5, // chance it tries to dodge each shot it notices (0..1)
+      defendChance: 0.45, // chance it uses a defensive ability (roll, dash...) against a close shot
       abilityRate: 0.7, // how often per second it considers using a cooldown ability
       moveSpeed: 1, // share of full walking speed it uses (dodging always uses full speed)
       pauseChance: 0, // chance it stands still instead of strafing, each time it changes direction
+      clickRate: 6.5, // clicks per second on click-to-fire weapons (the Sheriff's revolver)
+      tactics: 0.7, // 0..1: how often it plays smart: backs off to reload, pushes when you're stunned or reloading, uses combos
+      lineOfSight: 1, // 1 = doesn't shoot into walls and walks around them to get a clear shot (0 = off)
+      avoidHazards: 1, // 1 = steers around enemy tumbleweeds, slime and charging horses (0 = off)
+      kickChance: 0.7, // chance it kicks (F) when you get right up close
     },
-    strafeMin: 0.8, // both difficulties: shortest time (s) before it changes strafing direction
-    strafeMax: 2.2, // both difficulties: longest time (s) before it changes strafing direction
-    rangeMage: 460, // both difficulties: distance it likes to keep as a Mage
-    rangeSheriff: 380, // both difficulties: distance it likes to keep as a Sheriff
-    rangeRefractor: 320, // both difficulties: distance it likes to keep as a Refractor
-    rangeBuilder: 260, // both difficulties: distance it likes to keep as a Builder
-    rangeFrog: 130, // both difficulties: distance it likes to keep as a Frog
-    wallMargin: 140, // both difficulties: how close to a wall it gets before steering back to the middle
+    expert: { // plays like a good player
+      reactionTime: 0.08, // seconds after a shot is fired before the bot notices it
+      aimJitter: 22, // random aim error, in world units (0 = perfect aim)
+      leadFactor: 0.95, // how well it predicts where you're moving (1 = perfectly, 0 = shoots where you are)
+      dodgeChance: 0.7, // chance it tries to dodge each shot it notices (0..1)
+      defendChance: 0.7, // chance it uses a defensive ability (roll, dash...) against a close shot
+      abilityRate: 1, // how often per second it considers using a cooldown ability
+      moveSpeed: 1, // share of full walking speed it uses (dodging always uses full speed)
+      pauseChance: 0, // chance it stands still instead of strafing, each time it changes direction
+      clickRate: 8, // clicks per second on click-to-fire weapons (the Sheriff's revolver)
+      tactics: 1, // 0..1: how often it plays smart: backs off to reload, pushes when you're stunned or reloading, uses combos
+      lineOfSight: 1, // 1 = doesn't shoot into walls and walks around them to get a clear shot (0 = off)
+      avoidHazards: 1, // 1 = steers around enemy tumbleweeds, slime and charging horses (0 = off)
+      kickChance: 1, // chance it kicks (F) when you get right up close
+    },
+    insane: { // near-perfect reactions and aim
+      reactionTime: 0.04, // seconds after a shot is fired before the bot notices it
+      aimJitter: 8, // random aim error, in world units (0 = perfect aim)
+      leadFactor: 1, // how well it predicts where you're moving (1 = perfectly, 0 = shoots where you are)
+      dodgeChance: 0.9, // chance it tries to dodge each shot it notices (0..1)
+      defendChance: 0.9, // chance it uses a defensive ability (roll, dash...) against a close shot
+      abilityRate: 1.5, // how often per second it considers using a cooldown ability
+      moveSpeed: 1, // share of full walking speed it uses (dodging always uses full speed)
+      pauseChance: 0, // chance it stands still instead of strafing, each time it changes direction
+      clickRate: 9, // clicks per second on click-to-fire weapons (the Sheriff's revolver)
+      tactics: 1, // 0..1: how often it plays smart: backs off to reload, pushes when you're stunned or reloading, uses combos
+      lineOfSight: 1, // 1 = doesn't shoot into walls and walks around them to get a clear shot (0 = off)
+      avoidHazards: 1, // 1 = steers around enemy tumbleweeds, slime and charging horses (0 = off)
+      kickChance: 1, // chance it kicks (F) when you get right up close
+    },
+    strafeMin: 0.8, // all difficulties: shortest time (s) before it changes strafing direction
+    strafeMax: 2.2, // all difficulties: longest time (s) before it changes strafing direction
+    rangeMage: 460, // all difficulties: distance it likes to keep as a Mage
+    rangeSheriff: 380, // all difficulties: distance it likes to keep as a Sheriff
+    rangeRefractor: 320, // all difficulties: distance it likes to keep as a Refractor
+    rangeBuilder: 260, // all difficulties: distance it likes to keep as a Builder
+    rangeFrog: 130, // all difficulties: distance it likes to keep as a Frog
+    wallMargin: 140, // all difficulties: how close to a wall it gets before steering back to the middle
+    reloadRetreat: 200, // when playing smart: extra distance it keeps while its gun is reloading
+    pushRange: 160, // when playing smart: distance it closes to when you're stunned, lassoed or reloading
+    lowHpRatio: 0.6, // when playing smart: plays further back when its HP is below this share of yours
   },
 
   // ---------------------------------------------------------------- MAGE ----
