@@ -10,7 +10,7 @@
 import type { Tuning } from '../config/tuning.ts';
 import type { World, Zone } from './types.ts';
 import { dist } from './math.ts';
-import { getZoneKind } from './classes/registry.ts';
+import { allZoneKinds, getZoneKind } from './classes/registry.ts';
 
 export function spawnZone(world: World, props: Omit<Zone, 'id' | 'maxLife'>): Zone {
   const z: Zone = { id: world.nextId++, maxLife: props.life, ...props };
@@ -42,5 +42,6 @@ export function updateZones(world: World, tuning: Tuning, dt: number): void {
       done.add(key);
       getZoneKind(z.kind)?.onFighter(world, tuning, z, f, dt);
     }
+    for (const k of allZoneKinds()) k.always?.(world, tuning, f, dt);
   }
 }

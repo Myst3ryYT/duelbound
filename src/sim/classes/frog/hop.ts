@@ -1,7 +1,8 @@
 /**
  * FROG - SPACE - Hop (instant, mobility)
- * A quick hop towards the crosshair. In the air the Frog sails over structures,
- * physics objects and slime (shots can still hit him).
+ * A quick hop in the direction you're moving (towards the crosshair if you're
+ * standing still). Costs a little slime. In the air the Frog sails over structures,
+ * physics objects and slime, and nothing can hit him (he's invulnerable).
  * Hopping out of Acid Goop mode splashes a big slime puddle where he lands,
  * if he has the slime for it (landCost).
  * Numbers: tuning.frog.hop
@@ -24,7 +25,7 @@ export const hop: AbilityDef = {
   icon: 'icon_frog_hop',
   cooldown: (t) => t.frog.hop.cooldown,
 
-  update({ world, tuning, fighter: f, slot, pressed, dt }) {
+  update({ world, tuning, fighter: f, input, slot, pressed, dt }) {
     const h = tuning.frog.hop;
 
     // In the air: move along the hop.
@@ -39,13 +40,30 @@ export const hop: AbilityDef = {
     }
 
     if (!pressed || !isReady(f, slot) || f.stunT > 0 || f.hitstunT > 0 || f.pullById) return;
-    f.vars.hopDX = Math.cos(f.aimAngle);
-    f.vars.hopDY = Math.sin(f.aimAngle);
+    if (!spendSlime(f, tuning, h.cost)) return;
+
+    // Hop the way you're moving (keys, or the slide when gliding); standing still, towards the crosshair.
+    let dx = input.moveX;
+    let dy = input.moveY;
+    if (Math.hypot(dx, dy) < 0.01 && f.vars.goopOn) {
+      dx = f.vars.goopVx;
+      dy = f.vars.goopVy;
+    }
+    const len = Math.hypot(dx, dy);
+    if (len < 0.01) {
+      dx = Math.cos(f.aimAngle);
+      dy = Math.sin(f.aimAngle);
+    } else {
+      dx /= len;
+      dy /= len;
+    }
+    f.vars.hopDX = dx;
+    f.vars.hopDY = dy;
     f.vars.airT = h.duration;
     f.rootedT = h.duration; // normal walking is off during the hop
+    f.invulnT = Math.max(f.invulnT, h.duration); // in the air nothing can hit you
     startCooldown(world, f, slot, h.cooldown);
     emitSound(world, 'frog_hop', f.x, f.y);
-
   },
 };
 

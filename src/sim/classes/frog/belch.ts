@@ -4,6 +4,7 @@
  * The longer you hold, the faster and harder it hits, but charging keeps
  * using slime (a tap costs minCost; holding drains more). Charging stops
  * growing when the slime runs out. Flies buzz around it (looks only).
+ * Getting hit only pauses the charge (a real stun cancels it).
  * Numbers: tuning.frog.belch
  */
 import type { AbilityDef } from '../../abilities.ts';
@@ -33,10 +34,11 @@ export const belch: AbilityDef = {
       return;
     }
 
-    if (stunned) {
-      f.vars.belchOn = 0; // a stun wastes the charge
+    if (f.stunT > 0) {
+      f.vars.belchOn = 0; // a real stun wastes the charge
       return;
     }
+    if (stunned) return; // a mere flinch (hitstun from a hit) just pauses the charge: it isn't lost and doesn't fire early
 
     // Keep charging while held (and while there's slime to spend).
     if (held) {
@@ -54,6 +56,7 @@ export const belch: AbilityDef = {
     spawnProjectile(world, tuning, {
       ownerId: f.id,
       kind: 'frog_belch',
+      behavior: 'frog_belch', // (hits a marked enemy for extra, see slime.ts)
       x: f.x + Math.cos(f.aimAngle) * (f.radius + size + 4),
       y: f.y + Math.sin(f.aimAngle) * (f.radius + size + 4),
       angle: f.aimAngle,

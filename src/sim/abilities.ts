@@ -97,6 +97,8 @@ export interface ZoneKindDef {
   kind: string;
   /** A fighter is standing in a zone of this kind this tick (called once per kind and owner). */
   onFighter(world: World, tuning: Tuning, z: Zone, f: Fighter, dt: number): void;
+  /** Optional: called every tick for every (non-airborne) fighter, standing in this kind of zone or not, after the onFighter calls. For lingering effects. */
+  always?(world: World, tuning: Tuning, f: Fighter, dt: number): void;
 }
 
 /** Extra effect when a projectile with this `behavior` hits a fighter (after damage). */

@@ -48,6 +48,11 @@ export function getZoneKind(kind: string): ZoneKindDef | undefined {
   return undefined;
 }
 
+/** Every registered zone kind (for their `always` hooks). */
+export function allZoneKinds(): ZoneKindDef[] {
+  return Object.values(CLASSES).flatMap((c) => c.zones ?? []);
+}
+
 export function getProjectileHook(behavior: string): ProjectileHook | undefined {
   if (!behavior) return undefined;
   for (const c of Object.values(CLASSES)) {

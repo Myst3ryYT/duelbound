@@ -1,14 +1,16 @@
 /**
  * FROG - LC - Tongue (instant, melee)
  * The tongue lashes out like a whip towards the crosshair. An enemy it touches
- * takes damage and is shoved away hard. Tumbleweeds get knocked away, enemy
+ * takes damage (more if marked by his slime) and is stuck: slowed for a moment,
+ * with no knockback at all. Tumbleweeds get knocked away, enemy
  * furniture takes damage.
  * Numbers: tuning.frog.tongue
  */
 import type { AbilityDef } from '../../abilities.ts';
 import { isReady, startCooldown } from '../../abilities.ts';
 import { applyDamage } from '../../damage.ts';
-import { applyHitstun, applyKnockback } from '../../status.ts';
+import { applyHitstun } from '../../status.ts';
+import { markMult, stickTo } from './slime.ts';
 import { damageObject } from '../../objects.ts';
 import { emitSound } from '../../events.ts';
 import { distToSegment } from '../../math.ts';
@@ -36,9 +38,9 @@ export const tongue: AbilityDef = {
     for (const target of world.fighters) {
       if (target.id === f.id || target.invulnT > 0) continue;
       if (distToSegment(target.x, target.y, f.x, f.y, tipX, tipY) > target.radius + k.width) continue;
-      applyDamage(world, target, k.damage, f.id);
+      applyDamage(world, target, k.damage * markMult(world, tuning, target, f.id), f.id); // marked enemies take extra
       applyHitstun(target, tuning.hitstun.tongue, tuning.world.tickRate);
-      applyKnockback(target, Math.atan2(target.y - f.y, target.x - f.x), k.knockback);
+      stickTo(world, tuning, target); // no knockback: they're slowed (stuck) instead
       hit = true;
     }
     for (const o of world.objects) {

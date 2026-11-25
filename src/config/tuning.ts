@@ -328,18 +328,25 @@ export const TUNING = {
       refill: 14, // slime regained per second when not using any
       refillDelay: 0.8, // seconds of not using slime before it starts refilling
       ownSpeedMult: 1.3, // the Frog's walking speed while standing in his own slime (1 = normal)
-      enemySlowMult: 0.6, // an enemy's walking speed while standing in the Frog's slime
-      acidDps: 25, // damage per second to an enemy standing in the Frog's slime
+      enemySlowMult: 0.65, // an enemy's walking speed the moment it touches the Frog's slime
+      acidDps: 25, // damage per second to an enemy standing in the Frog's slime (grows with the stack, see stackDpsMult)
       acidTick: 0.25, // seconds between acid damage ticks
+      markTime: 3, // seconds an enemy stays MARKED after touching slime (refreshes while it stands in it)
+      markMult: 1.5, // damage the Frog's tongue and belch do to a marked enemy, times this
+      stackTime: 2, // seconds standing in slime to reach the full stack (the longer you stay, the worse it gets)
+      stackSlowMult: 0.4, // an enemy's walking speed at a full stack
+      stackDpsMult: 2, // acid damage at a full stack, times acidDps
+      lingerDpsMult: 0.5, // acid damage while marked but out of the slime, times the stacked damage
     },
     tongue: {
-      damage: 30, // LC: damage to an enemy hit by the tongue
-      knockback: 1100, // LC: how hard it shoves them away (see player.knockFriction)
-      range: 190, // LC: how far the tongue reaches, from the edge of the Frog's body
+      damage: 30, // LC: damage to an enemy hit by the tongue (no knockback: it sticks instead)
+      stickTime: 0.8, // LC: seconds a hit enemy is slowed ("stuck" to the tongue)
+      stickMult: 0.45, // LC: a stuck enemy's walking speed
+      range: 240, // LC: how far the tongue reaches, from the edge of the Frog's body
       width: 16, // LC: how thick the tongue's hit area is
       time: 0.18, // LC: how long the tongue stays out (looks only)
       objectFling: 700, // LC: speed it knocks tumbleweeds away at
-      cooldown: 0.55, // LC: seconds between lashes
+      cooldown: 0.45, // LC: seconds between lashes
     },
     belch: {
       minCost: 10, // RC: slime used by a quick tap
@@ -355,13 +362,13 @@ export const TUNING = {
     },
     goop: {
       drain: 12, // C: slime used per second while gliding
-      speed: 480, // C: top gliding speed (the Frog's own slime makes it faster, like walking)
-      accel: 900, // C: how quickly you speed up / turn (lower = more slippery)
-      friction: 1.2, // C: how quickly you slow down when not pressing a direction (lower = more slippery)
+      speed: 620, // C: top gliding speed (the Frog's own slime makes it faster, like walking)
+      accel: 2400, // C: how quickly you speed up / turn (lower = more slippery)
+      friction: 3, // C: how quickly you slow down when not pressing a direction (lower = more slippery)
       trailSpacing: 40, // C: distance between slime puddles left behind
-      trailRadius: 32, // C: size of each trail puddle
-      trailLife: 5, // C: seconds a trail puddle lasts
-      maxPuddles: 80, // C: most trail puddles at once (oldest disappear first)
+      trailRadius: 44, // C: size of each trail puddle
+      trailLife: 7, // C: seconds a trail puddle lasts
+      maxPuddles: 110, // C: most trail puddles at once (oldest disappear first)
       cooldown: 1, // C: seconds after leaving goop mode before you can enter it again
     },
     swallow: {
@@ -370,19 +377,21 @@ export const TUNING = {
       coneDegrees: 110, // V: how wide the swallowing cone is (degrees)
       damageMult: 1.5, // V: the spat glob does the swallowed damage times this
       maxStored: 160, // V: most damage that can be stored (so a huge volley can't one-shot)
+      objectValue: 40, // V: damage stored for each enemy object swallowed (bramble, flung furniture)
       spitSpeed: 500, // V: speed of the spat glob
       spitMinSize: 12, // V: radius of a small glob
       spitMaxSize: 30, // V: radius of a glob at maxStored
       cooldown: 8, // V: seconds before the mouth can open again (starts after spitting, or after swallowing nothing)
     },
     hop: {
-      distance: 220, // SPACE: how far the hop goes (towards the crosshair)
-      duration: 0.35, // SPACE: seconds in the air (sails over structures, objects and slime)
+      distance: 300, // SPACE: how far the hop goes (the way you're moving, or the crosshair if standing still)
+      duration: 0.35, // SPACE: seconds in the air (sails over structures, objects and slime, and nothing can hit you)
+      cost: 8, // SPACE: slime a hop uses (so it can't be spammed forever)
       height: 30, // SPACE: how high the Frog is drawn at the top of the hop (looks only)
       landCost: 35, // SPACE: slime used to splash a big puddle when landing out of goop mode
       landRadius: 110, // SPACE: size of that puddle
       landLife: 6, // SPACE: seconds it lasts
-      cooldown: 1.8, // SPACE: seconds before hopping again
+      cooldown: 0.9, // SPACE: seconds before hopping again
     },
   },
 

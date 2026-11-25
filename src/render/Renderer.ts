@@ -342,6 +342,15 @@ export class Renderer {
     if (f.vars.rollT > 0) spin = (1 - f.vars.rollT / Math.max(0.001, tuning.sheriff.roll.duration)) * Math.PI * 2;
     if (f.invulnT > 0) alpha *= 0.5;
 
+    // Marked by Frog slime: a sickly green ring under the fighter.
+    if ((f.vars.markUntil ?? 0) > world.time) {
+      this.ctx.strokeStyle = 'rgba(122,208,90,0.8)';
+      this.ctx.lineWidth = 3;
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, f.radius + 6, 0, Math.PI * 2);
+      this.ctx.stroke();
+    }
+
     const spriteName = f.kind === 'dummy' ? 'dummy' : (getClass(f.classId)?.sprite ?? 'fighter_default');
     const sprite = findSprite(spriteName) ?? getSprite('fighter_default');
     // Dash: a few fading after-images behind.

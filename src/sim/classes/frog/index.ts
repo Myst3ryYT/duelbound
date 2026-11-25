@@ -10,7 +10,9 @@ import { belch } from './belch.ts';
 import { goop } from './goop.ts';
 import { swallow } from './swallow.ts';
 import { hop } from './hop.ts';
-import { slimeOf, slimeZone, tickSlime } from './slime.ts';
+import { markMult, slimeOf, slimeZone, tickSlime } from './slime.ts';
+import { applyDamage } from '../../damage.ts';
+import { damageOf } from '../../projectiles.ts';
 
 export const FROG: ClassDef = {
   id: 'frog',
@@ -25,6 +27,14 @@ export const FROG: ClassDef = {
     mobility: hop, // SPACE
   },
   zones: [slimeZone],
+
+  // A belch hitting a marked enemy does extra (the shot itself already did its normal damage).
+  projectileHooks: {
+    frog_belch: (world, tuning, p, target) => {
+      const extra = (markMult(world, tuning, target, p.ownerId) - 1) * damageOf(p);
+      if (extra > 0) applyDamage(world, target, extra, p.ownerId);
+    },
+  },
 
   tick: (_world, tuning, f, dt) => tickSlime(f, tuning, dt),
 

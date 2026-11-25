@@ -5,7 +5,8 @@
  * out as one slow slime glob that does the swallowed damage times damageMult
  * (capped at maxStored, so a huge volley can't one-shot anybody).
  * The cooldown starts after spitting (or right away if nothing was swallowed).
- * Beams (Mind Ray) can't be swallowed.
+ * Enemy physics objects in the cone (brambles, flung furniture) are swallowed too
+ * (each stores objectValue). Beams (Mind Ray) and placeables (walls...) can't be.
  * Numbers: tuning.frog.swallow
  */
 import type { AbilityDef } from '../../abilities.ts';
@@ -39,7 +40,18 @@ export const swallow: AbilityDef = {
         f.vars.stored = Math.min(s.maxStored, (f.vars.stored ?? 0) + damageOf(p));
         return false; // swallowed
       });
-      if (world.projectiles.length < before) emitSound(world, 'frog_swallow', f.x, f.y);
+      // Enemy physics objects too (brambles, flung furniture), but never placeables (walls, turrets...).
+      const objBefore = world.objects.length;
+      world.objects = world.objects.filter((o) => {
+        if (o.ownerId === f.id) return true;
+        if (dist(f.x, f.y, o.x, o.y) > f.radius + s.range + o.radius) return true;
+        let diff = Math.atan2(o.y - f.y, o.x - f.x) - f.aimAngle;
+        diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+        if (Math.abs(diff) > half) return true;
+        f.vars.stored = Math.min(s.maxStored, (f.vars.stored ?? 0) + s.objectValue);
+        return false; // swallowed
+      });
+      if (world.projectiles.length < before || world.objects.length < objBefore) emitSound(world, 'frog_swallow', f.x, f.y);
       if (f.vars.mouthT <= 0 && !(f.vars.stored > 0)) startCooldown(world, f, slot, s.cooldown); // ate nothing
       return;
     }

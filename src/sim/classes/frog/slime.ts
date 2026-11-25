@@ -52,20 +52,65 @@ export function dropSlime(world: World, t: Tuning, f: Fighter, radius: number, l
   capZones(world, f.id, SLIME_ZONE, t.frog.goop.maxPuddles);
 }
 
-/** What standing in slime does. */
+/** Is this fighter MARKED by the Frog `byId` (touched his slime recently)? */
+export function isMarked(world: World, f: Fighter, byId: number): boolean {
+  return (f.vars.markUntil ?? 0) > world.time && f.vars.markBy === byId;
+}
+
+/** Damage multiplier the Frog's tongue and belch get against this target (1 if not marked). */
+export function markMult(world: World, tuning: Tuning, f: Fighter, byId: number): number {
+  return isMarked(world, f, byId) ? tuning.frog.slime.markMult : 1;
+}
+
+/** Stick an enemy to the tongue: slowed for a moment (see slimeZone.always). */
+export function stickTo(world: World, tuning: Tuning, f: Fighter): void {
+  f.vars.stickUntil = world.time + tuning.frog.tongue.stickTime;
+}
+
+/**
+ * What slime does to an enemy:
+ * - touching it MARKS them for markTime seconds (the tongue and belch hit marked enemies harder);
+ * - the longer they stand in it the bigger the "stack": more slow and more acid damage;
+ * - the mark (slow and weaker acid) lingers after they walk out.
+ * The Frog himself just walks faster in his own slime.
+ */
 export const slimeZone: ZoneKindDef = {
   kind: SLIME_ZONE,
+
   onFighter(world, tuning, z, f, dt) {
     const s = tuning.frog.slime;
     if (f.id === z.ownerId) {
       f.vars.speedMult = s.ownSpeedMult;
       return;
     }
-    f.vars.speedMult = s.enemySlowMult;
+    f.vars.markUntil = world.time + s.markTime;
+    f.vars.markBy = z.ownerId;
+    f.vars.slimeNow = 1; // (read by `always` just below, this same tick)
+    f.vars.stack = Math.min(s.stackTime, (f.vars.stack ?? 0) + dt);
+  },
+
+  // Every tick for every fighter, in a puddle or not: slow + acid for anyone marked, stuck tongue slow.
+  always(world, tuning, f, dt) {
+    const s = tuning.frog.slime;
+    const inSlime = f.vars.slimeNow === 1;
+    f.vars.slimeNow = 0;
+
+    if ((f.vars.stickUntil ?? 0) > world.time) f.vars.speedMult = Math.min(f.vars.speedMult, tuning.frog.tongue.stickMult);
+
+    if (!isMarked(world, f, f.vars.markBy)) {
+      f.vars.stack = 0; // the mark ran out: the stack is gone
+      return;
+    }
+    const k = Math.min(1, (f.vars.stack ?? 0) / Math.max(0.001, s.stackTime)); // 0 -> 1
+    const slow = inSlime ? s.enemySlowMult + (s.stackSlowMult - s.enemySlowMult) * k : s.stackSlowMult + (1 - s.stackSlowMult) * (1 - k);
+    f.vars.speedMult = Math.min(f.vars.speedMult, slow);
+
+    // Acid damage in ticks. Out of the slime only a lingering part of it.
+    const dps = s.acidDps * (1 + (s.stackDpsMult - 1) * k) * (inSlime ? 1 : s.lingerDpsMult * k);
     f.vars.acidT = (f.vars.acidT ?? 0) - dt;
     if (f.vars.acidT <= 0) {
       f.vars.acidT = s.acidTick;
-      applyDamage(world, f, s.acidDps * s.acidTick, z.ownerId);
+      if (dps > 0) applyDamage(world, f, dps * s.acidTick, f.vars.markBy);
     }
   },
 };

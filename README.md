@@ -94,11 +94,11 @@ Good to know:
 
 | Key | Does |
 | --- | --- |
-| Left click | Tongue: a whip towards the crosshair. Damage and a hard shove. |
+| Left click | Tongue: a whip towards the crosshair. Damage, no knockback: the target is stuck (slowed) for a moment. |
 | Right click | Belch: hold to charge, let go to fire. Longer = faster and harder, but uses more slime. |
-| C | Acid Goop on / off: fast, slippery gliding that leaves a slime trail. Uses slime while on. In your own slime you walk faster; enemies in it are slowed and take acid damage. |
-| V | Swallow: opens your mouth for 0.8 s and eats enemy shots in front of you. Press V again to spit them back as one glob (1.5x the damage, capped). |
-| Space | Hop towards the crosshair, over structures, objects and slime. Out of goop mode, landing splashes a big puddle (costs slime). |
+| C | Acid Goop on / off: fast gliding that leaves a slime trail. Uses slime while on. In your own slime you walk faster. An enemy that touches slime is **marked** for 3 s: slowed, burning, and your tongue and belch hit it for 1.5x. The longer it stands in slime the worse the slow and acid get. |
+| V | Swallow: opens your mouth for 0.8 s and eats enemy shots and objects (brambles, furniture, not walls or beams) in front of you. Press V again to spit them back as one glob (1.5x the damage, capped). |
+| Space | Hop the way you're moving (crosshair if standing still), over structures, objects and slime, and nothing can hit you in the air. Costs a little slime. In goop mode, landing splashes a big puddle. |
 
 Anything that belongs to your **opponent** (shots, walls, mirrors, furniture, beams) is tinted **red**.
 In any placing mode (watchtower, mirrors, walls) the crosshair turns into green corner brackets.
